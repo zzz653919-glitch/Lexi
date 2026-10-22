@@ -112,7 +112,7 @@ VL.io = (function () {
           if (!f) { currentText = ''; return refresh(); }
           if (f.size > 5 * 1024 * 1024) { currentText = ''; $('#imp-preview').innerHTML = '<p class="form-error">' + esc(t('imp.tooBig')) + '</p>'; parsed = null; return; }
           try { currentText = await f.text(); } catch (err) { currentText = ''; VL.ui.toast(t('imp.readFail'), 'error'); }
-          if (currentText.includes('�')) VL.ui.toast(t('imp.garbled'), 'error', 5000);
+          if (currentText.includes('\uFFFD')) VL.ui.toast(t('imp.garbled'), 'error', 5000);
           refresh();
         });
         ['#imp-text', '#imp-col', '#imp-colcol'].forEach((s) => $(s).addEventListener('input', refresh));
