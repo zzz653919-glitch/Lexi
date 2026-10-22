@@ -288,7 +288,7 @@ VL.views.bulk = (function () {
       case 'prev': S.page = Math.max(0, S.page - 1); drawTable(); break;
       case 'next': S.page++; drawTable(); break;
       case 'save': await save(); break;
-      case 'practise-now': await store.setSetting('learnSelected', [a.dataset.col]); location.hash = '#/learn'; break;
+      case 'practise-now': await store.setSetting('learnSelected', [a.dataset.col]); location.hash = '#/learn?tab=practice'; break;
       case 'more': resetAll(); break;
     }
   }

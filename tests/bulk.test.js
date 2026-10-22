@@ -178,7 +178,7 @@ const storeWords = (page, colName) => page.evaluate((n) => { const c = VL.store.
   await page.click('.ex-card[data-type="mixed"]'); await page.waitForSelector('.lesson');
   const lessonOk = await page.evaluate(() => { const l = VL.store.state.lesson; const col = VL.store.state.collections.find((c) => c.name === 'Lesson words'); return l.items.every((it) => it.wordIds.every((id) => VL.store.word(id).collectionId === col.id)); });
   assert(lessonOk, 'the lesson only contains the imported words');
-  await page.click('[data-action="pause"]'); await page.click('.modal-foot button:has-text("End and see")'); await page.waitForSelector('.summary'); 
+  await page.click('[data-action="pause"]'); await page.click('.modal-foot button:has-text("Save and exit")'); await page.waitForSelector('.resume');
 
   /* ---- 8. files: TSV and CSV ---- */
   await page.goto(APP + '#/bulk'); await page.waitForSelector('#bulk-text');
