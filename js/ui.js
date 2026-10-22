@@ -26,7 +26,7 @@ VL.ui = (function () {
       dlg.innerHTML =
         '<div class="modal-card">' +
         '<header class="modal-head"><h2 id="modal-title">' + esc(opts.title) + '</h2>' +
-        '<button type="button" class="icon-btn" data-dismiss aria-label="Close">' + icon('x') + '</button></header>' +
+        '<button type="button" class="icon-btn" data-dismiss aria-label="' + esc(VL.t('btn.close')) + '">' + icon('x') + '</button></header>' +
         '<div class="modal-body"></div>' +
         '<footer class="modal-foot"></footer></div>';
       const body = dlg.querySelector('.modal-body');
@@ -74,7 +74,7 @@ VL.ui = (function () {
     const v = await modal({
       title: opts.title,
       body: '<p class="modal-text">' + esc(opts.message) + '</p>',
-      buttons: [{ label: 'Cancel', value: 'no' }, { label: opts.confirmLabel || 'Confirm', value: 'yes', kind: opts.danger ? 'danger' : 'primary' }],
+      buttons: [{ label: VL.t('btn.cancel'), value: 'no' }, { label: opts.confirmLabel || VL.t('btn.confirm'), value: 'yes', kind: opts.danger ? 'danger' : 'primary' }],
     });
     return v === 'yes';
   }
@@ -94,14 +94,25 @@ VL.ui = (function () {
     '<div class="empty"><div class="empty-art" aria-hidden="true">' + icon('book') + '</div><h3>' + esc(title) + '</h3><p>' + esc(text) + '</p>' + (actionsHtml || '') + '</div>';
 
   const collectionOptions = (selectedId, withAll) =>
-    (withAll ? '<option value="">All collections</option>' : '') +
+    (withAll ? '<option value="">' + esc(VL.t('opt.allCollections')) + '</option>' : '') +
     VL.store.state.collections.map((c) => '<option value="' + esc(c.id) + '"' + (c.id === selectedId ? ' selected' : '') + '>' + esc(c.name) + '</option>').join('');
 
   const statusChip = (w) => {
     const s = VL.store.status(w);
-    const label = { new: 'New', learning: 'Learning', difficult: 'Difficult', mastered: 'Mastered' }[s];
+    const label = VL.t('st.' + s);
     return '<span class="chip chip-' + s + '">' + label + '</span>';
   };
 
-  return { icon, toast, modal, confirm, download, empty, collectionOptions, statusChip };
+  // Human-readable label for a saved quiz session, in the current UI language.
+  function sessionLabel(s) {
+    if (!s.scope) return s.label || '';
+    let scope;
+    if (s.scope === 'all') scope = VL.t('scope.allShort');
+    else if (s.scope === 'difficult') scope = VL.t('scope.difficult');
+    else if (s.scope === 'missed') scope = VL.t('scope.missed');
+    else { const c = VL.store.collection(s.scope); scope = c ? c.name : (s.collectionName || VL.t('scope.collection')); }
+    return scope + ' · ' + VL.t('dir.' + s.direction);
+  }
+
+  return { sessionLabel, icon, toast, modal, confirm, download, empty, collectionOptions, statusChip };
 })();

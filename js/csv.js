@@ -50,14 +50,14 @@ VL.csv = (function () {
       const line = raw.trim();
       if (!line || line.startsWith('#') || line.startsWith('//')) return;
       const parts = splitLine(line);
-      if (parts.length < 2) { errors.push({ line: lineNo, text: line, reason: 'No separator found (use "word — translation")' }); return; }
+      if (parts.length < 2) { errors.push({ line: lineNo, text: line, reason: 'nosep' }); return; }
       if (rows.length === 0 && !hadHeader && HEADER_EN.includes(parts[0].toLowerCase()) && HEADER_UZ.includes(parts[1].toLowerCase())) { hadHeader = true; return; }
       let en = parts[0], uz, collection = '';
       if (parts.length >= 3 && useCollectionColumn) { uz = parts[1]; collection = parts[2]; }
       else uz = parts.slice(1).filter(Boolean).join(', ');
-      if (!en) { errors.push({ line: lineNo, text: line, reason: 'English word is empty' }); return; }
-      if (!uz) { errors.push({ line: lineNo, text: line, reason: 'Translation is empty' }); return; }
-      if (en.length > 200 || uz.length > 200) { errors.push({ line: lineNo, text: line.slice(0, 60) + '…', reason: 'Entry is longer than 200 characters' }); return; }
+      if (!en) { errors.push({ line: lineNo, text: line, reason: 'emptyEn' }); return; }
+      if (!uz) { errors.push({ line: lineNo, text: line, reason: 'emptyUz' }); return; }
+      if (en.length > 200 || uz.length > 200) { errors.push({ line: lineNo, text: line.slice(0, 60) + '…', reason: 'long' }); return; }
       rows.push({ en, uz, collection, line: lineNo });
     });
     return { rows, errors, hadHeader };

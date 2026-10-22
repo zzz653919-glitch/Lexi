@@ -18,7 +18,7 @@ VL.store = (function () {
   async function save(fn) {
     try { await fn(); return true; } catch (err) {
       console.error(err);
-      if (VL.ui) VL.ui.toast('Could not save to local storage: ' + (err && err.message ? err.message : 'unknown error'), 'error', 6000);
+      if (VL.ui) VL.ui.toast(VL.t('err.saveFail', { msg: err && err.message ? err.message : '?' }), 'error', 6000);
       return false;
     }
   }
@@ -36,7 +36,7 @@ VL.store = (function () {
     state.settings = Object.assign({}, DEFAULTS);
     settings.forEach((s) => { state.settings[s.key] = s.value; });
     if (!state.collections.length) {
-      const c = newCollection('Personal Vocabulary');
+      const c = newCollection(VL.t('default.collection'));
       state.collections.push(c);
       await save(() => VL.db.put('collections', [c]));
     }
@@ -72,13 +72,13 @@ VL.store = (function () {
 
   /* ---------- words ---------- */
   function validateWord(en, uz, collectionId, ignoreId) {
-    if (!en && !uz) return 'Enter an English word and its Uzbek translation.';
-    if (!en) return 'The English word is empty.';
-    if (!uz) return 'The Uzbek translation is empty.';
-    if (en.length > MAX_LEN || uz.length > MAX_LEN) return 'Words are limited to ' + MAX_LEN + ' characters.';
-    if (!collection(collectionId)) return 'Choose a collection.';
+    if (!en && !uz) return VL.t('err.emptyBoth');
+    if (!en) return VL.t('err.emptyEn');
+    if (!uz) return VL.t('err.emptyUz');
+    if (en.length > MAX_LEN || uz.length > MAX_LEN) return VL.t('err.tooLong', { max: MAX_LEN });
+    if (!collection(collectionId)) return VL.t('err.chooseCol');
     const dup = findDuplicate(en, collectionId, ignoreId);
-    if (dup) return '"' + dup.en + '" already exists in this collection (' + dup.uz + ').';
+    if (dup) return VL.t('err.dup', { en: dup.en, uz: dup.uz });
     return null;
   }
 
@@ -95,7 +95,7 @@ VL.store = (function () {
 
   async function updateWord(id, input) {
     const w = word(id);
-    if (!w) return { ok: false, error: 'This word no longer exists.' };
+    if (!w) return { ok: false, error: VL.t('err.noWord') };
     const en = clean(input.en), uz = clean(input.uz);
     const error = validateWord(en, uz, input.collectionId, id);
     if (error) return { ok: false, error };
@@ -116,9 +116,9 @@ VL.store = (function () {
   /* ---------- collections ---------- */
   function validateCollection(name, ignoreId) {
     const n = clean(name);
-    if (!n) return 'Give the collection a name.';
-    if (n.length > 60) return 'Collection names are limited to 60 characters.';
-    if (state.collections.some((c) => c.id !== ignoreId && key(c.name) === key(n))) return 'A collection with this name already exists.';
+    if (!n) return VL.t('err.colEmpty');
+    if (n.length > 60) return VL.t('err.colLong');
+    if (state.collections.some((c) => c.id !== ignoreId && key(c.name) === key(n))) return VL.t('err.colExists');
     return null;
   }
 
@@ -134,7 +134,7 @@ VL.store = (function () {
 
   async function renameCollection(id, name) {
     const c = collection(id);
-    if (!c) return { ok: false, error: 'Collection not found.' };
+    if (!c) return { ok: false, error: VL.t('err.colNotFound') };
     const error = validateCollection(name, id);
     if (error) return { ok: false, error };
     c.name = clean(name);
@@ -144,7 +144,7 @@ VL.store = (function () {
   }
 
   async function deleteCollection(id) {
-    if (state.collections.length <= 1) return { ok: false, error: 'You need at least one collection.' };
+    if (state.collections.length <= 1) return { ok: false, error: VL.t('err.lastCollection') };
     const ids = state.words.filter((w) => w.collectionId === id).map((w) => w.id);
     state.words = state.words.filter((w) => w.collectionId !== id);
     state.collections = state.collections.filter((c) => c.id !== id);
@@ -197,7 +197,7 @@ VL.store = (function () {
   async function clearAll() {
     state.words = []; state.collections = []; state.sessions = [];
     await save(() => VL.db.clear(['words', 'collections', 'sessions']));
-    const c = newCollection('Personal Vocabulary');
+    const c = newCollection(VL.t('default.collection'));
     state.collections.push(c);
     await save(() => VL.db.put('collections', [c]));
     notify();
@@ -233,11 +233,11 @@ VL.store = (function () {
   }
 
   async function restore(data) {
-    if (!data || data.app !== 'lexi' || !Array.isArray(data.words) || !Array.isArray(data.collections)) throw new Error('This is not a Lexi backup file.');
+    if (!data || data.app !== 'lexi' || !Array.isArray(data.words) || !Array.isArray(data.collections)) throw new Error(VL.t('err.notBackup'));
     const validWord = (w) => w && typeof w.id === 'string' && typeof w.en === 'string' && typeof w.uz === 'string' && typeof w.collectionId === 'string';
     const validCol = (c) => c && typeof c.id === 'string' && typeof c.name === 'string';
     const cols = data.collections.filter(validCol).map((c) => ({ id: c.id, name: c.name, createdAt: Number(c.createdAt) || Date.now() }));
-    if (!cols.length) throw new Error('The backup contains no collections.');
+    if (!cols.length) throw new Error(VL.t('err.noCollections'));
     const ids = new Set(cols.map((c) => c.id));
     const words = data.words.filter((w) => validWord(w) && ids.has(w.collectionId)).map((w) => ({
       id: w.id, en: clean(w.en), uz: clean(w.uz), collectionId: w.collectionId,

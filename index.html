@@ -42,22 +42,30 @@
     <symbol id="i-folder" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
   </svg>
 
-  <a class="skip-link" href="#main">Skip to content</a>
+  <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
 
   <div class="app" id="app">
-    <aside class="sidebar" aria-label="Primary">
+    <aside class="sidebar" aria-label="Primary" data-i18n-aria="nav.primary">
       <a class="brand" href="#/dashboard" aria-label="Lexi home">
         <span class="brand-mark" aria-hidden="true">L</span>
         <span class="brand-name">Lexi</span>
       </a>
       <nav class="nav" id="nav">
-        <a href="#/dashboard" data-route="dashboard"><svg class="icon" aria-hidden="true"><use href="#i-home"/></svg><span>Dashboard</span></a>
-        <a href="#/vocabulary" data-route="vocabulary"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><span>My Vocabulary</span></a>
-        <a href="#/practice" data-route="practice"><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg><span>Practice</span></a>
-        <a href="#/difficult" data-route="difficult"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span>Difficult Words</span><b class="nav-badge" id="difficult-badge" hidden>0</b></a>
-        <a href="#/progress" data-route="progress"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg><span>Progress</span></a>
-        <a href="#/settings" data-route="settings"><svg class="icon" aria-hidden="true"><use href="#i-settings"/></svg><span>Settings</span></a>
+        <a href="#/dashboard" data-route="dashboard"><svg class="icon" aria-hidden="true"><use href="#i-home"/></svg><span data-i18n="nav.dashboard">Dashboard</span></a>
+        <a href="#/vocabulary" data-route="vocabulary"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><span data-i18n="nav.vocabulary">My Vocabulary</span></a>
+        <a href="#/practice" data-route="practice"><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg><span data-i18n="nav.practice">Practice</span></a>
+        <a href="#/difficult" data-route="difficult"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span data-i18n="nav.difficult">Difficult Words</span><b class="nav-badge" id="difficult-badge" hidden>0</b></a>
+        <a href="#/progress" data-route="progress"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg><span data-i18n="nav.progress">Progress</span></a>
+        <a href="#/settings" data-route="settings"><svg class="icon" aria-hidden="true"><use href="#i-settings"/></svg><span data-i18n="nav.settings">Settings</span></a>
       </nav>
+      <div class="lang-switch">
+        <label class="sr-only" for="lang-select" data-i18n="lang.label">Language</label>
+        <select id="lang-select">
+          <option value="en">English</option>
+          <option value="uz">O'zbekcha</option>
+          <option value="ru">Русский</option>
+        </select>
+      </div>
       <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme">
         <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun"/></svg>
         <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon"/></svg>
@@ -71,6 +79,8 @@
   <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
 
   <script src="js/utils.js"></script>
+  <script src="js/locales.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/db.js"></script>
   <script src="js/store.js"></script>
   <script src="js/sample-data.js"></script>

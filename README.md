@@ -12,6 +12,7 @@ Built with plain HTML, CSS and vanilla JavaScript (no build step, no runtime dep
 - **Difficult Words** – every word you miss lands here until you answer it correctly 3 times in a row; practise just those, or mark one as learned.
 - **Progress** – accuracy, correct/incorrect totals, 7-day activity, accuracy of recent sessions, per-collection learning progress, session history.
 - **Import / export** – CSV or TXT import, CSV export, full JSON backup & restore.
+- **Three interface languages** – English, O'zbekcha and Русский. Pick one with the selector in the sidebar (top-right on phones) or in Settings; it is remembered, and the first start follows your browser language.
 - **Light / dark theme**, responsive layout (desktop, tablet, phone), keyboard accessible with visible focus states.
 - **Persistent storage** – IndexedDB (automatic localStorage fallback).
 
@@ -25,6 +26,8 @@ css/
   views.css                Page-specific styles
 js/
   utils.js                 Helpers (escape, shuffle, dates…)
+  locales.js               All UI text in English / Uzbek / Russian (one row per string)
+  i18n.js                  Language switching, placeholders and plural rules
   db.js                    IndexedDB wrapper (+ localStorage fallback)
   store.js                 App state, validation, all data operations
   quiz-engine.js           Answer normalisation/checking, queue building (pure logic)
@@ -99,3 +102,7 @@ How word status works: **New** (never asked) → **Learning** → **Mastered** (
 - Deleting a collection deletes its words (after confirmation). At least one collection always exists.
 - Browser data can be cleared by the user/browser; keep a JSON backup of important vocabulary.
 - The Electron build was written for Windows but is not code-signed.
+
+## Adding or fixing translations
+
+Every interface string lives in `js/locales.js` as `[key, English, Uzbek, Russian]`. Edit a row to change a translation; to add a language, add a column and a code in `js/i18n.js`. Your vocabulary itself is never translated — languages only change the interface.

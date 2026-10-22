@@ -1,7 +1,8 @@
 VL.views.practice = (function () {
-  const { esc, pct, plural } = VL.util;
+  const { esc, pct } = VL.util;
+  const t = VL.t, n = VL.n;
   const { icon } = VL.ui;
-  const DIR_LABEL = { 'en-uz': 'English → Uzbek', 'uz-en': 'Uzbek → English', mixed: 'Mixed directions' };
+  const dirLabel = (d) => t('dir.' + d);
   const NEXT_GUARD_MS = 250;
 
   let root, keyHandler;
@@ -19,13 +20,6 @@ VL.views.practice = (function () {
     return st.wordsIn(scope);
   }
 
-  function scopeLabel(c) {
-    if (c.wordIds) return 'Missed words';
-    if (c.scope === 'difficult') return 'Difficult words';
-    if (c.scope === 'all') return 'All words';
-    const col = VL.store.collection(c.scope);
-    return col ? col.name : 'Collection';
-  }
 
   function drawSetup(preset) {
     mode = 'setup';
@@ -34,19 +28,19 @@ VL.views.practice = (function () {
     const scope = (preset && preset.scope) || (cfg && cfg.scope) || 'all';
     const dir = (preset && preset.direction) || (cfg && cfg.direction) || s.direction;
     const len = (cfg && cfg.length) || String(s.length);
-    const options = '<option value="all"' + (scope === 'all' ? ' selected' : '') + '>All words (' + st.state.words.length + ')</option>' +
-      '<option value="difficult"' + (scope === 'difficult' ? ' selected' : '') + '>Difficult words only (' + st.difficultWords().length + ')</option>' +
+    const options = '<option value="all"' + (scope === 'all' ? ' selected' : '') + '>' + esc(t('scope.all', { n: st.state.words.length })) + '</option>' +
+      '<option value="difficult"' + (scope === 'difficult' ? ' selected' : '') + '>' + esc(t('scope.difficultOpt', { n: st.difficultWords().length })) + '</option>' +
       st.state.collections.map((c) => '<option value="' + esc(c.id) + '"' + (scope === c.id ? ' selected' : '') + '>' + esc(c.name) + ' (' + st.wordsIn(c.id).length + ')</option>').join('');
     root.innerHTML =
-      '<header class="page-head"><div><h1>Practice</h1><p class="muted">Type the translation of each word. Words never repeat until you have been through all of them.</p></div></header>' +
+      '<header class="page-head"><div><h1>' + esc(t('nav.practice')) + '</h1><p class="muted">' + esc(t('practice.sub')) + '</p></div></header>' +
       '<form id="setup" class="card setup" novalidate>' +
-      '<div class="field"><label for="s-scope">What do you want to practise?</label><select id="s-scope">' + options + '</select></div>' +
-      '<fieldset class="field"><legend>Direction</legend><div class="segmented" role="radiogroup">' +
-      ['en-uz', 'uz-en', 'mixed'].map((d) => '<label><input type="radio" name="dir" value="' + d + '"' + (dir === d ? ' checked' : '') + '><span>' + DIR_LABEL[d] + '</span></label>').join('') + '</div></fieldset>' +
-      '<div class="field"><label for="s-len">Number of questions</label><select id="s-len">' +
-      [['all', 'All available words'], ['10', '10 questions'], ['20', '20 questions'], ['50', '50 questions']].map((o) => '<option value="' + o[0] + '"' + (len === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></div>' +
+      '<div class="field"><label for="s-scope">' + esc(t('practice.what')) + '</label><select id="s-scope">' + options + '</select></div>' +
+      '<fieldset class="field"><legend>' + esc(t('practice.direction')) + '</legend><div class="segmented" role="radiogroup">' +
+      ['en-uz', 'uz-en', 'mixed'].map((d) => '<label><input type="radio" name="dir" value="' + d + '"' + (dir === d ? ' checked' : '') + '><span>' + esc(dirLabel(d)) + '</span></label>').join('') + '</div></fieldset>' +
+      '<div class="field"><label for="s-len">' + esc(t('practice.length')) + '</label><select id="s-len">' +
+      [['all', t('len.all')], ['10', t('len.n', { n: 10 })], ['20', t('len.n', { n: 20 })], ['50', t('len.n', { n: 50 })]].map((o) => '<option value="' + o[0] + '"' + (len === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') + '</select></div>' +
       '<p class="form-error" id="s-error" role="alert"></p>' +
-      '<button class="btn btn-primary btn-lg" type="submit">' + icon('arrow') + 'Start quiz</button></form>';
+      '<button class="btn btn-primary btn-lg" type="submit">' + icon('arrow') + esc(t('btn.start')) + '</button></form>';
     root.querySelector('#setup').addEventListener('submit', (e) => {
       e.preventDefault();
       const c = {
@@ -55,8 +49,7 @@ VL.views.practice = (function () {
         length: root.querySelector('#s-len').value,
       };
       if (!start(c)) {
-        const n = c.scope === 'difficult' ? 'You have no difficult words right now — nice! Pick another set.' : 'There are no words in this selection yet. Add some in My Vocabulary first.';
-        root.querySelector('#s-error').textContent = n;
+        root.querySelector('#s-error').textContent = c.scope === 'difficult' ? t('practice.errDifficult') : t('practice.errEmpty');
       }
     });
   }
@@ -67,7 +60,7 @@ VL.views.practice = (function () {
     if (!words.length) return false;
     cfg = c;
     const queue = VL.quiz.buildQueue({ words, direction: c.direction, limit: c.length === 'all' ? 0 : parseInt(c.length, 10) });
-    run = { queue, index: 0, answered: false, correct: 0, wrong: 0, results: [], blockUntil: 0, label: scopeLabel(c) + ' · ' + DIR_LABEL[c.direction] };
+    run = { queue, index: 0, answered: false, correct: 0, wrong: 0, results: [], blockUntil: 0 };
     mode = 'run';
     drawQuestion();
     return true;
@@ -83,24 +76,24 @@ VL.views.practice = (function () {
     const prompt = q.dir === 'en-uz' ? w.en : w.uz;
     const total = run.queue.length;
     root.innerHTML =
-      '<h1 class="sr-only">Practice quiz</h1>' +
+      '<h1 class="sr-only">' + esc(t('quiz.title')) + '</h1>' +
       '<div class="quiz">' +
       '<div class="quiz-top">' +
-      '<div class="quiz-progress"><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + total + '" aria-valuenow="' + run.index + '" aria-label="Quiz progress"><span style="width:' + pct(run.index, total) + '%"></span></div>' +
-      '<span class="small muted">Question ' + (run.index + 1) + ' of ' + total + '</span></div>' +
-      '<div class="score" aria-label="Score"><span class="ok">' + icon('check') + '<b id="sc-ok">' + run.correct + '</b></span><span class="bad">' + icon('x') + '<b id="sc-bad">' + run.wrong + '</b></span></div></div>' +
+      '<div class="quiz-progress"><div class="bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + total + '" aria-valuenow="' + run.index + '" aria-label="' + esc(t('quiz.progressAria')) + '"><span style="width:' + pct(run.index, total) + '%"></span></div>' +
+      '<span class="small muted">' + esc(t('quiz.qOf', { i: run.index + 1, n: total })) + '</span></div>' +
+      '<div class="score" aria-label="' + esc(t('quiz.scoreAria')) + '"><span class="ok">' + icon('check') + '<b id="sc-ok">' + run.correct + '</b></span><span class="bad">' + icon('x') + '<b id="sc-bad">' + run.wrong + '</b></span></div></div>' +
       '<div class="quiz-card" id="qcard">' +
-      '<span class="chip">' + (q.dir === 'en-uz' ? 'English → Uzbek' : 'Uzbek → English') + '</span>' +
-      '<p class="q-label">What does this word mean?</p>' +
+      '<span class="chip">' + esc(dirLabel(q.dir)) + '</span>' +
+      '<p class="q-label">' + esc(t('quiz.q')) + '</p>' +
       '<p class="q-word" lang="' + (q.dir === 'en-uz' ? 'en' : 'uz') + '">' + esc(prompt) + '</p>' +
-      '<form id="answer-form" autocomplete="off" novalidate><label class="sr-only" for="answer">Your answer in ' + (q.dir === 'en-uz' ? 'Uzbek' : 'English') + '</label>' +
-      '<input id="answer" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="Type the ' + (q.dir === 'en-uz' ? 'Uzbek' : 'English') + ' translation and press Enter">' +
-      '<div class="quiz-buttons"><button type="submit" class="btn btn-primary" id="btn-check">Check answer</button>' +
-      '<button type="button" class="btn btn-ghost" id="btn-skip">I don’t know</button></div></form>' +
+      '<form id="answer-form" autocomplete="off" novalidate><label class="sr-only" for="answer">' + esc(t(q.dir === 'en-uz' ? 'quiz.ariaUz' : 'quiz.ariaEn')) + '</label>' +
+      '<input id="answer" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="' + esc(t(q.dir === 'en-uz' ? 'quiz.phUz' : 'quiz.phEn')) + '">' +
+      '<div class="quiz-buttons"><button type="submit" class="btn btn-primary" id="btn-check">' + esc(t('btn.check')) + '</button>' +
+      '<button type="button" class="btn btn-ghost" id="btn-skip">' + esc(t('btn.dontKnow')) + '</button></div></form>' +
       '<div id="feedback" class="feedback" role="status" aria-live="assertive"></div>' +
       '</div>' +
-      '<div class="quiz-bottom"><button type="button" class="btn btn-ghost btn-sm" id="btn-restart">' + icon('shuffle') + 'Restart &amp; shuffle</button>' +
-      '<button type="button" class="btn btn-ghost btn-sm" id="btn-end">End session</button></div></div>';
+      '<div class="quiz-bottom"><button type="button" class="btn btn-ghost btn-sm" id="btn-restart">' + icon('shuffle') + esc(t('btn.restart')) + '</button>' +
+      '<button type="button" class="btn btn-ghost btn-sm" id="btn-end">' + esc(t('btn.end')) + '</button></div></div>';
     run.answered = false;
     const input = root.querySelector('#answer');
     input.focus();
@@ -120,7 +113,7 @@ VL.views.practice = (function () {
     if (!text && !giveUp) {
       const input = root.querySelector('#answer');
       input.classList.add('shake'); setTimeout(() => input.classList.remove('shake'), 400);
-      root.querySelector('#feedback').innerHTML = '<p class="muted">Type an answer first, or press “I don’t know”.</p>';
+      root.querySelector('#feedback').innerHTML = '<p class="muted">' + esc(t('quiz.typeFirst')) + '</p>';
       return;
     }
     const ok = text ? VL.quiz.check(text, expected, VL.store.state.settings.lenient) : false;
@@ -136,10 +129,10 @@ VL.views.practice = (function () {
     root.querySelector('#qcard').classList.add(ok ? 'is-correct' : 'is-wrong');
     root.querySelector('#sc-ok').textContent = run.correct;
     root.querySelector('#sc-bad').textContent = run.wrong;
-    root.querySelector('.quiz-buttons').innerHTML = '<button type="button" class="btn btn-primary" id="btn-next">' + (isLast ? 'Finish quiz' : 'Next word') + icon('arrow') + '</button>';
+    root.querySelector('.quiz-buttons').innerHTML = '<button type="button" class="btn btn-primary" id="btn-next">' + esc(t(isLast ? 'btn.finish' : 'btn.next')) + icon('arrow') + '</button>';
     root.querySelector('#feedback').innerHTML = ok
-      ? '<div class="fb fb-ok">' + icon('check') + '<div><strong>Correct!</strong>' + (VL.quiz.acceptedAnswers(expected).length > 1 ? '<div class="small">All accepted: ' + esc(expected) + '</div>' : '') + '</div></div>'
-      : '<div class="fb fb-bad">' + icon('x') + '<div><strong>' + (text ? 'Not quite.' : 'No problem.') + '</strong><div>Correct answer: <b>' + esc(expected) + '</b></div>' + (text ? '<div class="small">You typed: ' + esc(text) + '</div>' : '') + '</div></div>';
+      ? '<div class="fb fb-ok">' + icon('check') + '<div><strong>' + esc(t('fb.correct')) + '</strong>' + (VL.quiz.acceptedAnswers(expected).length > 1 ? '<div class="small">' + esc(t('fb.allAccepted', { a: expected })) + '</div>' : '') + '</div></div>'
+      : '<div class="fb fb-bad">' + icon('x') + '<div><strong>' + esc(t(text ? 'fb.notQuite' : 'fb.noProblem')) + '</strong><div>' + esc(t('fb.correctAnswer')) + ' <b>' + esc(expected) + '</b></div>' + (text ? '<div class="small">' + esc(t('fb.youTyped', { x: text })) + '</div>' : '') + '</div></div>';
     const nextBtn = root.querySelector('#btn-next');
     nextBtn.addEventListener('click', next);
     nextBtn.focus();
@@ -159,8 +152,9 @@ VL.views.practice = (function () {
     run.saved = true;
     const missed = run.results.filter((r) => !r.correct).map((r) => r.wordId);
     return VL.store.addSession({
-      label: run.label, direction: cfg.direction, scope: cfg.scope,
+      direction: cfg.direction, scope: cfg.wordIds ? 'missed' : cfg.scope,
       collectionId: VL.store.collection(cfg.scope) ? cfg.scope : null,
+      collectionName: (VL.store.collection(cfg.scope) || {}).name || null,
       total: run.results.length, correct: run.correct, wrong: run.wrong, missedIds: Array.from(new Set(missed)),
     });
   }
@@ -169,7 +163,7 @@ VL.views.practice = (function () {
     if (run.results.length) await saveSession();
     const c = Object.assign({}, cfg);
     if (!start(c)) drawSetup();
-    else VL.ui.toast('Reshuffled — starting over.', 'info', 1600);
+    else VL.ui.toast(t('quiz.reshuffled'), 'info', 1600);
   }
 
   /* ---------- summary ---------- */
@@ -181,20 +175,21 @@ VL.views.practice = (function () {
     mode = 'summary';
     const total = run.results.length, p = pct(run.correct, total);
     const missed = run.results.filter((r) => !r.correct);
-    const msg = p === 100 ? 'Flawless!' : p >= 80 ? 'Great work!' : p >= 50 ? 'Good effort — keep going.' : 'Every mistake is a chance to learn.';
+    const msg = t(p === 100 ? 'sum.m100' : p >= 80 ? 'sum.m80' : p >= 50 ? 'sum.m50' : 'sum.m0');
+    const label = VL.ui.sessionLabel({ scope: cfg.wordIds ? 'missed' : cfg.scope, direction: cfg.direction });
     const R = 52, C = 2 * Math.PI * R;
     root.innerHTML =
-      '<header class="page-head"><div><h1>Session complete</h1><p class="muted">' + esc(run.label) + '</p></div></header>' +
+      '<header class="page-head"><div><h1>' + esc(t('sum.title')) + '</h1><p class="muted">' + esc(label) + '</p></div></header>' +
       '<section class="card summary">' +
-      '<div class="ring" role="img" aria-label="' + p + ' percent correct"><svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="' + R + '"/><circle class="ring-fg" cx="60" cy="60" r="' + R + '" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + (C * (1 - p / 100)).toFixed(1) + '"/></svg><div class="ring-text">' + p + '%</div></div>' +
-      '<div><h2>' + msg + '</h2><p class="muted">' + run.correct + ' correct · ' + run.wrong + ' incorrect · ' + plural(total, 'question') + '</p>' +
-      '<div class="btn-row"><button class="btn btn-primary" id="again">' + icon('refresh') + 'Practise again</button>' +
-      (missed.length ? '<button class="btn" id="mistakes">' + icon('target') + 'Practise ' + plural(missed.length, 'mistake') + '</button>' : '') +
-      '<button class="btn btn-ghost" id="back">New setup</button></div></div></section>' +
+      '<div class="ring" role="img" aria-label="' + esc(t('sum.ringAria', { p: p })) + '"><svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="' + R + '"/><circle class="ring-fg" cx="60" cy="60" r="' + R + '" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + (C * (1 - p / 100)).toFixed(1) + '"/></svg><div class="ring-text">' + p + '%</div></div>' +
+      '<div><h2>' + esc(msg) + '</h2><p class="muted">' + esc(t('sum.line', { c: run.correct, w: run.wrong, q: n('n.question', total) })) + '</p>' +
+      '<div class="btn-row"><button class="btn btn-primary" id="again">' + icon('refresh') + esc(t('btn.again')) + '</button>' +
+      (missed.length ? '<button class="btn" id="mistakes">' + icon('target') + esc(t('btn.mistakes', { m: n('n.mistake', missed.length) })) + '</button>' : '') +
+      '<button class="btn btn-ghost" id="back">' + esc(t('btn.newSetup')) + '</button></div></div></section>' +
       (missed.length
-        ? '<section class="card"><h2 class="card-title">Review: words you missed</h2><div class="table-wrap"><table class="words"><thead><tr><th scope="col">Word</th><th scope="col">Correct answer</th><th scope="col">You typed</th></tr></thead><tbody>' +
+        ? '<section class="card"><h2 class="card-title">' + esc(t('sum.review')) + '</h2><div class="table-wrap"><table class="words"><thead><tr><th scope="col">' + esc(t('th.word')) + '</th><th scope="col">' + esc(t('th.correctAnswer')) + '</th><th scope="col">' + esc(t('th.youTyped')) + '</th></tr></thead><tbody>' +
           missed.map((r) => '<tr><td class="strong">' + esc(r.prompt) + '</td><td>' + esc(r.expected) + '</td><td class="muted">' + (r.typed ? esc(r.typed) : '—') + '</td></tr>').join('') + '</tbody></table></div></section>'
-        : '<section class="card"><p>No mistakes this time. 🎉</p></section>');
+        : '<section class="card"><p>' + esc(t('sum.noMistakes')) + '</p></section>');
     root.querySelector('#again').addEventListener('click', () => { if (!start(Object.assign({}, cfg))) drawSetup(); });
     root.querySelector('#back').addEventListener('click', () => drawSetup());
     const mb = root.querySelector('#mistakes');
