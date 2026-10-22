@@ -115,6 +115,7 @@ VL.views.learn = (function () {
     const ids = selectedIds();
     let html = '<section class="card"><div class="tab-head"><p class="muted">' + esc(t('colt.intro')) + '</p><div class="btn-row">' +
       '<button class="btn btn-sm" data-action="select-all">' + esc(t('colt.selectAll')) + '</button><button class="btn btn-sm" data-action="select-none">' + esc(t('colt.clear')) + '</button>' +
+      '<a class="btn btn-sm" href="#/bulk">' + icon('list') + esc(t('bulk.entry')) + '</a>' +
       '<button class="btn btn-primary btn-sm" data-action="new-col">' + icon('plus') + esc(t('colt.new')) + '</button></div></div></section><div class="col-grid">';
     cols.forEach((c) => {
       const words = store.wordsIn(c.id);

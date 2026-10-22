@@ -18,7 +18,7 @@ VL.views.vocabulary = (function () {
   function shell() {
     root.innerHTML =
       '<header class="page-head"><div><h1>' + esc(t('nav.vocabulary')) + '</h1><p class="muted" id="v-count"></p></div>' +
-      '<div class="btn-row"><button class="btn" data-action="import">' + icon('upload') + esc(t('btn.import')) + '</button>' +
+      '<div class="btn-row"><a class="btn btn-primary" href="#/bulk">' + icon('list') + esc(t('bulk.entry')) + '</a><button class="btn" data-action="import">' + icon('upload') + esc(t('btn.import')) + '</button>' +
       '<button class="btn" data-action="export">' + icon('download') + esc(t('btn.exportCsv')) + '</button></div></header>' +
       '<div class="vocab-layout">' +
       '<aside class="card collections" aria-label="' + esc(t('dash.collections')) + '"><h2 class="card-title">' + esc(t('dash.collections')) + '</h2><ul id="v-collections"></ul>' +

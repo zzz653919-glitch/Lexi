@@ -295,9 +295,9 @@ VL.store = (function () {
       state.words.push(w);
       added.push(w);
     });
-    await save(() => VL.db.put('words', added));
+    const ok = await save(() => VL.db.put('words', added));
     notify();
-    return { added: added.length, duplicates };
+    return { added: added.length, duplicates, ok };
   }
 
   function backup() {
