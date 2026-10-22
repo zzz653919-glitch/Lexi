@@ -202,7 +202,8 @@ const storeWords = (page, colName) => page.evaluate((n) => { const c = VL.store.
     assert((await page.locator('.bulk-row[data-id]').count()) === 100, n + ' words with 100 rows per page');
   }
   const t0 = Date.now();
-  await page.fill('#bulk-text', tsv(gen(5000, 'big')));
+  // a real paste puts the text in at once; Playwright's fill() is very slow on 100 KB textareas, so set the value directly
+  await page.evaluate((txt) => { const el = document.querySelector('#bulk-text'); el.value = txt; el.dispatchEvent(new Event('input', { bubbles: true })); }, tsv(gen(5000, 'big')));
   await page.click('[data-action="build"]'); await page.waitForSelector('.bulk-row[data-id]');
   const buildMs = Date.now() - t0;
   assert((await page.locator('.bulk-row[data-id]').count()) <= 100 && (await page.locator('.bulk-pager').innerText()).includes('of 5000'), '5000 rows: only one page is rendered, pager shows total');
