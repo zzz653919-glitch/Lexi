@@ -1,0 +1,21 @@
+# Lexi sample — one word per line: English — Uzbek
+hello — salom
+goodbye — xayr
+thank you — rahmat
+please — iltimos
+water — suv
+bread — non
+apple — olma
+house — uy
+book — kitob
+friend — do'st
+mother — ona
+father — ota
+school — maktab
+red — qizil
+big — katta
+kitchen — oshxona
+weather — ob-havo
+holiday — ta'til
+journey — sayohat
+ticket — chipta
