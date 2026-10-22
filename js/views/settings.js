@@ -23,7 +23,11 @@ VL.views.settings = (function () {
       '<label class="check"><input type="checkbox" id="set-lenient"' + (s.lenient ? ' checked' : '') + '><span>' + esc(t('set.lenient')) + '</span></label>' +
       '<label class="check"><input type="checkbox" id="set-auto"' + (s.autoAdvance ? ' checked' : '') + '><span>' + esc(t('set.auto')) + '</span></label>' +
       '<p class="hint">' + esc(t('set.caseHint')) + '</p></section>' +
+      '<section class="card settings-group"><h2 class="card-title">' + esc(t('set.learn')) + '</h2>' +
+      '<div class="field"><label for="set-goal">' + esc(t('set.goal')) + '</label><select id="set-goal">' + [20, 50, 100, 150, 200].map((v) => '<option value="' + v + '"' + (Number(s.dailyGoal) === v ? ' selected' : '') + '>' + v + ' XP</option>').join('') + '</select></div>' +
+      (VL.speech.supported ? '<label class="check"><input type="checkbox" id="set-speak"' + (s.autoSpeak ? ' checked' : '') + '><span>' + esc(t('set.autoSpeak')) + '</span></label>' : '') + '</section>' +
       '<section class="card settings-group"><h2 class="card-title">' + esc(t('set.data')) + '</h2>' +
+      '<p class="notice">' + icon('alert') + '<span>' + esc(t('set.storageNote')) + '</span></p>' +
       '<div class="data-grid">' +
       row(t('data.importT'), t('data.importD'), '<button class="btn" data-action="import">' + icon('upload') + esc(t('data.importB')) + '</button>') +
       row(t('data.exportT'), t('data.exportD'), '<button class="btn" data-action="export">' + icon('download') + esc(t('btn.exportCsv')) + '</button>') +
@@ -66,6 +70,8 @@ VL.views.settings = (function () {
     else if (el.id === 'set-len') VL.store.setSetting('length', el.value);
     else if (el.id === 'set-lenient') VL.store.setSetting('lenient', el.checked);
     else if (el.id === 'set-auto') VL.store.setSetting('autoAdvance', el.checked);
+    else if (el.id === 'set-goal') VL.store.setSetting('dailyGoal', Number(el.value));
+    else if (el.id === 'set-speak') VL.store.setSetting('autoSpeak', el.checked);
   }
 
   return {

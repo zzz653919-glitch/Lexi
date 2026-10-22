@@ -10,7 +10,7 @@ VL.io = (function () {
   function exportCSV() {
     const words = store.state.words;
     if (!words.length) { VL.ui.toast(t('io.noWords'), 'error'); return; }
-    const rows = words.map((w) => ({ en: w.en, uz: w.uz, collection: (store.collection(w.collectionId) || {}).name || '' }));
+    const rows = words.map((w) => ({ en: w.en, uz: w.uz, collection: (store.collection(w.collectionId) || {}).name || '', example: w.example || '' }));
     VL.ui.download('lexi-vocabulary-' + stamp() + '.csv', VL.csv.stringify(rows), 'text/csv;charset=utf-8');
     VL.ui.toast(t('io.exported', { w: n('n.word', words.length) }), 'success');
   }
@@ -128,7 +128,7 @@ VL.io = (function () {
         const rows = [];
         for (const r of parsed.rows) {
           const col = r.collection ? await store.ensureCollection(r.collection) : { id: defaultCol };
-          rows.push({ en: r.en, uz: r.uz, collectionId: col.id });
+          rows.push({ en: r.en, uz: r.uz, example: r.example, collectionId: col.id });
         }
         const r = await store.importWords(rows);
         VL.ui.toast(t('imp.done', { w: n('n.word', r.added) }) + (r.duplicates ? t('imp.doneDup', { d: n('n.duplicate', r.duplicates) }) : '') + (parsed.errors.length ? t('imp.doneInv', { i: n('n.invalidLine', parsed.errors.length) }) : '') + '.', r.added ? 'success' : 'info', 5000);

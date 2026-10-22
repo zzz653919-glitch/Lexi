@@ -2,11 +2,11 @@
    persists; a failed write surfaces an error toast but never loses the UI state. */
 VL.store = (function () {
   const { uid } = VL.util;
-  const DEFAULTS = { direction: 'en-uz', length: 'all', autoAdvance: false, lenient: true };
+  const DEFAULTS = { direction: 'en-uz', length: 'all', autoAdvance: false, lenient: true, dailyGoal: 50, learnSelected: [], autoSpeak: false, lessonSize: 10 };
   const MAX_LEN = 200;
   const MASTERED_STREAK = 3;
 
-  const state = { words: [], collections: [], sessions: [], settings: Object.assign({}, DEFAULTS) };
+  const state = { words: [], collections: [], sessions: [], days: [], lesson: null, settings: Object.assign({}, DEFAULTS) };
   const listeners = new Set();
 
   const key = (s) => String(s).trim().replace(/\s+/g, ' ').toLowerCase();
@@ -23,18 +23,35 @@ VL.store = (function () {
     }
   }
 
-  function newCollection(name) { return { id: uid(), name: clean(name), createdAt: Date.now() }; }
+  function newCollection(name, deckKey) {
+    const c = { id: uid(), name: clean(name), createdAt: Date.now() };
+    if (deckKey) c.deckKey = deckKey;
+    return c;
+  }
+
+  // Words saved before the lesson system existed get spaced-repetition defaults on load.
+  function withLearnFields(w) {
+    if (w.box === undefined) { w.box = 0; w.reps = 0; w.lapses = 0; w.due = null; }
+    if (w.example === undefined) w.example = '';
+    return w;
+  }
+  function blankWord(en, uz, collectionId, example) {
+    return { id: uid(), en, uz, example: clean(example || ''), collectionId, createdAt: Date.now(), updatedAt: Date.now(), correct: 0, wrong: 0, streak: 0, lastSeenAt: null, lastWrongAt: null, box: 0, reps: 0, lapses: 0, due: null };
+  }
 
   async function load() {
     await VL.db.open();
-    const [words, collections, sessions, settings] = await Promise.all([
-      VL.db.getAll('words'), VL.db.getAll('collections'), VL.db.getAll('sessions'), VL.db.getAll('settings'),
+    const [words, collections, sessions, settings, days] = await Promise.all([
+      VL.db.getAll('words'), VL.db.getAll('collections'), VL.db.getAll('sessions'), VL.db.getAll('settings'), VL.db.getAll('days'),
     ]);
-    state.words = words;
+    state.words = words.map(withLearnFields);
+    state.days = days.sort((a, b) => (a.date < b.date ? -1 : 1));
+    const saved = settings.find((s) => s.key === 'lessonState');
+    state.lesson = saved ? saved.value : null;
     state.collections = collections.sort((a, b) => a.createdAt - b.createdAt);
     state.sessions = sessions.sort((a, b) => a.date - b.date);
     state.settings = Object.assign({}, DEFAULTS);
-    settings.forEach((s) => { state.settings[s.key] = s.value; });
+    settings.forEach((s) => { if (s.key !== 'lessonState') state.settings[s.key] = s.value; });
     if (!state.collections.length) {
       const c = newCollection(VL.t('default.collection'));
       state.collections.push(c);
@@ -86,7 +103,8 @@ VL.store = (function () {
     const en = clean(input.en), uz = clean(input.uz);
     const error = validateWord(en, uz, input.collectionId);
     if (error) return { ok: false, error };
-    const w = { id: uid(), en, uz, collectionId: input.collectionId, createdAt: Date.now(), updatedAt: Date.now(), correct: 0, wrong: 0, streak: 0, lastSeenAt: null, lastWrongAt: null };
+    if (clean(input.example).length > 300) return { ok: false, error: VL.t('err.exampleLong') };
+    const w = blankWord(en, uz, input.collectionId, input.example);
     state.words.push(w);
     await save(() => VL.db.put('words', [w]));
     notify();
@@ -99,8 +117,9 @@ VL.store = (function () {
     const en = clean(input.en), uz = clean(input.uz);
     const error = validateWord(en, uz, input.collectionId, id);
     if (error) return { ok: false, error };
-    if (key(en) !== key(w.en) || key(uz) !== key(w.uz)) { w.correct = 0; w.wrong = 0; w.streak = 0; w.lastWrongAt = null; }
-    Object.assign(w, { en, uz, collectionId: input.collectionId, updatedAt: Date.now() });
+    if (clean(input.example).length > 300) return { ok: false, error: VL.t('err.exampleLong') };
+    if (key(en) !== key(w.en) || key(uz) !== key(w.uz)) { w.correct = 0; w.wrong = 0; w.streak = 0; w.lastWrongAt = null; w.box = 0; w.reps = 0; w.lapses = 0; w.due = null; }
+    Object.assign(w, { en, uz, example: clean(input.example || ''), collectionId: input.collectionId, updatedAt: Date.now() });
     await save(() => VL.db.put('words', [w]));
     notify();
     return { ok: true, word: w };
@@ -182,21 +201,74 @@ VL.store = (function () {
   async function addSession(s) {
     const rec = Object.assign({ id: uid(), date: Date.now() }, s);
     state.sessions.push(rec);
-    await save(() => VL.db.put('sessions', [rec]));
+    const day = dayRecord();
+    day.sessions++;
+    if (rec.kind === 'lesson') day.lessons++;
+    await save(async () => { await VL.db.put('sessions', [rec]); await VL.db.put('days', [day]); });
     notify();
     return rec;
   }
 
+  /* ---------- daily activity (XP, goal, streak) ---------- */
+  function dayRecord(ts) {
+    const k = VL.util.dayKey(ts || Date.now());
+    let d = state.days.find((x) => x.date === k);
+    if (!d) { d = { date: k, xp: 0, answers: 0, correct: 0, sessions: 0, lessons: 0, goalMet: false }; state.days.push(d); }
+    return d;
+  }
+
+  // Adds XP / answer counts to today. Returns { goalJustMet } so the UI can celebrate once.
+  async function logLearn(delta) {
+    const d = dayRecord();
+    const before = d.goalMet;
+    d.xp += delta.xp || 0; d.answers += delta.answers || 0; d.correct += delta.correct || 0;
+    if (!d.goalMet && d.xp >= state.settings.dailyGoal) d.goalMet = true;
+    await save(() => VL.db.put('days', [d]));
+    notify();
+    return { goalJustMet: d.goalMet && !before };
+  }
+
+  /* Updates one word after a lesson answer. `first` = the first attempt for this word in the
+     lesson (only that attempt moves the spaced-repetition schedule). */
+  async function recordLearn(id, correct, first) {
+    const w = word(id);
+    if (!w) return;
+    const now = Date.now();
+    w.lastSeenAt = now;
+    if (correct) { w.correct++; w.streak++; } else { w.wrong++; w.streak = 0; w.lastWrongAt = now; }
+    if (first) VL.srs.schedule(w, correct, now);
+    await save(() => VL.db.put('words', [w]));
+    notify();
+  }
+
+  // Lesson in progress (so it can be paused and resumed, even after a reload).
+  async function saveLesson(lesson) {
+    state.lesson = lesson;
+    await save(() => lesson ? VL.db.put('settings', [{ key: 'lessonState', value: lesson }]) : VL.db.remove('settings', ['lessonState']));
+  }
+
+  // Finds or creates the collection that holds a ready-made deck.
+  async function ensureDeckCollection(deckKey, name) {
+    const existing = state.collections.find((c) => c.deckKey === deckKey);
+    if (existing) return existing;
+    const c = newCollection(name, deckKey);
+    state.collections.push(c);
+    await save(() => VL.db.put('collections', [c]));
+    return c;
+  }
+
   async function resetProgress() {
-    state.words.forEach((w) => { w.correct = 0; w.wrong = 0; w.streak = 0; w.lastSeenAt = null; w.lastWrongAt = null; });
-    state.sessions = [];
-    await save(async () => { await VL.db.put('words', state.words); await VL.db.clear('sessions'); });
+    state.words.forEach((w) => { w.correct = 0; w.wrong = 0; w.streak = 0; w.lastSeenAt = null; w.lastWrongAt = null; w.box = 0; w.reps = 0; w.lapses = 0; w.due = null; });
+    state.sessions = []; state.days = []; state.lesson = null;
+    await save(async () => { await VL.db.put('words', state.words); await VL.db.clear(['sessions', 'days']); await VL.db.remove('settings', ['lessonState']); });
     notify();
   }
 
   async function clearAll() {
-    state.words = []; state.collections = []; state.sessions = [];
-    await save(() => VL.db.clear(['words', 'collections', 'sessions']));
+    state.words = []; state.collections = []; state.sessions = []; state.days = []; state.lesson = null;
+    state.settings.learnSelected = [];
+    await save(() => VL.db.clear(['words', 'collections', 'sessions', 'days']));
+    await save(() => VL.db.remove('settings', ['lessonState', 'learnSelected']));
     const c = newCollection(VL.t('default.collection'));
     state.collections.push(c);
     await save(() => VL.db.put('collections', [c]));
@@ -219,7 +291,7 @@ VL.store = (function () {
       const en = clean(r.en), uz = clean(r.uz);
       if (!en || !uz || en.length > MAX_LEN || uz.length > MAX_LEN) return;
       if (findDuplicate(en, r.collectionId)) { duplicates++; return; }
-      const w = { id: uid(), en, uz, collectionId: r.collectionId, createdAt: Date.now(), updatedAt: Date.now(), correct: 0, wrong: 0, streak: 0, lastSeenAt: null, lastWrongAt: null };
+      const w = blankWord(en, uz, r.collectionId, String(r.example || '').slice(0, 300));
       state.words.push(w);
       added.push(w);
     });
@@ -229,14 +301,14 @@ VL.store = (function () {
   }
 
   function backup() {
-    return { app: 'lexi', version: 1, exportedAt: new Date().toISOString(), collections: state.collections, words: state.words, sessions: state.sessions, settings: state.settings };
+    return { app: 'lexi', version: 2, exportedAt: new Date().toISOString(), collections: state.collections, words: state.words, sessions: state.sessions, days: state.days, lesson: state.lesson, settings: state.settings };
   }
 
   async function restore(data) {
     if (!data || data.app !== 'lexi' || !Array.isArray(data.words) || !Array.isArray(data.collections)) throw new Error(VL.t('err.notBackup'));
     const validWord = (w) => w && typeof w.id === 'string' && typeof w.en === 'string' && typeof w.uz === 'string' && typeof w.collectionId === 'string';
     const validCol = (c) => c && typeof c.id === 'string' && typeof c.name === 'string';
-    const cols = data.collections.filter(validCol).map((c) => ({ id: c.id, name: c.name, createdAt: Number(c.createdAt) || Date.now() }));
+    const cols = data.collections.filter(validCol).map((c) => Object.assign({ id: c.id, name: c.name, createdAt: Number(c.createdAt) || Date.now() }, typeof c.deckKey === 'string' ? { deckKey: c.deckKey } : {}));
     if (!cols.length) throw new Error(VL.t('err.noCollections'));
     const ids = new Set(cols.map((c) => c.id));
     const words = data.words.filter((w) => validWord(w) && ids.has(w.collectionId)).map((w) => ({
@@ -244,16 +316,21 @@ VL.store = (function () {
       createdAt: Number(w.createdAt) || Date.now(), updatedAt: Number(w.updatedAt) || Date.now(),
       correct: Number(w.correct) || 0, wrong: Number(w.wrong) || 0, streak: Number(w.streak) || 0,
       lastSeenAt: w.lastSeenAt || null, lastWrongAt: w.lastWrongAt || null,
+      example: typeof w.example === 'string' ? w.example.slice(0, 300) : '',
+      box: Math.min(5, Math.max(0, Number(w.box) || 0)), reps: Number(w.reps) || 0, lapses: Number(w.lapses) || 0, due: Number(w.due) || null,
     }));
+    const days = (Array.isArray(data.days) ? data.days : []).filter((d) => d && /^\d{4}-\d{2}-\d{2}$/.test(d.date)).map((d) => ({ date: d.date, xp: Number(d.xp) || 0, answers: Number(d.answers) || 0, correct: Number(d.correct) || 0, sessions: Number(d.sessions) || 0, lessons: Number(d.lessons) || 0, goalMet: !!d.goalMet }));
     const sessions = (Array.isArray(data.sessions) ? data.sessions : []).filter((s) => s && typeof s.id === 'string' && Number(s.date));
     const settings = Object.assign({}, DEFAULTS, data.settings || {});
-    await VL.db.clear(['words', 'collections', 'sessions', 'settings']);
+    await VL.db.clear(['words', 'collections', 'sessions', 'settings', 'days']);
     await VL.db.put('collections', cols);
+    await VL.db.put('days', days);
     await VL.db.put('words', words);
     await VL.db.put('sessions', sessions);
     await VL.db.put('settings', Object.keys(settings).map((k) => ({ key: k, value: settings[k] })));
     state.collections = cols.sort((a, b) => a.createdAt - b.createdAt);
     state.words = words; state.sessions = sessions.sort((a, b) => a.date - b.date); state.settings = settings;
+    state.days = days.sort((a, b) => (a.date < b.date ? -1 : 1)); state.lesson = null;
     notify();
     return { words: words.length, collections: cols.length };
   }
@@ -262,6 +339,6 @@ VL.store = (function () {
     state, DEFAULTS, MASTERED_STREAK, load, onChange,
     collection, word, wordsIn, status, difficultWords, summarize, findDuplicate,
     addWord, updateWord, deleteWords, addCollection, renameCollection, deleteCollection, ensureCollection,
-    recordAnswer, markLearned, addSession, resetProgress, clearAll, setSetting, importWords, backup, restore,
+    recordAnswer, markLearned, addSession, dayRecord, logLearn, recordLearn, saveLesson, ensureDeckCollection, resetProgress, clearAll, setSetting, importWords, backup, restore,
   };
 })();

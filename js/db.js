@@ -2,8 +2,8 @@
    modes, locked-down browsers) it transparently falls back to localStorage. */
 VL.db = (function () {
   const DB_NAME = 'lexi-vocabulary';
-  const VERSION = 1;
-  const STORES = { words: 'id', collections: 'id', sessions: 'id', settings: 'key' };
+  const VERSION = 2; // v2 adds the 'days' store (daily activity: XP, goal, streak)
+  const STORES = { words: 'id', collections: 'id', sessions: 'id', settings: 'key', days: 'date' };
   let idb = null;
   let backend = 'indexeddb';
 

@@ -30,7 +30,9 @@ VL.views.vocabulary = (function () {
       '<div class="add-grid"><div class="field"><label for="f-en">' + esc(t('field.english')) + '</label><input id="f-en" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="' + esc(t('ph.en')) + '"></div>' +
       '<div class="field"><label for="f-uz">' + esc(t('field.uzbek')) + '</label><input id="f-uz" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="' + esc(t('ph.uz')) + '"></div>' +
       '<div class="field"><label for="f-col">' + esc(t('field.collection')) + '</label><select id="f-col"></select></div>' +
-      '<button class="btn btn-primary add-btn" type="submit">' + icon('plus') + esc(t('btn.addWord')) + '</button></div>' +
+      '<button class="btn btn-primary add-btn" type="submit">' + icon('plus') + esc(t('btn.addWord')) + '</button>' +
+      '<div class="field add-example"><label for="f-ex">' + esc(t('field.example')) + '</label><input id="f-ex" type="text" maxlength="300" autocomplete="off" placeholder="' + esc(t('ph.example')) + '"></div>' +
+      '</div>' +
       '<p class="form-error" id="add-error" role="alert"></p><p class="hint">' + esc(t('vocab.tip')) + '</p></form>' +
       '<section class="card"><div class="toolbar"><div class="search">' + icon('search') + '<label class="sr-only" for="v-search">' + esc(t('vocab.searchAria')) + '</label><input id="v-search" type="search" placeholder="' + esc(t('vocab.search')) + '" autocomplete="off"></div>' +
       '<label class="sr-only" for="v-sort">' + esc(t('vocab.sortAria')) + '</label><select id="v-sort"><option value="newest">' + esc(t('sort.newest')) + '</option><option value="en">' + esc(t('sort.en')) + '</option><option value="uz">' + esc(t('sort.uz')) + '</option></select></div>' +
@@ -69,7 +71,7 @@ VL.views.vocabulary = (function () {
       '<div class="table-wrap"><table class="words"><thead><tr><th scope="col">' + esc(t('th.english')) + '</th><th scope="col">' + esc(t('th.uzbek')) + '</th><th scope="col" class="hide-sm">' + esc(t('th.collection')) + '</th><th scope="col" class="hide-sm">' + esc(t('th.status')) + '</th><th scope="col"><span class="sr-only">' + esc(t('th.actions')) + '</span></th></tr></thead><tbody>' +
       list.map((w) => {
         const c = VL.store.collection(w.collectionId);
-        return '<tr data-id="' + esc(w.id) + '"><td class="strong">' + esc(w.en) + '</td><td>' + esc(w.uz) + '</td><td class="hide-sm"><span class="chip">' + esc(c ? c.name : '—') + '</span></td>' +
+        return '<tr data-id="' + esc(w.id) + '"><td class="strong"><span class="word-cell">' + esc(w.en) + VL.speech.button(w.en) + '</span></td><td>' + esc(w.uz) + (w.example ? '<div class="word-example">' + esc(w.example) + '</div>' : '') + '</td><td class="hide-sm"><span class="chip">' + esc(c ? c.name : '—') + '</span></td>' +
           '<td class="hide-sm">' + VL.ui.statusChip(w) + '</td><td class="row-actions"><button class="icon-btn" data-action="edit" aria-label="' + esc(t('vocab.editAria', { w: w.en })) + '">' + icon('edit') + '</button>' +
           '<button class="icon-btn danger" data-action="delete" aria-label="' + esc(t('vocab.deleteAria', { w: w.en })) + '">' + icon('trash') + '</button></td></tr>';
       }).join('') + '</tbody></table></div>' +
@@ -82,8 +84,9 @@ VL.views.vocabulary = (function () {
     e.preventDefault();
     const en = root.querySelector('#f-en'), uz = root.querySelector('#f-uz'), err = root.querySelector('#add-error');
     addCollectionId = root.querySelector('#f-col').value;
-    const sent = { en: en.value, uz: uz.value };
-    const r = await VL.store.addWord({ en: sent.en, uz: sent.uz, collectionId: addCollectionId });
+    const ex = root.querySelector('#f-ex');
+    const sent = { en: en.value, uz: uz.value, ex: ex.value };
+    const r = await VL.store.addWord({ en: sent.en, uz: sent.uz, example: sent.ex, collectionId: addCollectionId });
     if (!r.ok) {
       err.textContent = r.error;
       (en.value.trim() ? uz : en).focus();
@@ -92,40 +95,13 @@ VL.views.vocabulary = (function () {
     err.textContent = '';
     if (en.value === sent.en) en.value = '';   // don't wipe text typed while saving
     if (uz.value === sent.uz) uz.value = '';
+    if (ex.value === sent.ex) ex.value = '';
     en.focus();
     VL.ui.toast(t('vocab.added', { en: r.word.en }), 'success', 1800);
   }
 
-  async function editWord(id) {
-    const w = VL.store.word(id);
-    if (!w) return;
-    const body = document.createElement('div');
-    body.innerHTML =
-      '<div class="field"><label for="e-en">' + esc(t('field.english')) + '</label><input id="e-en" data-autofocus type="text" maxlength="200" value="' + esc(w.en) + '"></div>' +
-      '<div class="field"><label for="e-uz">' + esc(t('field.uzbek')) + '</label><input id="e-uz" type="text" maxlength="200" value="' + esc(w.uz) + '"></div>' +
-      '<div class="field"><label for="e-col">' + esc(t('field.collection')) + '</label><select id="e-col">' + VL.ui.collectionOptions(w.collectionId, false) + '</select></div>' +
-      '<p class="hint">' + esc(t('edit.hint')) + '</p><p class="form-error" id="e-error" role="alert"></p>';
-    await VL.ui.modal({
-      title: t('edit.title'), body,
-      buttons: [{ label: t('btn.cancel'), value: 'cancel' }, { label: t('btn.saveChanges'), value: 'save', kind: 'primary' }],
-      async onButton(v) {
-        if (v !== 'save') return true;
-        const r = await VL.store.updateWord(id, { en: body.querySelector('#e-en').value, uz: body.querySelector('#e-uz').value, collectionId: body.querySelector('#e-col').value });
-        if (!r.ok) { body.querySelector('#e-error').textContent = r.error; return false; }
-        VL.ui.toast(t('vocab.updated'), 'success', 1800);
-        return true;
-      },
-    });
-  }
-
-  async function deleteWord(id) {
-    const w = VL.store.word(id);
-    if (!w) return;
-    if (await VL.ui.confirm({ title: t('del.title'), message: t('del.msg', { en: w.en, uz: w.uz }), confirmLabel: t('btn.delete'), danger: true })) {
-      await VL.store.deleteWords([id]);
-      VL.ui.toast(t('vocab.deleted'), 'info', 1800);
-    }
-  }
+  const editWord = (id) => VL.wd.wordDialog({ id });
+  const deleteWord = (id) => VL.wd.confirmDeleteWord(id);
 
   async function createCollection(e) {
     e.preventDefault();
@@ -138,33 +114,11 @@ VL.views.vocabulary = (function () {
     VL.ui.toast(t('col.created', { name: r.collection.name }), 'success', 1800);
   }
 
-  async function renameCollection() {
-    const c = VL.store.collection(filter.collection);
-    if (!c) return;
-    const body = document.createElement('div');
-    body.innerHTML = '<div class="field"><label for="r-name">' + esc(t('col.name')) + '</label><input id="r-name" data-autofocus type="text" maxlength="60" value="' + esc(c.name) + '"></div><p class="form-error" id="r-error" role="alert"></p>';
-    await VL.ui.modal({
-      title: t('col.renameTitle'), body,
-      buttons: [{ label: t('btn.cancel'), value: 'cancel' }, { label: t('btn.save'), value: 'save', kind: 'primary' }],
-      async onButton(v) {
-        if (v !== 'save') return true;
-        const r = await VL.store.renameCollection(c.id, body.querySelector('#r-name').value);
-        if (!r.ok) { body.querySelector('#r-error').textContent = r.error; return false; }
-        return true;
-      },
-    });
-  }
+  const renameCollection = () => { if (filter.collection) VL.wd.collectionDialog(filter.collection); };
 
   async function deleteCollection() {
-    const c = VL.store.collection(filter.collection);
-    if (!c) return;
-    if (VL.store.state.collections.length <= 1) { VL.ui.toast(t('err.lastCollection'), 'error'); return; }
-    const cnt = VL.store.wordsIn(c.id).length;
-    if (await VL.ui.confirm({ title: t('col.delTitle'), message: t('col.delMsg', { name: c.name, w: n('n.word', cnt) }), confirmLabel: t('col.delBtn'), danger: true })) {
-      await VL.store.deleteCollection(c.id);
-      filter.collection = ''; addCollectionId = null;
-      drawAll();
-    }
+    if (!filter.collection) return;
+    if (await VL.wd.deleteCollectionDialog(filter.collection)) { filter.collection = ''; addCollectionId = null; drawAll(); }
   }
 
   function onClick(e) {

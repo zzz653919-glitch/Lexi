@@ -105,6 +105,7 @@ VL.ui = (function () {
 
   // Human-readable label for a saved quiz session, in the current UI language.
   function sessionLabel(s) {
+    if (s.kind === 'lesson') return VL.t('learn.sessionLabel', { type: VL.t('ex.' + (s.mode || 'mixed')) });
     if (!s.scope) return s.label || '';
     let scope;
     if (s.scope === 'all') scope = VL.t('scope.allShort');

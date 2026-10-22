@@ -322,4 +322,8 @@ VL.rows = [
 ];
 
 VL.locales = { en: {}, uz: {}, ru: {} };
-VL.rows.forEach((r) => { VL.locales.en[r[0]] = r[1]; VL.locales.uz[r[0]] = r[2]; VL.locales.ru[r[0]] = r[3]; });
+// Registers rows [key, en, uz, ru]; other locale files call this too.
+VL.addRows = function (rows) {
+  rows.forEach((r) => { VL.rows.push(r); VL.locales.en[r[0]] = r[1]; VL.locales.uz[r[0]] = r[2]; VL.locales.ru[r[0]] = r[3]; });
+};
+VL.addRows(VL.rows.splice(0));
