@@ -1,0 +1,22 @@
+{
+  "name": "lexi-vocabulary-trainer",
+  "version": "1.0.0",
+  "description": "Lexi — a local-first English ↔ Uzbek vocabulary trainer (web + Windows desktop via Electron).",
+  "main": "electron/main.js",
+  "author": "",
+  "license": "MIT",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win portable"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0"
+  },
+  "build": {
+    "appId": "app.lexi.vocabulary",
+    "productName": "Lexi",
+    "files": ["index.html", "css/**", "js/**", "sample/**", "electron/**", "package.json"],
+    "win": { "target": ["portable"] }
+  }
+}
