@@ -58,19 +58,21 @@
         <a href="#/progress" data-route="progress"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg><span data-i18n="nav.progress">Progress</span></a>
         <a href="#/settings" data-route="settings"><svg class="icon" aria-hidden="true"><use href="#i-settings"/></svg><span data-i18n="nav.settings">Settings</span></a>
       </nav>
-      <div class="lang-switch">
-        <label class="sr-only" for="lang-select" data-i18n="lang.label">Language</label>
-        <select id="lang-select">
-          <option value="en">English</option>
-          <option value="uz">O'zbekcha</option>
-          <option value="ru">Русский</option>
-        </select>
+      <div class="sidebar-tools">
+        <div class="lang-switch">
+          <label class="sr-only" for="lang-select" data-i18n="lang.label">Language</label>
+          <select id="lang-select">
+            <option value="en">English</option>
+            <option value="uz">O'zbekcha</option>
+            <option value="ru">Русский</option>
+          </select>
+        </div>
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme">
+          <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun"/></svg>
+          <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon"/></svg>
+          <span class="theme-toggle-label">Dark mode</span>
+        </button>
       </div>
-      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme">
-        <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun"/></svg>
-        <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon"/></svg>
-        <span class="theme-toggle-label">Dark mode</span>
-      </button>
     </aside>
 
     <main id="main" class="main" tabindex="-1"></main>
