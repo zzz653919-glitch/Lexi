@@ -1,35 +1,43 @@
 VL.views.settings = (function () {
+  const { esc } = VL.util;
   const { icon } = VL.ui;
+  const t = VL.t;
   let root;
+
+  const radio = (name, val, cur, label) => '<label><input type="radio" name="' + name + '" value="' + val + '"' + (cur === val ? ' checked' : '') + '><span>' + esc(label) + '</span></label>';
+  const row = (title, desc, btn) => '<div class="data-row"><div><strong>' + esc(title) + '</strong><div class="muted small">' + esc(desc) + '</div></div>' + btn + '</div>';
 
   function draw() {
     const s = VL.store.state.settings;
     const theme = VL.theme.get();
-    const radio = (name, val, cur, label) => '<label><input type="radio" name="' + name + '" value="' + val + '"' + (cur === val ? ' checked' : '') + '><span>' + label + '</span></label>';
+    const lang = VL.i18n.lang;
     root.innerHTML =
-      '<header class="page-head"><div><h1>Settings</h1><p class="muted">Everything is stored on this device (' + (VL.db.backend === 'indexeddb' ? 'IndexedDB' : 'localStorage fallback') + ').</p></div></header>' +
-      '<section class="card settings-group"><h2 class="card-title">Appearance</h2>' +
-      '<fieldset class="field"><legend>Theme</legend><div class="segmented">' + radio('theme', 'light', theme, 'Light') + radio('theme', 'dark', theme, 'Dark') + radio('theme', 'system', theme, 'System') + '</div></fieldset></section>' +
-      '<section class="card settings-group"><h2 class="card-title">Quiz preferences</h2>' +
-      '<fieldset class="field"><legend>Default direction</legend><div class="segmented">' + radio('direction', 'en-uz', s.direction, 'English → Uzbek') + radio('direction', 'uz-en', s.direction, 'Uzbek → English') + radio('direction', 'mixed', s.direction, 'Mixed') + '</div></fieldset>' +
-      '<div class="field"><label for="set-len">Default quiz length</label><select id="set-len">' +
-      [['all', 'All available words'], ['10', '10 questions'], ['20', '20 questions'], ['50', '50 questions']].map((o) => '<option value="' + o[0] + '"' + (String(s.length) === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('') + '</select></div>' +
-      '<label class="check"><input type="checkbox" id="set-lenient"' + (s.lenient ? ' checked' : '') + '><span>Ignore accents and apostrophe styles (o\' = oʻ = o‘, café = cafe)</span></label>' +
-      '<label class="check"><input type="checkbox" id="set-auto"' + (s.autoAdvance ? ' checked' : '') + '><span>Automatically move on after a correct answer</span></label>' +
-      '<p class="hint">Capitalisation and extra spaces are always ignored.</p></section>' +
-      '<section class="card settings-group"><h2 class="card-title">Data management</h2>' +
+      '<header class="page-head"><div><h1>' + esc(t('nav.settings')) + '</h1><p class="muted">' + esc(t(VL.db.backend === 'indexeddb' ? 'set.subIdb' : 'set.subLs')) + '</p></div></header>' +
+      '<section class="card settings-group"><h2 class="card-title">' + esc(t('set.appearance')) + '</h2>' +
+      '<fieldset class="field"><legend>' + esc(t('set.theme')) + '</legend><div class="segmented">' + radio('theme', 'light', theme, t('theme.optLight')) + radio('theme', 'dark', theme, t('theme.optDark')) + radio('theme', 'system', theme, t('theme.optSystem')) + '</div></fieldset>' +
+      '<fieldset class="field"><legend>' + esc(t('set.language')) + '</legend><div class="segmented">' + VL.i18n.LANGS.map((l) => radio('lang', l, lang, VL.i18n.NAMES[l])).join('') + '</div></fieldset></section>' +
+      '<section class="card settings-group"><h2 class="card-title">' + esc(t('set.quiz')) + '</h2>' +
+      '<fieldset class="field"><legend>' + esc(t('set.defDir')) + '</legend><div class="segmented">' + radio('direction', 'en-uz', s.direction, t('dir.en-uz')) + radio('direction', 'uz-en', s.direction, t('dir.uz-en')) + radio('direction', 'mixed', s.direction, t('dir.short.mixed')) + '</div></fieldset>' +
+      '<div class="field"><label for="set-len">' + esc(t('set.defLen')) + '</label><select id="set-len">' +
+      [['all', t('len.all')], ['10', t('len.n', { n: 10 })], ['20', t('len.n', { n: 20 })], ['50', t('len.n', { n: 50 })]].map((o) => '<option value="' + o[0] + '"' + (String(s.length) === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') + '</select></div>' +
+      '<label class="check"><input type="checkbox" id="set-lenient"' + (s.lenient ? ' checked' : '') + '><span>' + esc(t('set.lenient')) + '</span></label>' +
+      '<label class="check"><input type="checkbox" id="set-auto"' + (s.autoAdvance ? ' checked' : '') + '><span>' + esc(t('set.auto')) + '</span></label>' +
+      '<p class="hint">' + esc(t('set.caseHint')) + '</p></section>' +
+      '<section class="card settings-group"><h2 class="card-title">' + esc(t('set.learn')) + '</h2>' +
+      '<div class="field"><label for="set-goal">' + esc(t('set.goal')) + '</label><select id="set-goal">' + [20, 50, 100, 150, 200].map((v) => '<option value="' + v + '"' + (Number(s.dailyGoal) === v ? ' selected' : '') + '>' + v + ' XP</option>').join('') + '</select></div>' +
+      (VL.speech.supported ? '<label class="check"><input type="checkbox" id="set-speak"' + (s.autoSpeak ? ' checked' : '') + '><span>' + esc(t('set.autoSpeak')) + '</span></label>' : '') + '</section>' +
+      '<section class="card settings-group"><h2 class="card-title">' + esc(t('set.data')) + '</h2>' +
+      '<p class="notice">' + icon('alert') + '<span>' + esc(t('set.storageNote')) + '</span></p>' +
       '<div class="data-grid">' +
-      row('Import vocabulary', 'Add words from a CSV or TXT file.', '<button class="btn" data-action="import">' + icon('upload') + 'Import…</button>') +
-      row('Export vocabulary', 'Download all words as a CSV file.', '<button class="btn" data-action="export">' + icon('download') + 'Export CSV</button>') +
-      row('Backup everything', 'Words, collections and progress as one JSON file.', '<button class="btn" data-action="backup">' + icon('download') + 'Download backup</button>') +
-      row('Restore backup', 'Replace all data from a backup file.', '<button class="btn" data-action="restore">' + icon('upload') + 'Restore…</button>') +
-      row('Sample vocabulary', 'Add ~60 A1–IELTS words to try the app.', '<button class="btn" data-action="sample">' + icon('plus') + 'Load samples</button>') +
-      row('Reset progress', 'Keep your words, clear scores and history.', '<button class="btn btn-danger-outline" data-action="reset">' + icon('refresh') + 'Reset progress</button>') +
-      row('Delete all data', 'Permanently remove every word and collection.', '<button class="btn btn-danger-outline" data-action="wipe">' + icon('trash') + 'Delete everything</button>') +
+      row(t('data.importT'), t('data.importD'), '<button class="btn" data-action="import">' + icon('upload') + esc(t('data.importB')) + '</button>') +
+      row(t('data.exportT'), t('data.exportD'), '<button class="btn" data-action="export">' + icon('download') + esc(t('btn.exportCsv')) + '</button>') +
+      row(t('data.backupT'), t('data.backupD'), '<button class="btn" data-action="backup">' + icon('download') + esc(t('data.backupB')) + '</button>') +
+      row(t('data.restoreT'), t('data.restoreD'), '<button class="btn" data-action="restore">' + icon('upload') + esc(t('data.restoreB')) + '</button>') +
+      row(t('data.sampleT'), t('data.sampleD'), '<button class="btn" data-action="sample">' + icon('plus') + esc(t('data.sampleB')) + '</button>') +
+      row(t('data.resetT'), t('data.resetD'), '<button class="btn btn-danger-outline" data-action="reset">' + icon('refresh') + esc(t('data.resetT')) + '</button>') +
+      row(t('data.wipeT'), t('data.wipeD'), '<button class="btn btn-danger-outline" data-action="wipe">' + icon('trash') + esc(t('data.wipeB')) + '</button>') +
       '</div></section>';
   }
-
-  const row = (t, d, btn) => '<div class="data-row"><div><strong>' + t + '</strong><div class="muted small">' + d + '</div></div>' + btn + '</div>';
 
   async function onClick(e) {
     const a = e.target.closest('[data-action]');
@@ -42,25 +50,28 @@ VL.views.settings = (function () {
       case 'restore': if (await VL.io.restoreBackup()) draw(); break;
       case 'sample': VL.io.loadSample(); break;
       case 'reset':
-        if (await VL.ui.confirm({ title: 'Reset progress?', message: 'All scores, difficult-word marks and session history will be cleared. Your words stay.', confirmLabel: 'Reset progress', danger: true })) {
-          await st.resetProgress(); VL.ui.toast('Progress reset.', 'success');
+        if (await VL.ui.confirm({ title: t('reset.title'), message: t('reset.msg'), confirmLabel: t('data.resetT'), danger: true })) {
+          await st.resetProgress(); VL.ui.toast(t('reset.done'), 'success');
         }
         break;
       case 'wipe':
-        if (await VL.ui.confirm({ title: 'Delete all data?', message: 'Every word, collection and progress record will be permanently deleted. Consider downloading a backup first.', confirmLabel: 'Delete everything', danger: true })) {
-          await st.clearAll(); VL.ui.toast('All data deleted.', 'success');
+        if (await VL.ui.confirm({ title: t('wipe.title'), message: t('wipe.msg'), confirmLabel: t('data.wipeB'), danger: true })) {
+          await st.clearAll(); VL.ui.toast(t('wipe.done'), 'success');
         }
         break;
     }
   }
 
   function onChange(e) {
-    const t = e.target;
-    if (t.name === 'theme') VL.theme.set(t.value);
-    else if (t.name === 'direction') VL.store.setSetting('direction', t.value);
-    else if (t.id === 'set-len') VL.store.setSetting('length', t.value);
-    else if (t.id === 'set-lenient') VL.store.setSetting('lenient', t.checked);
-    else if (t.id === 'set-auto') VL.store.setSetting('autoAdvance', t.checked);
+    const el = e.target;
+    if (el.name === 'theme') VL.theme.set(el.value);
+    else if (el.name === 'lang') VL.i18n.set(el.value);
+    else if (el.name === 'direction') VL.store.setSetting('direction', el.value);
+    else if (el.id === 'set-len') VL.store.setSetting('length', el.value);
+    else if (el.id === 'set-lenient') VL.store.setSetting('lenient', el.checked);
+    else if (el.id === 'set-auto') VL.store.setSetting('autoAdvance', el.checked);
+    else if (el.id === 'set-goal') VL.store.setSetting('dailyGoal', Number(el.value));
+    else if (el.id === 'set-speak') VL.store.setSetting('autoSpeak', el.checked);
   }
 
   return {

@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="css/base.css">
   <link rel="stylesheet" href="css/components.css">
   <link rel="stylesheet" href="css/views.css">
+  <link rel="stylesheet" href="css/learn.css">
 </head>
 <body>
   <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
@@ -39,30 +40,52 @@
     <symbol id="i-x" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></symbol>
     <symbol id="i-arrow" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
     <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
+    <symbol id="i-volume" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></symbol>
+    <symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
+    <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><line x1="9" y1="5" x2="9" y2="19"/><line x1="15" y1="5" x2="15" y2="19"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 4 20 12 6 20 6 4"/></symbol>
+    <symbol id="i-zap" viewBox="0 0 24 24"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+    <symbol id="i-list" viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></symbol>
+    <symbol id="i-type" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
     <symbol id="i-folder" viewBox="0 0 24 24"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></symbol>
   </svg>
 
-  <a class="skip-link" href="#main">Skip to content</a>
+  <a class="skip-link" href="#main" data-i18n="skip">Skip to content</a>
 
   <div class="app" id="app">
-    <aside class="sidebar" aria-label="Primary">
+    <aside class="sidebar" aria-label="Primary" data-i18n-aria="nav.primary">
       <a class="brand" href="#/dashboard" aria-label="Lexi home">
         <span class="brand-mark" aria-hidden="true">L</span>
         <span class="brand-name">Lexi</span>
       </a>
       <nav class="nav" id="nav">
-        <a href="#/dashboard" data-route="dashboard"><svg class="icon" aria-hidden="true"><use href="#i-home"/></svg><span>Dashboard</span></a>
-        <a href="#/vocabulary" data-route="vocabulary"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><span>My Vocabulary</span></a>
-        <a href="#/practice" data-route="practice"><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg><span>Practice</span></a>
-        <a href="#/difficult" data-route="difficult"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span>Difficult Words</span><b class="nav-badge" id="difficult-badge" hidden>0</b></a>
-        <a href="#/progress" data-route="progress"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg><span>Progress</span></a>
-        <a href="#/settings" data-route="settings"><svg class="icon" aria-hidden="true"><use href="#i-settings"/></svg><span>Settings</span></a>
+        <a href="#/dashboard" data-route="dashboard"><svg class="icon" aria-hidden="true"><use href="#i-home"/></svg><span data-i18n="nav.dashboard">Dashboard</span></a>
+        <a href="#/vocabulary" data-route="vocabulary"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><span data-i18n="nav.vocabulary">My Vocabulary</span></a>
+        <a href="#/learn" data-route="learn"><svg class="icon" aria-hidden="true"><use href="#i-zap"/></svg><span data-i18n="nav.learn">Word Lessons</span></a>
+        <a href="#/practice" data-route="practice"><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg><span data-i18n="nav.practice">Practice</span></a>
+        <a href="#/difficult" data-route="difficult"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span data-i18n="nav.difficult">Difficult Words</span><b class="nav-badge" id="difficult-badge" hidden>0</b></a>
+        <a href="#/progress" data-route="progress"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg><span data-i18n="nav.progress">Progress</span></a>
+        <a href="#/settings" data-route="settings"><svg class="icon" aria-hidden="true"><use href="#i-settings"/></svg><span data-i18n="nav.settings">Settings</span></a>
       </nav>
-      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme">
-        <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun"/></svg>
-        <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon"/></svg>
-        <span class="theme-toggle-label">Dark mode</span>
-      </button>
+      <div class="sidebar-tools">
+        <div class="lang-switch">
+          <label class="sr-only" for="lang-select" data-i18n="lang.label">Language</label>
+          <select id="lang-select">
+            <option value="en">English</option>
+            <option value="uz">O'zbekcha</option>
+            <option value="ru">Русский</option>
+          </select>
+        </div>
+        <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Switch to dark theme">
+          <svg class="icon icon-sun" aria-hidden="true"><use href="#i-sun"/></svg>
+          <svg class="icon icon-moon" aria-hidden="true"><use href="#i-moon"/></svg>
+          <span class="theme-toggle-label">Dark mode</span>
+        </button>
+      </div>
     </aside>
 
     <main id="main" class="main" tabindex="-1"></main>
@@ -71,15 +94,23 @@
   <div id="toasts" class="toasts" role="status" aria-live="polite"></div>
 
   <script src="js/utils.js"></script>
+  <script src="js/locales.js"></script>
+  <script src="js/locales-learn.js"></script>
+  <script src="js/i18n.js"></script>
   <script src="js/db.js"></script>
   <script src="js/store.js"></script>
   <script src="js/sample-data.js"></script>
+  <script src="js/decks.js"></script>
   <script src="js/csv.js"></script>
   <script src="js/quiz-engine.js"></script>
+  <script src="js/learn-engine.js"></script>
   <script src="js/ui.js"></script>
+  <script src="js/speech.js"></script>
+  <script src="js/word-dialogs.js"></script>
   <script src="js/import-export.js"></script>
   <script src="js/views/dashboard.js"></script>
   <script src="js/views/vocabulary.js"></script>
+  <script src="js/views/learn.js"></script>
   <script src="js/views/practice.js"></script>
   <script src="js/views/difficult.js"></script>
   <script src="js/views/progress.js"></script>

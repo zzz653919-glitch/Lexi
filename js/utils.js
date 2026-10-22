@@ -37,17 +37,15 @@ VL.util = (function () {
 
   function timeAgo(ts) {
     const s = Math.max(0, Math.round((Date.now() - ts) / 1000));
-    if (s < 45) return 'just now';
+    if (s < 45) return VL.t('ago.now');
     const m = Math.round(s / 60);
-    if (m < 60) return m + ' min ago';
+    if (m < 60) return VL.t('ago.min', { n: m });
     const h = Math.round(m / 60);
-    if (h < 24) return h + ' h ago';
+    if (h < 24) return VL.t('ago.hour', { n: h });
     const d = Math.round(h / 24);
-    if (d < 7) return d + (d === 1 ? ' day ago' : ' days ago');
-    return new Date(ts).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' });
+    if (d < 7) return VL.n('ago.day', d);
+    return new Date(ts).toLocaleDateString(VL.i18n.locale, { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
-  const plural = (n, one, many) => n + ' ' + (n === 1 ? one : many || one + 's');
-
-  return { esc, uid, shuffle, debounce, pct, dayKey, timeAgo, plural };
+  return { esc, uid, shuffle, debounce, pct, dayKey, timeAgo };
 })();

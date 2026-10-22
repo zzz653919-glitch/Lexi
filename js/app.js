@@ -1,14 +1,11 @@
 /* App shell: boot, theme, hash router. */
 (function () {
   const { esc } = VL.util;
+  const t = VL.t;
   const main = document.getElementById('main');
   const ROUTES = {
-    dashboard: { view: 'dashboard', title: 'Dashboard' },
-    vocabulary: { view: 'vocabulary', title: 'My Vocabulary' },
-    practice: { view: 'practice', title: 'Practice' },
-    difficult: { view: 'difficult', title: 'Difficult Words' },
-    progress: { view: 'progress', title: 'Progress' },
-    settings: { view: 'settings', title: 'Settings' },
+    dashboard: { view: 'dashboard' }, vocabulary: { view: 'vocabulary' }, learn: { view: 'learn' }, practice: { view: 'practice' },
+    difficult: { view: 'difficult' }, progress: { view: 'progress' }, settings: { view: 'settings' },
   };
   let current = null;
 
@@ -21,8 +18,8 @@
     const theme = resolveTheme(getThemePref());
     document.documentElement.setAttribute('data-theme', theme);
     const btn = document.getElementById('theme-toggle');
-    btn.setAttribute('aria-label', theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme');
-    btn.querySelector('.theme-toggle-label').textContent = theme === 'dark' ? 'Light mode' : 'Dark mode';
+    btn.setAttribute('aria-label', t(theme === 'dark' ? 'theme.toLight' : 'theme.toDark'));
+    btn.querySelector('.theme-toggle-label').textContent = t(theme === 'dark' ? 'theme.light' : 'theme.dark');
   }
   function setThemePref(pref) {
     try { localStorage.setItem('lexi.theme', pref); } catch (e) { /* theme just won't persist */ }
@@ -59,7 +56,7 @@
       a.classList.toggle('active', on);
       if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });
-    document.title = route.title + ' — Lexi';
+    document.title = t('nav.' + name) + ' — Lexi';
     document.body.classList.remove('focus-mode');
     main.innerHTML = '';
     main.scrollTop = 0; window.scrollTo(0, 0);
@@ -68,16 +65,20 @@
     updateBadge();
   }
 
-  VL.app = { render, updateBadge };
+  function refreshChrome() { applyTheme(); }
+
+  VL.app = { render, updateBadge, refreshChrome };
 
   function showFatal(err) {
     console.error(err);
-    main.innerHTML = '<div class="empty"><h3>Storage is unavailable</h3><p>' + esc(err && err.message ? err.message : String(err)) +
-      '</p><p class="muted">Lexi needs IndexedDB or localStorage to save your words. Try a normal (non-private) browser window.</p></div>';
+    main.innerHTML = '<div class="empty"><h3>' + esc(t('err.storageTitle')) + '</h3><p>' + esc(err && err.message ? err.message : String(err)) +
+      '</p><p class="muted">' + esc(t('err.storageHelp')) + '</p></div>';
   }
 
   window.addEventListener('hashchange', render);
   VL.store.onChange(updateBadge);
+  document.getElementById('lang-select').addEventListener('change', (e) => VL.i18n.set(e.target.value));
+  VL.i18n.apply();
   applyTheme();
 
   VL.store.load().then(() => {

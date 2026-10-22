@@ -41,7 +41,7 @@ VL.csv = (function () {
 
   /* Returns { rows: [{en, uz, collection, line}], errors: [{line, text, reason}], hadHeader } */
   function parseImport(text, opts) {
-    const useCollectionColumn = !!(opts && opts.useCollectionColumn);
+    let useCollectionColumn = !!(opts && opts.useCollectionColumn);
     const rows = [], errors = [];
     let hadHeader = false;
     const lines = String(text).replace(/^﻿/, '').split(/\r\n|\n|\r/);
@@ -50,15 +50,19 @@ VL.csv = (function () {
       const line = raw.trim();
       if (!line || line.startsWith('#') || line.startsWith('//')) return;
       const parts = splitLine(line);
-      if (parts.length < 2) { errors.push({ line: lineNo, text: line, reason: 'No separator found (use "word — translation")' }); return; }
-      if (rows.length === 0 && !hadHeader && HEADER_EN.includes(parts[0].toLowerCase()) && HEADER_UZ.includes(parts[1].toLowerCase())) { hadHeader = true; return; }
-      let en = parts[0], uz, collection = '';
-      if (parts.length >= 3 && useCollectionColumn) { uz = parts[1]; collection = parts[2]; }
+      if (parts.length < 2) { errors.push({ line: lineNo, text: line, reason: 'nosep' }); return; }
+      if (rows.length === 0 && !hadHeader && HEADER_EN.includes(parts[0].toLowerCase()) && HEADER_UZ.includes(parts[1].toLowerCase())) {
+        hadHeader = true;
+        if (parts.length >= 3 && /^(collection|to'plam|toplam)$/i.test(parts[2])) useCollectionColumn = true; // files exported by this app
+        return;
+      }
+      let en = parts[0], uz, collection = '', example = '';
+      if (parts.length >= 3 && useCollectionColumn) { uz = parts[1]; collection = parts[2]; example = parts[3] || ''; }
       else uz = parts.slice(1).filter(Boolean).join(', ');
-      if (!en) { errors.push({ line: lineNo, text: line, reason: 'English word is empty' }); return; }
-      if (!uz) { errors.push({ line: lineNo, text: line, reason: 'Translation is empty' }); return; }
-      if (en.length > 200 || uz.length > 200) { errors.push({ line: lineNo, text: line.slice(0, 60) + '…', reason: 'Entry is longer than 200 characters' }); return; }
-      rows.push({ en, uz, collection, line: lineNo });
+      if (!en) { errors.push({ line: lineNo, text: line, reason: 'emptyEn' }); return; }
+      if (!uz) { errors.push({ line: lineNo, text: line, reason: 'emptyUz' }); return; }
+      if (en.length > 200 || uz.length > 200) { errors.push({ line: lineNo, text: line.slice(0, 60) + '…', reason: 'long' }); return; }
+      rows.push({ en, uz, collection, example, line: lineNo });
     });
     return { rows, errors, hadHeader };
   }
@@ -66,8 +70,8 @@ VL.csv = (function () {
   const field = (s) => (/[",\r\n;]/.test(s) || s !== s.trim() ? '"' + s.replace(/"/g, '""') + '"' : s);
 
   function stringify(rows) {
-    const lines = [['english', 'uzbek', 'collection'].join(',')];
-    rows.forEach((r) => lines.push([field(r.en), field(r.uz), field(r.collection || '')].join(',')));
+    const lines = [['english', 'uzbek', 'collection', 'example'].join(',')];
+    rows.forEach((r) => lines.push([field(r.en), field(r.uz), field(r.collection || ''), field(r.example || '')].join(',')));
     return '﻿' + lines.join('\r\n') + '\r\n'; // BOM so Excel reads Uzbek letters correctly
   }
 

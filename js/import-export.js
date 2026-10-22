@@ -1,6 +1,7 @@
 /* Import (CSV/TXT/paste), CSV export, JSON backup & restore, sample loading. */
 VL.io = (function () {
-  const { esc, plural } = VL.util;
+  const { esc } = VL.util;
+  const t = VL.t, n = VL.n;
   const { icon } = VL.ui;
   const store = VL.store;
 
@@ -8,15 +9,15 @@ VL.io = (function () {
 
   function exportCSV() {
     const words = store.state.words;
-    if (!words.length) { VL.ui.toast('There are no words to export yet.', 'error'); return; }
-    const rows = words.map((w) => ({ en: w.en, uz: w.uz, collection: (store.collection(w.collectionId) || {}).name || '' }));
+    if (!words.length) { VL.ui.toast(t('io.noWords'), 'error'); return; }
+    const rows = words.map((w) => ({ en: w.en, uz: w.uz, collection: (store.collection(w.collectionId) || {}).name || '', example: w.example || '' }));
     VL.ui.download('lexi-vocabulary-' + stamp() + '.csv', VL.csv.stringify(rows), 'text/csv;charset=utf-8');
-    VL.ui.toast('Exported ' + plural(words.length, 'word') + ' to CSV.', 'success');
+    VL.ui.toast(t('io.exported', { w: n('n.word', words.length) }), 'success');
   }
 
   function exportBackup() {
     VL.ui.download('lexi-backup-' + stamp() + '.json', JSON.stringify(store.backup(), null, 2), 'application/json');
-    VL.ui.toast('Backup downloaded (includes progress).', 'success');
+    VL.ui.toast(t('io.backedUp'), 'success');
   }
 
   function pickFile(accept) {
@@ -33,14 +34,14 @@ VL.io = (function () {
     const file = await pickFile('.json,application/json');
     if (!file) return false;
     let data;
-    try { data = JSON.parse(await file.text()); } catch (e) { VL.ui.toast('That file is not valid JSON.', 'error'); return false; }
-    const ok = await VL.ui.confirm({ title: 'Restore backup?', message: 'This replaces ALL current words, collections and progress with the contents of "' + file.name + '".', confirmLabel: 'Replace everything', danger: true });
+    try { data = JSON.parse(await file.text()); } catch (e) { VL.ui.toast(t('io.badJson'), 'error'); return false; }
+    const ok = await VL.ui.confirm({ title: t('io.restoreTitle'), message: t('io.restoreMsg', { f: file.name }), confirmLabel: t('io.replaceAll'), danger: true });
     if (!ok) return false;
     try {
       const r = await store.restore(data);
-      VL.ui.toast('Restored ' + plural(r.words, 'word') + ' in ' + plural(r.collections, 'collection') + '.', 'success');
+      VL.ui.toast(t('io.restored', { w: n('n.word', r.words), c: n('n.collection', r.collections) }), 'success');
       return true;
-    } catch (e) { VL.ui.toast(e.message || 'Could not restore the backup.', 'error', 5000); return false; }
+    } catch (e) { VL.ui.toast(e.message || t('io.restoreFail'), 'error', 5000); return false; }
   }
 
   async function loadSample() {
@@ -50,7 +51,7 @@ VL.io = (function () {
       const r = await store.importWords(group.words.map(([en, uz]) => ({ en, uz, collectionId: col.id })));
       added += r.added; duplicates += r.duplicates;
     }
-    VL.ui.toast(added ? 'Added ' + plural(added, 'sample word') + '.' : 'Sample vocabulary is already in your library.', added ? 'success' : 'info');
+    VL.ui.toast(added ? t('io.sampleAdded', { n: n('n.sampleWord', added) }) : t('io.sampleExists'), added ? 'success' : 'info');
     return added;
   }
 
@@ -59,14 +60,14 @@ VL.io = (function () {
     const body = document.createElement('div');
     body.className = 'import';
     body.innerHTML =
-      '<p class="muted">One entry per line, e.g. <code>apple — olma</code>. Also accepts CSV, tab- or semicolon-separated text, <code>word = translation</code> and <code>word | translation</code>.</p>' +
-      '<div class="field"><label for="imp-file">File (.csv or .txt)</label>' +
+      '<p class="muted">' + t('imp.help') + '</p>' +
+      '<div class="field"><label for="imp-file">' + esc(t('imp.file')) + '</label>' +
       '<input id="imp-file" type="file" accept=".csv,.txt,.tsv,text/csv,text/plain"></div>' +
-      '<div class="field"><label for="imp-text">…or paste lines here</label>' +
+      '<div class="field"><label for="imp-text">' + esc(t('imp.paste')) + '</label>' +
       '<textarea id="imp-text" rows="4" placeholder="apple — olma&#10;book — kitob"></textarea></div>' +
       '<div class="field-row">' +
-      '<div class="field"><label for="imp-col">Add to collection</label><select id="imp-col">' + VL.ui.collectionOptions(null, false) + '</select></div>' +
-      '<label class="check"><input type="checkbox" id="imp-colcol"><span>Use the 3rd column as collection name (creates it if missing)</span></label></div>' +
+      '<div class="field"><label for="imp-col">' + esc(t('imp.target')) + '</label><select id="imp-col">' + VL.ui.collectionOptions(null, false) + '</select></div>' +
+      '<label class="check"><input type="checkbox" id="imp-colcol"><span>' + esc(t('imp.colcol')) + '</span></label></div>' +
       '<div id="imp-preview" class="import-preview" aria-live="polite"></div>';
 
     let parsed = null;
@@ -89,29 +90,29 @@ VL.io = (function () {
         seen.add(k);
       });
       parsed = res;
-      let html = '<div class="preview-stats"><span class="chip chip-mastered">' + plural(res.rows.length - dupes < 0 ? 0 : res.rows.length - dupes, 'new word') + '</span>' +
-        (dupes ? '<span class="chip chip-learning">' + plural(dupes, 'duplicate') + ' skipped</span>' : '') +
-        (res.errors.length ? '<span class="chip chip-difficult">' + plural(res.errors.length, 'invalid line') + '</span>' : '') + '</div>';
+      let html = '<div class="preview-stats"><span class="chip chip-mastered">' + esc(n('n.newWord', Math.max(0, res.rows.length - dupes))) + '</span>' +
+        (dupes ? '<span class="chip chip-learning">' + esc(t('imp.skipped', { x: n('n.duplicate', dupes) })) + '</span>' : '') +
+        (res.errors.length ? '<span class="chip chip-difficult">' + esc(n('n.invalidLine', res.errors.length)) + '</span>' : '') + '</div>';
       if (res.errors.length) {
-        html += '<ul class="preview-errors">' + res.errors.slice(0, 5).map((e) => '<li>Line ' + e.line + ': ' + esc(e.reason) + ' — <code>' + esc(e.text.slice(0, 50)) + '</code></li>').join('') +
-          (res.errors.length > 5 ? '<li>…and ' + (res.errors.length - 5) + ' more</li>' : '') + '</ul>';
+        html += '<ul class="preview-errors">' + res.errors.slice(0, 5).map((e) => '<li>' + esc(t('imp.line', { l: e.line, reason: t('csv.err.' + e.reason) })) + ' — <code>' + esc(e.text.slice(0, 50)) + '</code></li>').join('') +
+          (res.errors.length > 5 ? '<li>' + esc(t('imp.more', { n: res.errors.length - 5 })) + '</li>' : '') + '</ul>';
       }
-      if (!res.rows.length) html += '<p class="muted">No valid entries found yet.</p>';
+      if (!res.rows.length) html += '<p class="muted">' + esc(t('imp.noneValid')) + '</p>';
       prev.innerHTML = html;
     }
 
     return VL.ui.modal({
-      title: 'Import vocabulary',
+      title: t('imp.title'),
       wide: true,
       body,
-      buttons: [{ label: 'Cancel', value: 'cancel' }, { label: 'Import words', value: 'import', kind: 'primary' }],
+      buttons: [{ label: t('btn.cancel'), value: 'cancel' }, { label: t('btn.importWords'), value: 'import', kind: 'primary' }],
       onOpen(dlg) {
         $('#imp-file').addEventListener('change', async (e) => {
           const f = e.target.files[0];
           if (!f) { currentText = ''; return refresh(); }
-          if (f.size > 5 * 1024 * 1024) { currentText = ''; $('#imp-preview').innerHTML = '<p class="form-error">File is larger than 5 MB.</p>'; parsed = null; return; }
-          try { currentText = await f.text(); } catch (err) { currentText = ''; VL.ui.toast('Could not read that file.', 'error'); }
-          if (currentText.includes('�')) VL.ui.toast('Some characters look garbled — save the file as UTF-8 and try again.', 'error', 5000);
+          if (f.size > 5 * 1024 * 1024) { currentText = ''; $('#imp-preview').innerHTML = '<p class="form-error">' + esc(t('imp.tooBig')) + '</p>'; parsed = null; return; }
+          try { currentText = await f.text(); } catch (err) { currentText = ''; VL.ui.toast(t('imp.readFail'), 'error'); }
+          if (currentText.includes('\uFFFD')) VL.ui.toast(t('imp.garbled'), 'error', 5000);
           refresh();
         });
         ['#imp-text', '#imp-col', '#imp-colcol'].forEach((s) => $(s).addEventListener('input', refresh));
@@ -120,17 +121,17 @@ VL.io = (function () {
       async onButton(value) {
         if (value !== 'import') return true;
         if (!parsed || !parsed.rows.length) {
-          $('#imp-preview').innerHTML = '<p class="form-error">Choose a file or paste some lines first — nothing valid to import.</p>';
+          $('#imp-preview').innerHTML = '<p class="form-error">' + esc(t('imp.nothing')) + '</p>';
           return false;
         }
         const defaultCol = $('#imp-col').value;
         const rows = [];
         for (const r of parsed.rows) {
           const col = r.collection ? await store.ensureCollection(r.collection) : { id: defaultCol };
-          rows.push({ en: r.en, uz: r.uz, collectionId: col.id });
+          rows.push({ en: r.en, uz: r.uz, example: r.example, collectionId: col.id });
         }
         const r = await store.importWords(rows);
-        VL.ui.toast('Imported ' + plural(r.added, 'word') + (r.duplicates ? ', skipped ' + plural(r.duplicates, 'duplicate') : '') + (parsed.errors.length ? ', ' + plural(parsed.errors.length, 'invalid line') + ' ignored' : '') + '.', r.added ? 'success' : 'info', 5000);
+        VL.ui.toast(t('imp.done', { w: n('n.word', r.added) }) + (r.duplicates ? t('imp.doneDup', { d: n('n.duplicate', r.duplicates) }) : '') + (parsed.errors.length ? t('imp.doneInv', { i: n('n.invalidLine', parsed.errors.length) }) : '') + '.', r.added ? 'success' : 'info', 5000);
         return true;
       },
     });
