@@ -34,6 +34,18 @@ How a lesson works: one question at a time, a progress bar on top, a green/red f
 
 **Pronunciation:** a speaker button next to English words uses the browser's built-in Text-to-Speech (it prefers natural-sounding US/UK English voices). If the browser has no speech support the buttons are simply hidden and everything else keeps working. Optional setting: read English words aloud automatically.
 
+### Bulk Vocabulary Import (new)
+Open **My Vocabulary → Bulk add** (or the same button in *Word Lessons → My collections*). Paste 10, 20, 50, 100 or thousands of words at once; every line becomes its own vocabulary card.
+
+1. **Paste** (straight from Excel / Google Sheets / a text file) or open a `.csv`, `.tsv` or `.txt` file. Two formats:
+   - English only, one word or phrase per line (`look for`, `have a row with` stay in one piece), or
+   - English + translation separated by a **tab, `;`, `,`, `—`/`-`/`=` or `|`**. A header row, a `№` column and numbering such as `1.` are removed automatically. A third column becomes the example sentence. The separator is detected automatically and can be forced.
+2. **Check and edit** the table: every row shows *Ready*, *Missing translation*, *Missing English word*, *Too long*, *Repeats row N* or *Already saved as …*; rows with problems are highlighted. Edit any cell, add/delete rows, swap the two columns, tick which rows to save, 25/50/100 rows per page (lists up to 5000 rows stay fast).
+   **Duplicates are never removed automatically.** They stay in the table, unticked; tick one to replace the saved translation of an existing word. Two ticked rows with the same English word are blocked until you untick one.
+3. **Save** into a new collection (give it a name such as “Unit 5”) or an existing one. The result tells you how many words were saved, or that saving failed. The words then show up as their own collection in *My Vocabulary*, *Practice* and *Word Lessons* (*Practise these words* starts a lesson with only them).
+
+**English-only lists:** translations stay empty so you can type them. **Automatic AI translation is not available** (the app is offline and has no AI service), so there is no such button. Instead *Fill empty translations from my words and ready-made decks* looks words up in your own vocabulary and the 288 ready-made entries, and marks every filled cell “from library” so you can check it.
+
 ### Earlier features
 
 - **My Vocabulary** – add, edit, delete and search words; custom collections (A1, A2, B1, IELTS, Personal…); duplicate and empty-input protection.
@@ -67,11 +79,13 @@ js/
   ui.js                    Toasts, modals, icons
   app.js                   Router, theme, boot
   decks.js                 288 ready-made words (4 levels x 9 topics)
+  bulk-parse.js            Bulk import parser and row checks (pure logic)
+  locales-bulk.js          Translations for Bulk Import
   learn-engine.js          Spaced repetition, lesson building, exercises, XP, streak, level, achievements (pure logic)
   speech.js                Text-to-Speech pronunciation
   word-dialogs.js          Shared add/edit/delete dialogs for words and collections
   locales-learn.js         Translations for Word Lessons
-  views/                   dashboard, vocabulary, learn, practice, difficult, progress, settings
+  views/                   dashboard, vocabulary, learn, bulk, practice, difficult, progress, settings
 tests/                     Automated browser tests (Playwright)
 sample/
   sample-vocabulary.csv    60 words with collections (CSV)
@@ -150,7 +164,7 @@ There is **no server, account or login**, so everything is stored locally with I
 npm install --save-dev playwright
 npx playwright install chromium     # once
 node tests/core.test.js
-node tests/lessons.test.js          # ...and language / upgrade / storage-fallback
+node tests/lessons.test.js          # ...and bulk-parser / bulk / language / upgrade / storage-fallback
 ```
 
 ## Notes & limits

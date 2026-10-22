@@ -330,7 +330,7 @@ VL.views.bulk = (function () {
     let text;
     try { text = await f.text(); } catch (e) { err.textContent = t('imp.readFail'); return; }
     input.value = '';
-    if (text.includes('�')) VL.ui.toast(t('imp.garbled'), 'error', 5000);
+    if (text.includes('\uFFFD')) VL.ui.toast(t('imp.garbled'), 'error', 5000);
     root.querySelector('#bulk-text').value = text; S.text = text;
     await build(false);
   }

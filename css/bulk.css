@@ -56,3 +56,4 @@ input.sr-only:focus-visible + * , label.btn:focus-within { outline: 3px solid va
   .b-en { grid-area: en; } .b-uz { grid-area: uz; } .b-ex { grid-area: ex; }
   .bulk-table { border-radius: 12px; }
 }
+.bulk-toolbar .btn, .bulk-controls .btn { white-space: normal; text-align: left; max-width: 100%; }
