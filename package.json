@@ -8,7 +8,7 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --win portable",
-    "test": "node tests/answer-check.test.js && node tests/bulk-parser.test.js && node tests/lesson-engine.test.js && node tests/core.test.js && node tests/language.test.js && node tests/lessons.test.js && node tests/exercises.test.js && node tests/bulk.test.js && node tests/upgrade.test.js && node tests/storage-fallback.test.js && node tests/sessions.test.js && node tests/mixed.test.js"
+    "test": "node tests/answer-check.test.js && node tests/vocab-data.test.js && node tests/bulk-parser.test.js && node tests/lesson-engine.test.js && node tests/core.test.js && node tests/language.test.js && node tests/lessons.test.js && node tests/exercises.test.js && node tests/bulk.test.js && node tests/upgrade.test.js && node tests/storage-fallback.test.js && node tests/sessions.test.js && node tests/mixed.test.js && node tests/topics.test.js"
   },
   "devDependencies": {
     "electron": "^33.0.0",
