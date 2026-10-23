@@ -37,7 +37,7 @@ async function newPage(browser, opts, init) {
   return page;
 }
 const startGuided = async (page) => { await page.click('[data-action="start"][data-type="guided"]'); await page.waitForSelector('.lesson-card'); };
-const startType = async (page, type) => { await page.click('[data-action="start"][data-type="' + type + '"]'); await page.waitForSelector('.lesson-card'); };
+const startType = async (page, type) => { await page.evaluate((x) => VL.views.learn.startType(x), type); await page.waitForSelector('.lesson-card'); };
 const backToHub = async (page) => { await page.click('[data-action="hub"]'); await page.waitForSelector('.today'); };
 const items = (page) => page.evaluate(() => VL.store.state.lesson.items.map((i) => i.type));
 
