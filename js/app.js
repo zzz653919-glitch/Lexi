@@ -81,8 +81,21 @@
   VL.i18n.apply();
   applyTheme();
 
+  /* Splash screen: shown while the data loads, for at least ~900 ms so it does not flash. Skipped in automated
+     browsers (tests) and when the address has ?nosplash. */
+  const splash = document.getElementById('splash');
+  const skipSplash = navigator.webdriver || /nosplash/.test(location.search + location.hash);
+  const splashStart = Date.now();
+  function hideSplash() {
+    if (!splash) return;
+    const wait = skipSplash ? 0 : Math.max(0, 900 - (Date.now() - splashStart));
+    setTimeout(() => { splash.classList.add('hide'); setTimeout(() => splash.remove(), skipSplash ? 0 : 600); }, wait);
+  }
+  if (skipSplash && splash) splash.remove();
+
   VL.store.load().then(() => {
     if (!location.hash) history.replaceState(null, '', '#/dashboard');
     render();
-  }).catch(showFatal);
+    hideSplash();
+  }).catch((e) => { hideSplash(); showFatal(e); });
 })();

@@ -75,6 +75,24 @@ VL.answers = (function () {
     return out;
   };
 
+  /* "kuni yomon o'tmoq" (have a bad day): a typed "yomon kun" means the same. For phrases that end in a light verb
+     (o'tmoq, bo'lmoq, qilmoq, etmoq) the verb may be left out, a possessive -i on the first noun may be dropped,
+     and a two-word result may come in either order. Only whole words from the stored phrase are used. */
+  const LIGHT_VERBS = new Set(["o'tmoq", "bo'lmoq", 'qilmoq', 'etmoq']);
+  function phraseVariants(phrase) {
+    const out = new Set();
+    const w = phrase.split(' ');
+    if (w.length >= 3 && LIGHT_VERBS.has(w[w.length - 1])) {
+      const core = w.slice(0, -1);
+      out.add(core.join(' '));
+      const first = core[0];
+      const alt = first.length > 3 && first.endsWith('i') ? [first.slice(0, -1)].concat(core.slice(1)) : null;
+      if (alt) out.add(alt.join(' '));
+      [core, alt].forEach((c) => { if (c && c.length === 2) out.add([c[1], c[0]].join(' ')); });
+    }
+    return Array.from(out);
+  }
+
   const withoutParens = (s) => s.replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
 
   // "text | context" lines -> [{ text, context }]
@@ -98,6 +116,7 @@ VL.answers = (function () {
       const variants = new Set([base, norm(withoutParens(text), lenient)]);
       Array.from(variants).forEach((v) => verbForms(v).forEach((f) => variants.add(f)));
       Array.from(variants).forEach((v) => swapSynonyms(v).forEach((f) => variants.add(f)));
+      Array.from(variants).forEach((v) => phraseVariants(v).forEach((f) => variants.add(f)));
       variants.forEach((v) => { if (v && !keys.has(v)) keys.set(v, text); });
     });
     return keys;
