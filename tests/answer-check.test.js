@@ -57,6 +57,11 @@ syn('buy', 'sotib olmoq', 'xarid qilmoq', 'sotmoq');
 syn('quiet', 'tinch', 'sokin', 'shovqinli');
 ok(good('sotib olish', words.find((w) => w.en === 'buy')), 'multi-word verb: sotib olish');
 
+/* phrase with a light verb */
+const badDay = W('have a bad day', "kuni yomon o'tmoq");
+ok(good('yomon kun', badDay) && good("kuni yomon o‘tmoq", badDay) && good('kuni yomon', badDay), "kuni yomon o'tmoq = yomon kun");
+ok(v('yaxshi kun', badDay) === 'wrong' && v('kun', badDay) === 'wrong', 'a different phrase is still rejected');
+
 /* forms and meaning */
 const read = W('read', "o'qimoq");
 ok(good("o'qish", read), "read: o'qish accepted");
