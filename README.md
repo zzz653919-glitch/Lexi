@@ -154,12 +154,13 @@ electron/main.js           Windows desktop wrapper
 package.json               Electron scripts
 Start-Lexi.bat             Windows: open in browser
 Start-Lexi-Desktop.bat     Windows: run as desktop app
+Install-Lexi-to-Desktop.bat  Windows: creates a "Lexi.bat" launcher on your Desktop
 ```
 
 ## Running on Windows
 
 ### Option A — in the browser (no install)
-Double-click **`Start-Lexi.bat`** (or just open `index.html`). Works in Chrome, Edge and Firefox.
+Double-click **`Start-Lexi.bat`** (or just open `index.html`). To get a launcher on your Desktop, double-click **`Install-Lexi-to-Desktop.bat`** once (keep the Lexi folder where it is). Works in Chrome, Edge and Firefox.
 > Your words are saved per browser. Always open Lexi in the same browser to see the same data. Use *Settings → Backup everything* to move data between browsers.
 
 ### Option B — desktop app (Electron)
