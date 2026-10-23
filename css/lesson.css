@@ -109,3 +109,6 @@
 .mix-steps li svg { width: 1rem; height: 1rem; flex: none; }
 .mix-side { display: grid; gap: .75rem; flex: 0 1 240px; min-width: 0; width: 100%; max-width: 280px; }
 @media (max-width: 640px) { .mix-side { max-width: none; } }
+
+.study-go { margin-top: 1rem; }
+.study-hint { margin-top: 1rem; }

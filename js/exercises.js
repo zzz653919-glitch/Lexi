@@ -264,6 +264,29 @@ VL.exercises = (function () {
   };
   C.type = C.translate = C.reverse = C.wordType;
 
+  /* "study" card of the mixed exercise: the word with its translation(s) and example, shown BEFORE the six
+     exercises of that word. It is not an exercise: nothing is graded and it is not counted. */
+  C.study = {
+    selfChecked: true,
+    hideActions: true,
+    render({ word: w, item }) {
+      const posKey = w.pos ? 'pos.' + w.pos : '';
+      return '<span class="chip chip-new-word">' + icon('star') + esc(t('mx.studyChip', { i: (item.mixWord || 0) + 1 })) + '</span>' +
+        '<p class="q-word" lang="en">' + esc(w.en) + sayBtn(w.en, true) + '</p>' +
+        (w.phonetic ? '<p class="phonetic">' + esc(w.phonetic) + '</p>' : '') +
+        '<p class="intro-uz" lang="uz">' + esc(w.uz) + '</p>' +
+        '<div class="tp-chips">' + (posKey ? '<span class="chip">' + esc(t(posKey)) + '</span>' : '') + (w.level ? '<span class="chip">' + esc(w.level) + '</span>' : '') + '</div>' +
+        (w.example ? '<p class="lesson-example"><b>' + esc(t('les.example')) + ':</b> <span lang="en">' + esc(w.example) + '</span>' + sayBtn(w.example) + (w.exUz ? '<br><span class="muted" lang="uz">' + esc(w.exUz) + '</span>' : '') + '</p>' : '') +
+        (w.sense ? '<p class="muted small">' + esc(w.sense) + '</p>' : '') +
+        '<p class="muted small study-hint">' + esc(t('mx.studyHint')) + '</p>' +
+        '<button type="button" class="btn btn-primary btn-lg study-go" data-study-go>' + esc(t('mx.begin')) + icon('arrow') + '</button>';
+    },
+    mount(root, ctx, api) { const b = root.querySelector('[data-study-go]'); b.addEventListener('click', () => api.finish({ neutral: true, skipped: true, lines: [] })); b.focus(); },
+    collect: () => null,
+    speakText: (ctx) => ctx.word.en,
+    evaluate: () => ({ neutral: true, skipped: true, lines: [] }),
+  };
+
   // missing letters:  B _ _ k
   C.fill = {
     render({ item, word: w }) {
@@ -464,7 +487,7 @@ VL.exercises = (function () {
   };
 
   // the item type -> component
-  const BY_TYPE = { learn: C.learn, intro: C.learn, choose: C.choose, type: C.wordType, translate: C.wordType, reverse: C.wordType, fill: C.fill, scramble: C.scramble,
+  const BY_TYPE = { study: C.study, learn: C.learn, intro: C.learn, choose: C.choose, type: C.wordType, translate: C.wordType, reverse: C.wordType, fill: C.fill, scramble: C.scramble,
     listen: C.listen, sentEnUz: C.sentence, sentUzEn: C.sentence, order: C.order, cloze: C.cloze, match: C.match };
 
   return { components: C, forItem: (item) => BY_TYPE[item.type] || null, TileBoard };

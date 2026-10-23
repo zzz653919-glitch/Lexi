@@ -31,7 +31,9 @@ const ORDER = ['choose', 'type', 'translate', 'fill', 'match', 'reverse'];
 
   // ---------- plan ----------
   await btn.click(); await page.waitForSelector('.lesson');
-  const plan = await page.evaluate(() => VL.store.state.lesson.items.map((i) => ({ t: i.type, w: i.wordIds[0], d: i.dir, f: i.focusId || null, p: i.prompt || null })));
+  const full = await page.evaluate(() => VL.store.state.lesson.items.map((i) => ({ t: i.type, w: i.wordIds[0], d: i.dir, f: i.focusId || null, p: i.prompt || null })));
+  assert(full.length === 35 && full.filter((x, i) => x.t === 'study' && i % 7 === 0).length === 5, 'a translation card comes first for each of the 5 words (35 steps)');
+  const plan = full.filter((x) => x.t !== 'study');
   assert(plan.length === 30, '5 words × 6 = 30 exercises (' + plan.length + ')');
   let orderOk = true, dirOk = true;
   for (let w = 0; w < 5; w++) {
@@ -42,7 +44,10 @@ const ORDER = ['choose', 'type', 'translate', 'fill', 'match', 'reverse'];
   }
   assert(orderOk && dirOk, 'each word: choose → type → translate → fill → match → reverse, finished before the next word');
   assert(new Set(plan.filter((c) => c.t !== 'match').map((c) => c.w)).size === 5, 'five different words');
-  assert((await page.locator('#lstep').innerText()).trim() === '1 / 30', 'progress shows 1 / 30');
+  assert((await page.locator('.study-go').count()) === 1 && (await page.locator('.q-word').innerText()).length > 0 && (await page.locator('.intro-uz').innerText()).length > 0, 'the first screen shows the first word with its translation');
+  assert((await page.locator('#lstep').innerText()).trim() === '0 / 30', 'progress is 0 / 30 on the translation card');
+  await page.click('[data-study-go]'); await page.waitForSelector('.option');
+  assert((await page.locator('#lstep').innerText()).trim() === '1 / 30', 'after the card the first exercise (choose) is 1 / 30');
 
   // ---------- play 8, leave, reload, resume ----------
   const part = await playLesson(page, { wrongEvery: 0, stopAfter: 8, maxSteps: 40 });
@@ -52,7 +57,7 @@ const ORDER = ['choose', 'type', 'translate', 'fill', 'match', 'reverse'];
   await page.click('[data-action="resume"]'); await page.waitForSelector('.lesson');
   assert((await page.locator('#lstep').innerText()).trim() === '9 / 30', 'after reload the progress is kept: 9 / 30');
   const state = await page.evaluate(() => ({ a: VL.store.state.lesson.answers, n: VL.store.state.lesson.items.length }));
-  assert(state.a === 8 && state.n === 30, 'saved state: 8 answers, 30 items');
+  assert(state.a === 8 && state.n === 35, 'saved state: 8 answers, 35 steps (30 exercises + 5 translation cards)');
 
   // ---------- finish with some mistakes ----------
   const rest = await playLesson(page, { wrongEvery: 5, maxSteps: 80 });
@@ -81,14 +86,14 @@ const ORDER = ['choose', 'type', 'translate', 'fill', 'match', 'reverse'];
   await playLesson(page, { wrongEvery: 0, maxSteps: 80 });
   await page.waitForSelector('.summary');
   await page.click('[data-action="mx-restart"]'); await page.waitForSelector('.lesson');
-  assert((await page.evaluate(() => VL.store.state.lesson.items.length)) === 30, 'restart: new 30-exercise run with the same words');
+  assert((await page.evaluate(() => VL.store.state.lesson.items.filter((i) => i.type !== 'study').length)) === 30, 'restart: new 30-exercise run with the same words');
   await page.evaluate(() => VL.store.saveLesson(null));
 
   // ---------- the lose example ----------
   const lose = await page.evaluate(() => {
     const w = VL.store.state.words.find((x) => x.en === 'lose');
     const b = VL.learn.buildMixed({ words: [w] }, VL.store.state.words);
-    return b.items.map((i) => i.type + ':' + i.dir + ':' + (i.prompt || ''));
+    return b.items.filter((i) => i.type !== 'study').map((i) => i.type + ':' + i.dir + ':' + (i.prompt || ''));
   });
   assert(lose.length === 6 && lose[0].startsWith('choose') && lose[1].startsWith('type:en-uz') && lose[2].startsWith('translate:uz-en') && lose[5].startsWith('reverse:uz-en:Yo\'qotish'), 'lose: ' + lose.join(' | '));
 

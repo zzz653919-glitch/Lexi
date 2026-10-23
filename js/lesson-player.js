@@ -77,11 +77,18 @@ VL.player = (function () {
   }
 
   /* ---------- rendering one exercise ---------- */
+  // study cards are not exercises: they are left out of the "4 / 12" counter
+  function progressNumbers() {
+    const exercises = L.items.filter((i) => i.type !== 'study');
+    const done = L.items.slice(0, L.index).filter((i) => i.type !== 'study').length;
+    const cur2 = L.items[L.index];
+    return { total: exercises.length, done, shown: Math.min(done + (cur2 && cur2.type === 'study' ? 0 : 1), exercises.length) };
+  }
   function topBar() {
-    const total = L.items.length;
+    const pn = progressNumbers(), total = pn.total;
     return '<div class="lesson-top"><button type="button" class="icon-btn" data-action="pause" aria-label="' + esc(t('les.pauseAria')) + '">' + icon('x') + '</button>' +
-      '<div class="lesson-bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + total + '" aria-valuenow="' + L.index + '" aria-label="' + esc(t('les.progressAria')) + '"><span id="lbar" style="width:' + pct(L.index, total) + '%"></span></div>' +
-      '<span class="lesson-step" id="lstep" aria-label="' + esc(t('lesson.stepAria', { i: Math.min(L.index + 1, total), n: total })) + '">' + Math.min(L.index + 1, total) + ' / ' + total + '</span>' +
+      '<div class="lesson-bar" role="progressbar" aria-valuemin="0" aria-valuemax="' + total + '" aria-valuenow="' + pn.done + '" aria-label="' + esc(t('les.progressAria')) + '"><span id="lbar" style="width:' + pct(pn.done, total) + '%"></span></div>' +
+      '<span class="lesson-step" id="lstep" aria-label="' + esc(t('lesson.stepAria', { i: pn.shown, n: total })) + '">' + pn.shown + ' / ' + total + '</span>' +
       '<span class="combo' + (L.combo >= 2 ? ' on' : '') + '" id="lcombo">' + (L.combo >= 2 ? icon('flame') + esc(t('les.combo', { n: L.combo })) : '') + '</span></div>';
   }
 
@@ -101,7 +108,7 @@ VL.player = (function () {
     root.innerHTML = '<div class="lesson">' + topBar() + '<section class="lesson-card" id="lcard">' + comp.render(ctx) + '</section>' +
       '<div class="lesson-bottom"><div id="lfeedback" class="lesson-feedback" hidden aria-live="assertive"></div>' +
       '<div class="lesson-actions-bar" id="lactions">' +
-      (comp.selfChecked ? '<span class="muted small">' + esc(t('match.hint')) + '</span>' : '<button type="button" class="btn btn-ghost" data-action="skip">' + esc(t('btn.dontKnow')) + '</button><button type="button" class="btn btn-primary btn-lg" data-action="check" disabled>' + esc(t('btn.checkShort')) + '</button>') +
+      (comp.hideActions ? '' : comp.selfChecked ? '<span class="muted small">' + esc(t('match.hint')) + '</span>' : '<button type="button" class="btn btn-ghost" data-action="skip">' + esc(t('btn.dontKnow')) + '</button><button type="button" class="btn btn-primary btn-lg" data-action="check" disabled>' + esc(t('btn.checkShort')) + '</button>') +
       '</div></div></div>';
     const card = root.querySelector('#lcard');
     const api = {
@@ -133,6 +140,12 @@ VL.player = (function () {
     if (!cur || cur.answered) return;
     cur.answered = true;
     cur.blockUntil = Date.now() + GUARD_MS;
+    if (cur.item.type === 'study') {          // an information card: no feedback panel, straight to the next step
+      neutral();
+      L.index++;
+      if (L.index >= L.items.length) finish(true); else renderItem();
+      return;
+    }
     const card = root.querySelector('#lcard');
     if (cur.comp.reveal) cur.comp.reveal(card, cur.ctx, res);
     const g = res.neutral ? neutral() : (cur.item.type === 'match' ? gradeMatch(res) : grade(res));
@@ -383,7 +396,7 @@ VL.player = (function () {
     const tag = e.target.tagName;
     if (tag === 'BUTTON' || tag === 'A' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'INPUT') return;
     e.preventDefault();
-    if (cur.answered) next(); else if (cur.ready) check();
+    if (cur.answered) next(); else if (cur.item.type === 'study') finalize({ neutral: true, skipped: true, lines: [] }); else if (cur.ready) check();
   }
 
   return { start, resume, active, exit, detach };

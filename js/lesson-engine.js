@@ -372,6 +372,7 @@
         match: () => (group.length >= 2 ? Object.assign(mk.match(group), { focusId: w.id }) : null),
         reverse: () => { const it = Object.assign(mk.wordType('reverse', w), { dir: 'uz-en' }); const v = VL.answers && VL.answers.promptVariant(w); if (v) it.prompt = v; return it; },
       };
+      items.push(Object.assign(base('study', { wordIds: [w.id] }), { mixStep: 0, mixWord: i }));
       MIX_STEPS.forEach((k, step) => {
         // a step that cannot be built (e.g. a one-letter word has nothing to fill) becomes a typed translation, so every word keeps six exercises
         const it = steps[k]() || Object.assign(mk.wordType('type', w), { dir: step % 2 ? 'uz-en' : 'en-uz' });

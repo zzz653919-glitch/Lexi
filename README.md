@@ -58,7 +58,7 @@ How the lesson is put together: new words are introduced first (“learn”), th
 
 ### Mixed exercise
 
-The six single-type cards were merged into one button, *Aralash mashqni boshlash*: for each word in turn — choose the translation → type the answer → translate the word → fill in the letters → match pairs → reverse (Uzbek → English). N words give N × 6 exercises (matching counts as one exercise). Mistakes are not repeated inside the run; the results page lists the difficult words and offers *Review the mistakes*, *Create a new session* and *Restart*.
+The six single-type cards were merged into one button, *Aralash mashqni boshlash*: for each word in turn, a **translation card** comes first (word, translation, level, example with its translation, audio; it is not an exercise and is not counted), then — choose the translation → type the answer → translate the word → fill in the letters → match pairs → reverse (Uzbek → English). N words give N × 6 exercises (matching counts as one exercise). Mistakes are not repeated inside the run; the results page lists the difficult words and offers *Review the mistakes*, *Create a new session* and *Restart*.
 
 ### Smarter translation checking and custom sessions
 

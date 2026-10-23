@@ -95,7 +95,7 @@ const wait = (p, ms) => p.waitForTimeout(ms || 200);
   for (let i = 0; i < 4; i++) await page.locator('.tp-word').nth(i).locator('[data-action="tp-pick"]').check();
   assert((await page.locator('[data-action="tp-start-sel"]').isEnabled()), 'practise-selected is enabled');
   await page.click('[data-action="tp-start-sel"]'); await page.waitForSelector('.lesson');
-  const plan = await page.evaluate(() => VL.store.state.lesson.items.map((i) => i.type));
+  const plan = await page.evaluate(() => VL.store.state.lesson.items.map((i) => i.type).filter((x) => x !== 'study'));
   assert(plan.length === 24 && plan.slice(0, 6).join() === 'choose,type,translate,fill,match,reverse', '4 selected words × 6 = 24 exercises, in the fixed order');
   const r = await playLesson(page, { wrongEvery: 6, maxSteps: 40 });
   await page.waitForSelector('.summary');
@@ -105,7 +105,7 @@ const wait = (p, ms) => p.waitForTimeout(ms || 200);
   // ---------- start learning (whole topic) and a session from it ----------
   await page.goto(APP + '#/topics'); await page.waitForSelector('.tp-card');
   await page.locator('.tp-card[data-topic="t003"] [data-action="tp-start"]').click(); await page.waitForSelector('.lesson');
-  const n10 = await page.evaluate(() => VL.store.state.lesson.items.length);
+  const n10 = await page.evaluate(() => VL.store.state.lesson.items.filter((i) => i.type !== 'study').length);
   assert(n10 === 60, 'start learning: 10 words × 6 = 60 exercises (' + n10 + ')');
   assert((await page.evaluate(() => VL.store.state.collections.some((c) => c.deckKey === 'topic.t003' || c.deckKey === 'A.t003'))) || true, 'topic words installed');
   await page.evaluate(() => VL.store.saveLesson(null));
