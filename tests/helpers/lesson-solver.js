@@ -29,20 +29,12 @@ async function clickChipByText(page, zone, text, used) {
   return false;
 }
 
-/* opts: { wrongEvery, stopAfter, maxSteps } -> { seen, answered, wrongs, mismatches, steps } */
-async function playLesson(page, opts) {
-  const o = Object.assign({ wrongEvery: 0, stopAfter: 0, maxSteps: 60 }, opts);
-  const seen = {}, mismatches = [];
-  let answered = 0, wrongs = 0, steps = 0;
-  while (steps++ < o.maxSteps) {
-    await wait(page, 260);
-    if (await page.locator('.summary').count()) break;
-    if (o.stopAfter && answered >= o.stopAfter) return { seen, answered, wrongs, mismatches, stopped: true };
-    if (!(await page.locator('.lesson-card').count())) break;
-    const d = await readItem(page);
-    const it = d.it;
-    seen[it.type] = (seen[it.type] || 0) + 1;
-    const wrong = !!o.wrongEvery && it.type !== 'learn' && (answered + 1) % o.wrongEvery === 0;
+/* Answers the exercise on screen (rightly, or wrongly when `wrong` is true) and checks the verdict.
+   Leaves the result panel open. -> { type, wrongAccepted..., mismatches: [], pairs } */
+async function solveCurrent(page, wrong) {
+  const mismatches = [];
+  const d = await readItem(page);
+  const it = d.it;
     const checkBtn = page.locator('[data-action="check"]');
 
     if (it.type === 'match') {
@@ -97,12 +89,44 @@ async function playLesson(page, opts) {
     if (it.type === 'match') { /* feedback is always the "all pairs matched" panel */ }
     else if (wrong && gotOk) mismatches.push(it.type + ': a wrong answer was accepted');
     else if (!wrong && !gotOk) mismatches.push(it.type + ': a correct answer was rejected');
+  return { type: it.type, pairs: it.type === 'match' ? it.pairs.length : 1, mismatches };
+}
+
+/* opts: { wrongEvery, stopAfter, maxSteps } -> { seen, answered, wrongs, mismatches, steps, extraPairs } */
+async function playLesson(page, opts) {
+  const o = Object.assign({ wrongEvery: 0, stopAfter: 0, maxSteps: 60 }, opts);
+  const seen = {}, mismatches = [];
+  let answered = 0, wrongs = 0, steps = 0, extraPairs = 0;
+  while (steps++ < o.maxSteps) {
+    await wait(page, 260);
+    if (await page.locator('.summary').count()) break;
+    if (o.stopAfter && answered >= o.stopAfter) return { seen, answered, wrongs, mismatches, stopped: true, extraPairs };
+    if (!(await page.locator('.lesson-card').count())) break;
+    const cur = await readItem(page);
+    const wrong = !!o.wrongEvery && cur.it.type !== 'learn' && cur.it.type !== 'intro' && (answered + 1) % o.wrongEvery === 0;
+    seen[cur.it.type] = (seen[cur.it.type] || 0) + 1;
+    const r = await solveCurrent(page, wrong);
+    mismatches.push(...r.mismatches);
+    if (r.type === 'match') extraPairs += r.pairs - 1;
     if (wrong) wrongs++;
     answered++;
     await wait(page, 300);
     await page.click('#btn-next');
   }
-  return { seen, answered, wrongs, mismatches, steps };
+  return { seen, answered, wrongs, mismatches, steps, extraPairs };
 }
 
-module.exports = { playLesson, readItem, wait };
+/* Solves exercises (correctly) until the one on screen is of the wanted type. */
+async function advanceTo(page, type) {
+  for (let i = 0; i < 12; i++) {
+    const d = await readItem(page);
+    if (d.it.type === type) return d;
+    await solveCurrent(page, false);
+    await wait(page, 300);
+    await page.click('#btn-next');
+    await wait(page, 260);
+  }
+  throw new Error('exercise type ' + type + ' not reached');
+}
+
+module.exports = { playLesson, solveCurrent, advanceTo, readItem, wait };

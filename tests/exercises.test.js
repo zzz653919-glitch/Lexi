@@ -4,7 +4,7 @@ const os = require('os');
 const { pathToFileURL } = require('url');
 let playwright;
 try { playwright = require('playwright'); } catch (e) { playwright = require(require('child_process').execSync('npm root -g').toString().trim() + '/playwright'); }
-const { playLesson, readItem, wait } = require('./helpers/lesson-solver');
+const { playLesson, advanceTo, readItem, wait } = require('./helpers/lesson-solver');
 const APP = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 const OUT = os.tmpdir();
 const assert = (c, m) => { if (!c) { console.error('FAIL:', m); process.exitCode = 1; } else console.log('ok  -', m); };
@@ -86,7 +86,7 @@ const items = (page) => page.evaluate(() => VL.store.state.lesson.items.map((i) 
   assert(missingKinds.length === 0, 'the lesson used learn, choose, scramble, cloze, both translations, word order, matching and listening (missing: ' + (missingKinds.join(',') || 'none') + ')');
   assert(r1.answered > total0 - 1, 'mistakes were repeated: ' + r1.answered + ' exercises answered for a lesson that started with ' + total0);
   const res = await page.evaluate(() => { const s = VL.store.state.sessions.filter((x) => x.kind === 'lesson').pop(); return s; });
-  assert(res.total === r1.answered && res.wrong >= r1.wrongs - 1, 'the saved session matches what was answered (' + res.correct + '/' + res.total + ')');
+  assert(res.total === r1.answered + r1.extraPairs && res.wrong >= r1.wrongs - 1, 'the saved session matches what was answered (' + res.correct + '/' + res.total + ')');
   for (const label of ['Exercises', 'Correct', 'Wrong', 'Accuracy', 'XP earned', 'Well learned words', 'Words to review']) assert(S.includes(label), 'results page shows "' + label + '"');
   assert((await page.locator('[data-action="review-mistakes"]').count()) === 1 && (await page.locator('[data-action="next-lesson"]').count()) === 1 && (await page.locator('[data-action="hub"]').count()) === 1, 'results page has Review mistakes, Next lesson and Back to the lesson list');
   const xpShown = Number((await page.locator('.xp-total').innerText()).replace('+', ''));
@@ -181,11 +181,12 @@ const items = (page) => page.evaluate(() => VL.store.state.lesson.items.map((i) 
 
   /* ----- choose: A) B) C) D), shuffled, explanation ----- */
   await startType(page, 'choose');
+  await advanceTo(page, 'choose');   // the single-type lesson first explains new words
   const labels = await page.locator('.option kbd').allInnerTexts();
   assert(labels.join('') === 'ABCD', 'choose: four options labelled A, B, C, D');
   const posSeen = new Set();
   for (let i = 0; i < 6; i++) {
-    const d = await readItem(page);
+    const d = await advanceTo(page, 'choose');
     posSeen.add(d.it.options.findIndex((o) => o.correct));
     const right = d.it.options.findIndex((o) => o.correct);
     await page.click('.option[data-index="' + right + '"]');
