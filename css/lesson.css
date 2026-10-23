@@ -81,3 +81,19 @@
   .tb-answer { min-height: 68px; padding: 10px; }
   .listen-btn { min-width: 76px; height: 76px; }
 }
+
+.more-opts { margin: .25rem 0 .75rem; }
+.more-opts > summary { cursor: pointer; font-weight: 600; padding: .4rem 0; }
+.more-opts textarea { width: 100%; }
+
+/* custom sessions */
+.new-session { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .75rem; }
+.cs-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: 1rem; }
+.cs-card h3 { margin: 0; overflow-wrap: anywhere; }
+.cs-head { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; justify-content: space-between; }
+.cs-runs { list-style: none; margin: .5rem 0 0; padding: 0; font-size: .875rem; color: var(--muted); }
+.cs-runs li { padding: .2rem 0; border-top: 1px solid var(--border); }
+.cs-form .cs-radios, .cs-form .cs-types { display: grid; gap: .25rem; }
+.cs-form .is-off { opacity: .55; }
+.cs-pick { max-height: 11rem; overflow: auto; border: 1px solid var(--border); border-radius: 10px; padding: .5rem; margin-top: .5rem; display: grid; gap: .25rem; }
+.cs-form textarea { width: 100%; }

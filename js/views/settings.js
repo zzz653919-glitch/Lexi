@@ -21,6 +21,7 @@ VL.views.settings = (function () {
       '<div class="field"><label for="set-len">' + esc(t('set.defLen')) + '</label><select id="set-len">' +
       [['all', t('len.all')], ['10', t('len.n', { n: 10 })], ['20', t('len.n', { n: 20 })], ['50', t('len.n', { n: 50 })]].map((o) => '<option value="' + o[0] + '"' + (String(s.length) === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') + '</select></div>' +
       '<label class="check"><input type="checkbox" id="set-lenient"' + (s.lenient ? ' checked' : '') + '><span>' + esc(t('set.lenient')) + '</span></label>' +
+      '<fieldset class="field"><legend>' + esc(t('set.typo')) + '</legend><div class="segmented">' + radio('typoMode', 'careful', s.typoMode, t('set.typoCareful')) + radio('typoMode', 'strict', s.typoMode, t('set.typoStrict')) + '</div><p class="hint">' + esc(t('set.typoHint')) + '</p></fieldset>' +
       '<label class="check"><input type="checkbox" id="set-auto"' + (s.autoAdvance ? ' checked' : '') + '><span>' + esc(t('set.auto')) + '</span></label>' +
       '<p class="hint">' + esc(t('set.caseHint')) + '</p></section>' +
       '<section class="card settings-group"><h2 class="card-title">' + esc(t('set.learn')) + '</h2>' +
@@ -67,6 +68,7 @@ VL.views.settings = (function () {
     if (el.name === 'theme') VL.theme.set(el.value);
     else if (el.name === 'lang') VL.i18n.set(el.value);
     else if (el.name === 'direction') VL.store.setSetting('direction', el.value);
+    else if (el.name === 'typoMode') VL.store.setSetting('typoMode', el.value);
     else if (el.id === 'set-len') VL.store.setSetting('length', el.value);
     else if (el.id === 'set-lenient') VL.store.setSetting('lenient', el.checked);
     else if (el.id === 'set-auto') VL.store.setSetting('autoAdvance', el.checked);

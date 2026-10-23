@@ -12,7 +12,7 @@ VL.views.learn = (function () {
     sentEnUz: { icon: 'book', color: 'teal' }, sentUzEn: { icon: 'refresh', color: 'violet' }, order: { icon: 'list', color: 'green' }, cloze: { icon: 'type', color: 'pink' },
   };
   const SINGLE_TYPES = ['choose', 'scramble', 'listen', 'type', 'translate', 'reverse', 'fill', 'match', 'sentEnUz', 'sentUzEn', 'order', 'cloze', 'review'];
-  const TABS = ['practice', 'collections', 'decks', 'words', 'achievements'];
+  const TABS = ['practice', 'sessions', 'collections', 'decks', 'words', 'achievements'];
 
   let root, off;
   let tab = 'practice';
@@ -62,7 +62,7 @@ VL.views.learn = (function () {
   function drawTab() {
     const host = root.querySelector('#tab-body');
     if (!host) return;
-    host.innerHTML = ({ practice: tabPractice, collections: tabCollections, decks: tabDecks, words: tabWords, achievements: tabAchievements })[tab]();
+    host.innerHTML = ({ practice: tabPractice, sessions: VL.custom.tabHtml, collections: tabCollections, decks: tabDecks, words: tabWords, achievements: tabAchievements })[tab]();
   }
 
   /* ----- tab: exercises ----- */
@@ -96,6 +96,7 @@ VL.views.learn = (function () {
       '<div class="today-side"><div class="field"><label for="lesson-length">' + esc(t('lesson.length')) + '</label><select id="lesson-length">' +
       E.GUIDED_LENGTHS.map((v) => '<option value="' + v + '"' + (v === length ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></div>' +
       '<button class="btn btn-primary btn-xl" data-action="start" data-type="guided"' + (pool.length ? '' : ' disabled') + '>' + icon('play') + esc(t('lesson.start')) + '</button></div></section>';
+    html += '<section class="card new-session"><div><h2 class="card-title">' + esc(t('cs.new')) + '</h2><p class="muted">' + esc(t('cs.teaser')) + '</p></div><div class="btn-row"><button class="btn btn-primary" data-action="cs-new">' + icon('plus') + esc(t('cs.new')) + '</button><button class="btn" data-tab="sessions">' + esc(t('tab.sessions')) + '</button></div></section>';
     html += '<section class="card source"><div class="source-main"><h2 class="card-title">' + esc(t('src.title')) + '</h2>' +
       '<p><b>' + esc(ids.length ? t('src.some', { n: ids.length }) : t('src.all')) + '</b> · ' + esc(n('n.word', pool.length)) + '</p>' +
       '<p class="hint">' + esc(t('src.hint')) + '</p></div>' +
@@ -255,6 +256,7 @@ VL.views.learn = (function () {
     if (tabBtn) { tab = tabBtn.dataset.tab; drawHub(); return; }
     const a = e.target.closest('[data-action]');
     if (!a) return;
+    if (a.dataset.action.startsWith('cs-')) { await VL.custom.onAction(a.dataset.action, a, root, { onExit: drawHub }, drawHub); return; }
     const card = a.closest('[data-col]');
     const colId = card ? card.dataset.col : null;
     const row = a.closest('li[data-id]');

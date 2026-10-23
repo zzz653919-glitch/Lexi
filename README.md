@@ -44,7 +44,28 @@ How the lesson is put together: new words are introduced first (“learn”), th
 
 **Pronunciation:** a speaker button next to English words uses the browser's built-in Text-to-Speech (it prefers natural-sounding US/UK English voices). If the browser has no speech support the buttons are simply hidden and everything else keeps working. Optional setting: read English words aloud automatically.
 
-### Bulk Vocabulary Import (new)
+### Smarter translation checking and custom sessions (new)
+
+**Answer checking** (`js/answer-check.js`, a separate module with no UI; used by every typed translation exercise and by the Practice page):
+
+- Capital letters, extra spaces, simple punctuation and apostrophe styles (`o'` `oʻ` `o‘` `o’`) never matter.
+- An Uzbek verb is accepted in both common forms: `yo'qotmoq` = `yo'qotish`, `boshlamoq` = `boshlash`, `yordam bermoq` = `yordam berish`, `ta'mirlamoq` = `ta'mirlash`.
+- Every stored translation is accepted: several in the main field (separated by `;`) and extra ones in *Add word → More options → Additional translations* (`tez` + `tezkor`).
+- A translation can be limited to a context (`boy bermoq | o'yinda`). It is accepted only when the exercise has that context; otherwise the app says it is right only in that context.
+- Uzbek → English also accepts another word of your vocabulary with the same translation (`uy` → `home` or `house`).
+- Spelling: a different word is never accepted just because the letters are similar (`yo'q` for `yo'qotmoq` is wrong). In *Careful* mode (Settings) one slip is accepted only in long answers (9+ letters), only when the typed text is not another known word, and the app says "check the spelling". *Strict* mode accepts none.
+- Each word can also store the meaning in context and the part of speech (optional).
+- No AI is used and none is claimed. The rules are deterministic and local; `node tests/answer-check.test.js` shows them in examples.
+
+**Custom sessions** (`js/custom-sessions.js`, `js/topics.js`): *Word Lessons → Sessions → Create a new session* (also on the Exercises tab and on the results page).
+
+- Name, topic (11 ready topics or your own text), words (all words of the topic / specific words / words you type / a saved collection / words you got wrong), 5/10/15/20/all exercises, any of seven exercise types (none chosen = default mix).
+- With few words, words are reused with different exercise types and never twice in a row; with many words nothing repeats.
+- Each session keeps its words and a history of runs (result, percent, date); it can be restarted, renamed and deleted. Words answered wrongly are remembered for later sessions ("Words I got wrong"). A paused run survives a page reload.
+- Results page: total / correct / wrong / percent, learned words, mistaken words and the buttons *Faqat xatolarni qayta ishlash*, *Sessiyani qayta boshlash*, *Yangi sessiya yaratish*.
+- The topic word lists are short and unreviewed (like the ready-made decks). Typed words need a translation; the app never invents one.
+
+### Bulk Vocabulary Import
 Open **My Vocabulary → Bulk add** (or the same button in *Word Lessons → My collections*). Paste 10, 20, 50, 100 or thousands of words at once; every line becomes its own vocabulary card.
 
 1. **Paste** (straight from Excel / Google Sheets / a text file) or open a `.csv`, `.tsv` or `.txt` file. Two formats:
@@ -89,6 +110,10 @@ js/
   ui.js                    Toasts, modals, icons
   app.js                   Router, theme, boot
   decks.js                 288 ready-made words (4 levels x 9 topics)
+  answer-check.js          Translation checking: forms, synonyms, context, careful spelling (pure logic)
+  topics.js                Topics for custom sessions
+  custom-sessions.js       Custom sessions: creation window, Sessions tab, history
+  locales-sessions.js      Translations for custom sessions
   bulk-parse.js            Bulk import parser and row checks (pure logic)
   locales-bulk.js          Translations for Bulk Import
   learn-engine.js          Spaced repetition, word exercises, XP, streak, level, achievements (pure logic)
@@ -179,6 +204,8 @@ There is **no server, account or login**, so everything is stored locally with I
 npm install --save-dev playwright
 npx playwright install chromium     # once
 node tests/core.test.js
+node tests/answer-check.test.js     # pure logic, no browser
+node tests/sessions.test.js         # custom sessions + typed-answer checking in the real exercise
 node tests/lessons.test.js          # ...and lesson-engine / exercises / bulk-parser / bulk / language / upgrade / storage-fallback
 ```
 

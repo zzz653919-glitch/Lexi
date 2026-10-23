@@ -237,18 +237,28 @@ VL.exercises = (function () {
     evaluate(answer, { item, word: w }, opts) {
       const expected = E.expectedFor(item, w);
       const give = !answer || (opts && opts.skipped);
-      const r = give ? { correct: false, closeCall: false } : E.checkTyped(answer, expected, lenient());
+      const r = give ? { verdict: 'empty' } : VL.answers.checkWord(answer, w, { dir: item.dir, prompt: E.promptFor(item, w), lenient: lenient(), context: item.context || '' });
+      const ok = r.verdict === 'correct' || r.verdict === 'typo';
       const speak = item.dir === 'uz-en' ? sayBtn(w.en) : '';
       const lines = [];
-      if (r.correct) { if (VL.quiz.acceptedAnswers(expected).length > 1) lines.push(esc(t('fb.allAccepted', { a: expected }))); if (speak) lines.push(esc(w.en) + speak); }
-      else {
-        if (r.closeCall) lines.push(esc(t('fb.close')));
-        lines.push(esc(t('fb.rightIs', { a: expected })) + speak);
+      const info = item.dir === 'en-uz' ? VL.answers.describe(w, item.context) : null;
+      if (ok) {
+        if (r.verdict === 'typo') lines.push(esc(t('fb.typo', { a: r.matched })));
+        else if (info && info.others.length) lines.push(esc(t('fb.alsoOk', { a: [info.main].concat(info.others).join(' / ') })));
+        else if (!info && VL.quiz.acceptedAnswers(expected).length > 1) lines.push(esc(t('fb.allAccepted', { a: expected })));
+        if (r.synonymOf) lines.push(esc(t('fb.synonym', { a: w.en, b: r.matched })));
+        if (speak) lines.push(esc(w.en) + speak);
+      } else {
+        if (r.verdict === 'close') lines.push(esc(t('fb.close')));
+        if (r.verdict === 'contextOnly') lines.push(esc(t('fb.contextOnly', { a: r.matched, c: r.context })));
+        if (r.verdict === 'generalOnly') lines.push(esc(t('fb.generalOnly', { a: r.matched })));
+        lines.push(esc(t('fb.rightIs', { a: info ? info.main : expected })) + speak);
+        if (info && info.others.length) lines.push(esc(t('fb.alsoOk', { a: info.others.join(' / ') })));
         if (!give) lines.push(esc(t('fb.youTyped', { x: answer })));
         lines.push(meaning(w));
       }
       if (w.example) lines.push(exampleLine(w));
-      return { correct: r.correct, skipped: give, lines, typed: answer };
+      return { correct: ok, typo: r.verdict === 'typo', skipped: give, lines, typed: answer };
     },
     reveal: lockTyped,
   };

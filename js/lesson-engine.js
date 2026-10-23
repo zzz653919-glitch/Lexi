@@ -289,5 +289,67 @@
     return { items, wordIds: focus.map((w) => w.id), newCount: 0, sentenceIds: sents.map((s) => s.id) };
   }
 
-  Object.assign(E, { buildSingle, checkSentence, normSentence, sentenceTokens, tilesFrom, mk, levelFor, pickSentences, buildGuided, sequence, reviewItemFor, insertReview, GUIDED_LENGTHS: [10, 12, 15] });
+
+  /* ---------- custom sessions ---------- */
+  const CUSTOM_TYPES = ['translate', 'choose', 'scramble', 'order', 'listen', 'fill', 'match'];
+  const CUSTOM_DEFAULT = ['translate', 'choose', 'scramble', 'fill', 'listen', 'match'];
+
+  /* cfg: { words (the session's words), count: 5|10|15|20|'all', types: [custom types], speech: bool }
+     Builds exactly `count` exercises (for 'all': one per word, at least 5 when there are only a few words).
+     With few words the words are reused, but a word never comes twice in a row and each reuse gets a different
+     kind of exercise; with many words nothing repeats. Matching counts as one exercise (up to 4 words). */
+  function buildCustom(cfg, allWords) {
+    const words = cfg.words.filter(Boolean);
+    if (!words.length) return { items: [], wordIds: [], newCount: 0, sentenceIds: [] };
+    const want = CUSTOM_TYPES.filter((t) => (cfg.types || []).includes(t));
+    const types = (want.length ? want : CUSTOM_DEFAULT).filter((t) => t !== 'listen' || cfg.speech);
+    const total = cfg.count === 'all' ? Math.max(words.length, 1) : Math.max(1, Number(cfg.count) || 10);
+    const used = new Map(); // wordId -> types already used for it
+    const items = [];
+    const sentenceIds = [];
+    let deck = [], last = null;
+    const nextWord = () => {
+      if (!deck.length) {
+        deck = shuffle(words.slice());
+        if (last && deck.length > 1 && deck[deck.length - 1].id === last.id) deck.unshift(deck.pop()); // popped first -> avoid repeat across rounds
+      }
+      last = deck.pop();
+      return last;
+    };
+    const sentenceFor = (w) => {
+      const key = w.en.trim().toLowerCase();
+      const hits = (VL.sentences || []).filter((s) => s.words.includes(key) && !sentenceIds.includes(s.id));
+      return hits.length ? hits[Math.floor(Math.random() * hits.length)] : null;
+    };
+    const make = (type, w) => {
+      if (type === 'translate') return mk.wordType((used.get(w.id) || []).includes('translate') ? 'reverse' : 'translate', w);
+      if (type === 'choose') return mk.choose(w, allWords);
+      if (type === 'scramble') return mk.scramble(w);
+      if (type === 'fill') return mk.fill(w);
+      if (type === 'listen') return mk.listenWord(w, allWords);
+      if (type === 'order') { const s = sentenceFor(w); const it = s ? mk.order(s) : null; if (it) sentenceIds.push(s.id); return it; }
+      if (type === 'match') {
+        const others = shuffle(words.filter((x) => x.id !== w.id)).concat(shuffle(allWords.filter((x) => x.id !== w.id && !words.includes(x))));
+        const group = [w].concat(others.slice(0, 3));
+        return group.length >= 2 ? mk.match(group) : null;
+      }
+      return null;
+    };
+    for (let i = 0; i < total; i++) {
+      const w = nextWord();
+      const prev = items.length ? items[items.length - 1].type : null;
+      const tried = used.get(w.id) || [];
+      // prefer a kind this word has not had yet and that differs from the previous exercise
+      const order = shuffle(types.slice()).sort((a, b) => (tried.includes(a) - tried.includes(b)) || ((a === prev) - (b === prev)));
+      let it = null, kind = null;
+      for (const t of order.concat(['translate', 'choose'])) { it = make(t, w); if (it) { kind = t; break; } }
+      if (!it) continue;
+      used.set(w.id, tried.concat(kind));
+      items.push(it);
+    }
+    const ids = Array.from(new Set(items.flatMap((it) => it.wordIds)));
+    return { items, wordIds: ids, newCount: words.filter((w) => !w.reps).length, sentenceIds };
+  }
+
+  Object.assign(E, { buildCustom, CUSTOM_TYPES, CUSTOM_DEFAULT, buildSingle, checkSentence, normSentence, sentenceTokens, tilesFrom, mk, levelFor, pickSentences, buildGuided, sequence, reviewItemFor, insertReview, GUIDED_LENGTHS: [10, 12, 15] });
 })();

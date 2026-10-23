@@ -44,6 +44,7 @@ VL.player = (function () {
     const pool = config.words || all;
     let built;
     if (config.items) built = { items: config.items, wordIds: [], newCount: 0 };
+    else if (config.type === 'session') built = E.buildCustom({ words: pool, count: config.count, types: config.types, speech: VL.speech.supported }, all);
     else if (config.type === 'guided') built = E.buildGuided({ words: pool, length: config.length || store.state.settings.lessonLength || 12, speech: VL.speech.supported, history: store.state.settings.sentenceHistory || [] }, all);
     else built = E.buildSingle(config.type, { words: pool, size: config.size || store.state.settings.lessonSize || 10, speech: VL.speech.supported, history: store.state.settings.sentenceHistory || [] }, all);
     if (!built.items.length) { VL.ui.toast(t('les.empty'), 'error'); exit(); return; }
@@ -51,7 +52,7 @@ VL.player = (function () {
     L = {
       v: 2, type: config.type, items: built.items, index: 0, correct: 0, wrong: 0, answers: 0, xp: 0, comboBonus: 0, combo: 0, bestCombo: 0,
       results: [], attempted: {}, retried: {}, retryCount: 0, wordIds: built.wordIds || [], wordCount: (built.wordIds || []).length, newCount: built.newCount || 0,
-      sentenceIds: built.sentenceIds || [], activeMs: 0, tick: Date.now(), achBefore: E.achievements(store.state).filter((a) => a.unlocked).map((a) => a.id), levelBefore: stats.level.level,
+      sentenceIds: built.sentenceIds || [], custom: config.custom || null, customMode: config.mode || '', activeMs: 0, tick: Date.now(), achBefore: E.achievements(store.state).filter((a) => a.unlocked).map((a) => a.id), levelBefore: stats.level.level,
     };
     queue(() => store.saveLesson(clone(L)));
     renderItem();
@@ -271,7 +272,8 @@ VL.player = (function () {
     const missedWordIds = Array.from(new Set(done.results.filter((r) => !r.correct && r.wordId).map((r) => r.wordId)));
     const missedSentenceIds = Array.from(new Set(done.results.filter((r) => !r.correct && r.sentenceId).map((r) => r.sentenceId)));
     const goodWordIds = Array.from(new Set(done.results.filter((r) => r.wordId && r.type !== 'learn').map((r) => r.wordId))).filter((id) => !done.results.some((r) => r.wordId === id && !r.correct));
-    await store.addSession({ kind: 'lesson', mode: done.type, scope: 'lesson', direction: 'en-uz', total: done.answers, correct: done.correct, wrong: done.wrong, xp: totalXp, missedIds: missedWordIds, newWords: done.newCount, durationMs: done.activeMs });
+    await store.addSession(Object.assign({ kind: 'lesson', mode: done.type, scope: 'lesson', direction: 'en-uz', total: done.answers, correct: done.correct, wrong: done.wrong, xp: totalXp, missedIds: missedWordIds, newWords: done.newCount, durationMs: done.activeMs }, done.custom ? { customId: done.custom.id, customName: done.custom.name } : {}));
+    if (done.custom) await store.recordCustomRun(done.custom.id, { ended: !completed, total: done.answers, correct: done.correct, wrong: done.wrong, pct: pct(done.correct, done.answers), missedIds: missedWordIds, goodIds: goodWordIds, mode: done.customMode });
     if (done.sentenceIds && done.sentenceIds.length) {
       const hist = (store.state.settings.sentenceHistory || []).concat(done.items.filter((i) => i.sentenceId).map((i) => i.sentenceId)).slice(-40);
       await store.setSetting('sentenceHistory', hist);
@@ -297,22 +299,24 @@ VL.player = (function () {
     const goodWords = R.goodWordIds.map((id) => store.word(id)).filter(Boolean);
     const missedSentences = R.missedSentenceIds.map((id) => VL.sentenceById(id)).filter(Boolean);
     root.innerHTML =
-      '<header class="page-head"><div><h1>' + esc(t(R.completed ? 'res.title' : 'res.ended')) + '</h1><p class="muted">' + esc(t('ex.' + done.type)) + '</p></div></header>' +
+      '<header class="page-head"><div><h1>' + esc(t(R.completed ? 'res.title' : 'res.ended')) + '</h1><p class="muted">' + esc(done.custom ? done.custom.name + ' · ' + done.custom.topic : t('ex.' + done.type)) + '</p></div></header>' +
       '<section class="card summary"><div class="ring" role="img" aria-label="' + esc(t('sum.ringAria', { p })) + '"><svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="' + Rr + '"/><circle class="ring-fg" cx="60" cy="60" r="' + Rr + '" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + (C * (1 - p / 100)).toFixed(1) + '"/></svg><div class="ring-text">' + p + '%</div></div>' +
       '<div class="res-main"><h2>' + esc(t(p === 100 ? 'sum.m100' : p >= 80 ? 'sum.m80' : p >= 50 ? 'sum.m50' : 'sum.m0')) + '</h2>' +
       '<div class="res-stats"><div><b>' + done.answers + '</b><span>' + esc(t('res.exercises')) + '</span></div><div><b class="ok-text">' + done.correct + '</b><span>' + esc(t('res.correctN')) + '</span></div><div><b class="bad-text">' + done.wrong + '</b><span>' + esc(t('res.wrongN')) + '</span></div>' +
       '<div><b>' + p + '%</b><span>' + esc(t('stat.accuracy')) + '</span></div><div><b class="xp-total">+' + R.totalXp + '</b><span>' + esc(t('res.xp')) + '</span></div><div><b>' + fmtTime(done.activeMs) + '</b><span>' + esc(t('res.time')) + '</span></div>' +
       '<div><b>×' + done.bestCombo + '</b><span>' + esc(t('res.bestCombo')) + '</span></div></div>' +
       '<p class="small muted">' + (done.comboBonus ? esc(t('res.bonusCombo', { n: done.comboBonus })) + ' · ' : '') + (R.finishBonus ? esc(t('res.bonusFinish', { n: R.finishBonus })) : '') + '</p>' +
-      '<div class="btn-row">' + (missedWords.length || missedSentences.length ? '<button class="btn btn-primary" data-action="review-mistakes">' + icon('refresh') + esc(t('res.reviewMistakes')) + '</button>' : '') +
-      '<button class="btn' + (missedWords.length || missedSentences.length ? '' : ' btn-primary') + '" data-action="next-lesson">' + icon('arrow') + esc(t('res.next')) + '</button>' +
-      '<button class="btn btn-ghost" data-action="hub">' + esc(t('res.hubLessons')) + '</button></div></div></section>' +
+      '<div class="btn-row">' + (missedWords.length || missedSentences.length ? '<button class="btn btn-primary" data-action="review-mistakes">' + icon('refresh') + esc(t(done.custom ? 'cs.onlyMistakes' : 'res.reviewMistakes')) + '</button>' : '') +
+      (done.custom
+        ? '<button class="btn' + (missedWords.length || missedSentences.length ? '' : ' btn-primary') + '" data-action="cs-restart">' + icon('play') + esc(t('cs.restart')) + '</button><button class="btn" data-action="cs-new">' + icon('plus') + esc(t('cs.new')) + '</button>'
+        : '<button class="btn' + (missedWords.length || missedSentences.length ? '' : ' btn-primary') + '" data-action="next-lesson">' + icon('arrow') + esc(t('res.next')) + '</button>') +
+      '<button class="btn btn-ghost" data-action="hub">' + esc(t(done.custom ? 'cs.toSessions' : 'res.hubLessons')) + '</button></div></div></section>' +
       '<section class="card res-progress"><div class="res-row">' + icon('flame') + '<span>' + esc(t('res.streak', { n: after.streak.current })) + '</span></div>' +
       '<div class="res-row">' + icon('flag') + '<span>' + esc(t('res.goal', { a: Math.min(todayRec.xp, goal), b: goal })) + '</span><div class="bar"><span style="width:' + Math.min(100, pct(todayRec.xp, goal)) + '%"></span></div></div>' +
       (after.level.level > done.levelBefore ? '<div class="res-row level-up">' + icon('star') + '<b>' + esc(t('res.levelUp', { n: after.level.level })) + '</b></div>' : '') + '</section>' +
       (R.newAch.length ? '<section class="card"><h2 class="card-title">' + esc(t('res.newAch')) + '</h2><div class="ach-grid">' + R.newAch.map((a) => '<article class="ach unlocked"><span class="ach-ico">' + icon(a.icon) + '</span><div><b>' + esc(t('ach.' + a.id + '.t')) + '</b><p class="small muted">' + esc(t('ach.' + a.id + '.d')) + '</p></div></article>').join('') + '</div></section>' : '') +
-      '<div class="two-col"><section class="card"><h2 class="card-title">' + esc(t('res.good')) + '</h2>' + (goodWords.length ? '<ul class="word-list">' + goodWords.map(wordRow).join('') + '</ul>' : '<p class="muted">' + esc(t('res.noGood')) + '</p>') + '</section>' +
-      '<section class="card"><h2 class="card-title">' + esc(t('res.review')) + '</h2>' + (missedWords.length || missedSentences.length
+      '<div class="two-col"><section class="card"><h2 class="card-title">' + esc(t(done.custom ? 'cs.learnedWords' : 'res.good')) + '</h2>' + (goodWords.length ? '<ul class="word-list">' + goodWords.map(wordRow).join('') + '</ul>' : '<p class="muted">' + esc(t('res.noGood')) + '</p>') + '</section>' +
+      '<section class="card"><h2 class="card-title">' + esc(t(done.custom ? 'cs.mistakenWords' : 'res.review')) + '</h2>' + (missedWords.length || missedSentences.length
         ? '<ul class="word-list">' + missedWords.map(wordRow).join('') + missedSentences.map((s) => '<li><div class="wl-main"><span class="wl-en">' + esc(s.en) + VL.speech.button(s.en) + '</span><span class="wl-uz">' + esc(s.uz[0]) + '</span></div></li>').join('') + '</ul>'
         : '<p>' + esc(t('res.noMistakes')) + '</p>') + '</section></div>';
     root._result = R;
@@ -344,6 +348,8 @@ VL.player = (function () {
       }
     });
     const ordered = E.sequence([], items.slice(0, 15));
+    const cu = R.done.custom;
+    if (cu && R.missedWordIds.length) return start(root, { type: 'session', mode: 'mistakes', words: R.missedWordIds.map((id) => store.word(id)).filter(Boolean), count: Math.max(5, R.missedWordIds.length * 2), types: (store.customSession(cu.id) || {}).types, custom: cu }, hooks);
     return start(root, { type: 'review', items: ordered }, hooks);
   }
 
@@ -359,6 +365,8 @@ VL.player = (function () {
       case 'hub': exit(); break;
       case 'next-lesson': { const c = root; const h = hooks; start(c, { type: 'guided' }, h); break; }
       case 'review-mistakes': reviewMistakes(root._result); break;
+      case 'cs-restart': { const cu = root._result.done.custom; const c = root, h = hooks; VL.custom.start(c, cu.id, h, { replace: true }); break; }
+      case 'cs-new': VL.custom.create(root, hooks); break;
     }
   }
 
