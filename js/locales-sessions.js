@@ -95,3 +95,9 @@ VL.addRows([
   ['mx.hardWords', 'Difficult words', "Qiyin bo'lgan so'zlar", 'Трудные слова'],
   ['mx.wrongN', '{n} wrong', '{n} ta xato', 'ошибок: {n}'],
 ]);
+
+VL.addRows([
+  ['mx.studyChip', 'Word {i} · translation first', "{i}-so'z · avval tarjimasi", 'Слово {i} · сначала перевод'],
+  ['mx.studyHint', 'Read the word and its translation. Then six exercises follow for this word.', "So'z va uning tarjimasini o'qing. Keyin shu so'z uchun oltita mashq keladi.", 'Прочитайте слово и перевод. Затем будут шесть упражнений для этого слова.'],
+  ['mx.begin', 'Start the exercises', 'Mashqlarni boshlash', 'Начать упражнения'],
+]);

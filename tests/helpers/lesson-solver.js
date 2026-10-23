@@ -103,6 +103,7 @@ async function playLesson(page, opts) {
     if (o.stopAfter && answered >= o.stopAfter) return { seen, answered, wrongs, mismatches, stopped: true, extraPairs };
     if (!(await page.locator('.lesson-card').count())) break;
     const cur = await readItem(page);
+    if (cur.it.type === 'study') { await page.click('[data-study-go]'); continue; }   // information card of the mixed exercise: nothing to answer
     const wrong = !!o.wrongEvery && cur.it.type !== 'learn' && cur.it.type !== 'intro' && (answered + 1) % o.wrongEvery === 0;
     seen[cur.it.type] = (seen[cur.it.type] || 0) + 1;
     const r = await solveCurrent(page, wrong);
