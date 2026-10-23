@@ -24,14 +24,15 @@ VL.speech = (function () {
     if (synth.addEventListener) synth.addEventListener('voiceschanged', pickVoice);
   }
 
-  function speak(text) {
+  // rate: 1 = normal, 0.6 = slow. Returns false when nothing could be played.
+  function speak(text, rate) {
     if (!supported || !text) return false;
     try {
       synth.cancel();
       const u = new SpeechSynthesisUtterance(String(text));
       u.lang = voice ? voice.lang : 'en-US';
       if (voice) u.voice = voice;
-      u.rate = 0.9;
+      u.rate = rate || 0.9;
       synth.speak(u);
       return true;
     } catch (e) { return false; }
@@ -49,7 +50,7 @@ VL.speech = (function () {
     if (!b) return;
     e.preventDefault();
     e.stopPropagation();
-    if (!speak(b.dataset.speak)) VL.ui.toast(VL.t('speak.fail'), 'info');
+    if (!speak(b.dataset.speak, b.dataset.rate ? Number(b.dataset.rate) : undefined)) VL.ui.toast(VL.t('speak.fail'), 'info');
   }, true);
 
   return { supported, speak, button };

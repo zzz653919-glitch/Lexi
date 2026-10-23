@@ -2,7 +2,7 @@
    persists; a failed write surfaces an error toast but never loses the UI state. */
 VL.store = (function () {
   const { uid } = VL.util;
-  const DEFAULTS = { direction: 'en-uz', length: 'all', autoAdvance: false, lenient: true, dailyGoal: 50, learnSelected: [], autoSpeak: false, lessonSize: 10 };
+  const DEFAULTS = { direction: 'en-uz', length: 'all', autoAdvance: false, lenient: true, dailyGoal: 50, learnSelected: [], autoSpeak: false, lessonSize: 10, lessonLength: 12, sentenceHistory: [] };
   const MAX_LEN = 200;
   const MASTERED_STREAK = 3;
 
@@ -33,10 +33,11 @@ VL.store = (function () {
   function withLearnFields(w) {
     if (w.box === undefined) { w.box = 0; w.reps = 0; w.lapses = 0; w.due = null; }
     if (w.example === undefined) w.example = '';
+    if (w.phonetic === undefined) w.phonetic = '';
     return w;
   }
-  function blankWord(en, uz, collectionId, example) {
-    return { id: uid(), en, uz, example: clean(example || ''), collectionId, createdAt: Date.now(), updatedAt: Date.now(), correct: 0, wrong: 0, streak: 0, lastSeenAt: null, lastWrongAt: null, box: 0, reps: 0, lapses: 0, due: null };
+  function blankWord(en, uz, collectionId, example, phonetic) {
+    return { id: uid(), en, uz, example: clean(example || ''), phonetic: clean(phonetic || ''), collectionId, createdAt: Date.now(), updatedAt: Date.now(), correct: 0, wrong: 0, streak: 0, lastSeenAt: null, lastWrongAt: null, box: 0, reps: 0, lapses: 0, due: null };
   }
 
   async function load() {
@@ -104,7 +105,8 @@ VL.store = (function () {
     const error = validateWord(en, uz, input.collectionId);
     if (error) return { ok: false, error };
     if (clean(input.example).length > 300) return { ok: false, error: VL.t('err.exampleLong') };
-    const w = blankWord(en, uz, input.collectionId, input.example);
+    if (clean(input.phonetic).length > 100) return { ok: false, error: VL.t('err.phoneticLong') };
+    const w = blankWord(en, uz, input.collectionId, input.example, input.phonetic);
     state.words.push(w);
     await save(() => VL.db.put('words', [w]));
     notify();
@@ -118,8 +120,9 @@ VL.store = (function () {
     const error = validateWord(en, uz, input.collectionId, id);
     if (error) return { ok: false, error };
     if (clean(input.example).length > 300) return { ok: false, error: VL.t('err.exampleLong') };
+    if (clean(input.phonetic).length > 100) return { ok: false, error: VL.t('err.phoneticLong') };
     if (key(en) !== key(w.en) || key(uz) !== key(w.uz)) { w.correct = 0; w.wrong = 0; w.streak = 0; w.lastWrongAt = null; w.box = 0; w.reps = 0; w.lapses = 0; w.due = null; }
-    Object.assign(w, { en, uz, example: clean(input.example || ''), collectionId: input.collectionId, updatedAt: Date.now() });
+    Object.assign(w, { en, uz, example: clean(input.example || ''), phonetic: input.phonetic === undefined ? w.phonetic : clean(input.phonetic), collectionId: input.collectionId, updatedAt: Date.now() });
     await save(() => VL.db.put('words', [w]));
     notify();
     return { ok: true, word: w };
@@ -317,6 +320,7 @@ VL.store = (function () {
       correct: Number(w.correct) || 0, wrong: Number(w.wrong) || 0, streak: Number(w.streak) || 0,
       lastSeenAt: w.lastSeenAt || null, lastWrongAt: w.lastWrongAt || null,
       example: typeof w.example === 'string' ? w.example.slice(0, 300) : '',
+      phonetic: typeof w.phonetic === 'string' ? w.phonetic.slice(0, 100) : '',
       box: Math.min(5, Math.max(0, Number(w.box) || 0)), reps: Number(w.reps) || 0, lapses: Number(w.lapses) || 0, due: Number(w.due) || null,
     }));
     const days = (Array.isArray(data.days) ? data.days : []).filter((d) => d && /^\d{4}-\d{2}-\d{2}$/.test(d.date)).map((d) => ({ date: d.date, xp: Number(d.xp) || 0, answers: Number(d.answers) || 0, correct: Number(d.correct) || 0, sessions: Number(d.sessions) || 0, lessons: Number(d.lessons) || 0, goalMet: !!d.goalMet }));

@@ -6,20 +6,30 @@ Built with plain HTML, CSS and vanilla JavaScript (no build step, no runtime dep
 
 ## Features
 
-### Word Lessons (new): Duolingo-style exercises
-A separate **Word Lessons** section (original design, inspired only by the learning method) with 7 exercise types plus a mixed lesson:
+### Word Lessons: one guided lesson, ten kinds of exercises
+Open **Word Lessons** and press **Start lesson** (*Mashqni boshlash*). A lesson of 10–15 exercises opens in its own full-screen player (progress bar and a `4 / 12` counter on top, a pause/exit button, the exercise in the middle, **Check** at the bottom). You solve one exercise at a time: answer → **Check** → a green or red panel explains the answer → **Continue**. Nothing advances by itself. The kinds of exercises change from step to step and the order differs from lesson to lesson:
 
-| Exercise | What you do |
-|---|---|
-| Choose the translation | See an English word, pick the right one of 4 Uzbek translations (keys 1–4) |
-| Type the answer | An English word *or* an Uzbek translation appears; type the other one |
-| Translate the word | `Apple` → type `Olma` |
-| Fill in the letters | `B _ _ k` with the meaning as a hint; type the whole word |
-| Match the pairs | Pair up to 5 English words with their Uzbek translations |
-| Reverse | An Uzbek translation appears; type the English word |
-| Review | Only words that are due for review or that you keep missing |
+| # | Exercise | What you do |
+|---|---|---|
+| 1 | **Learn the word** | See the word big, its Uzbek translation, a pronunciation (🔊) button and, if you saved one, the pronunciation note / transcription; then type the word yourself |
+| 2 | **Choose the translation** | A) B) C) D) options, shuffled so the right one is not always in the same place; short explanation afterwards |
+| 3 | **Build the word from letters** | Mixed-up letter tiles; tap to place, tap a placed tile to take it back, *Undo*, *Reset*, keyboard letters/Backspace; repeated letters are separate tiles; success animation |
+| 4 | **Translate a sentence EN → UZ** | `I am at home.` → type the Uzbek; several correct translations are accepted (e.g. with or without “Men”) |
+| 5 | **Translate a sentence UZ → EN** | `Men uyda turibman.` → type the English; contractions (`I'm` = `I am`), capital letters and punctuation do not matter; a short grammar note follows |
+| 6 | **Build the sentence** | Tap word tiles into order; remove, put back, **drag** or use the arrow keys to re-order |
+| 7 | **Listen and answer** | Text-to-speech plays a word or sentence (replay and slow replay); type or choose what you heard |
+| 8 | **Fill in the blank** | `I ___ a student.` → am / is / are; the grammar rule is explained |
+| 9 | **Match pairs** | Pair English words with their Uzbek translations |
+| 10 | **Review mistakes** | Words and sentences you got wrong come back near the end of the lesson as a *different* kind of exercise (never the same one twice in a row); the results page has a *Review mistakes* button for an extra round |
 
-How a lesson works: one question at a time, a progress bar on top, a green/red feedback panel that explains the right answer (plus your example sentence), a *Continue* button (or **Enter**), and a **pause** button. Paused lessons are saved (even across a page reload) and shown as a **Resume** card. A word you miss comes back later in the same lesson. Brand-new words are introduced with a “meet the word” card first. Results page: accuracy, XP, time, new words, best combo, streak, daily goal, level-ups, new achievements and the words to review.
+How the lesson is put together: new words are introduced first (“learn”), then used in different exercises; the next exercise never has the same type or the same word as the previous one; sentences are picked to match your words and level when possible and recently used ones are avoided. The “Practise one exercise type” cards below the Start button run a single kind of exercise only (plus the older word exercises: type the answer, fill in missing letters, reverse, review). Quit with the ✕ button any time: *Save and exit* keeps your progress (even across a page reload) and shows a **Resume** card.
+
+**Results page:** exercises done, correct / wrong, accuracy %, XP, time, best combo, streak, daily goal, level-ups, new achievements, *well learned words*, *words and sentences to review*, and the buttons **Review mistakes**, **Next lesson** and **Back to the lesson list**.
+
+**Pronunciation and honesty notes**
+- Audio uses the browser's built-in Text-to-Speech (US/UK English voices are preferred). There is no recorded audio and no fake audio: if the browser has no speech support, listening exercises and speaker buttons are simply not offered and every other exercise works as usual. “I can't listen right now” skips a listening exercise without counting a mistake.
+- Pronunciation notes / phonetic transcription are shown **only if you typed one** (field *Pronunciation* in the word dialog, e.g. `/ˈæp.əl/`). The 288 ready-made words do not include transcriptions because I would have to invent them.
+- Sentence exercises use a built-in bank of 54 simple sentences (A1–B1) with Uzbek translations, accepted alternatives and short grammar notes (20 rules). They were written for this project and are not reviewed by a professional translator; please have a teacher or native speaker check them.
 
 **Motivation system (all computed from real, stored activity):**
 - **XP** per correct answer (choose 8, fill 10, typing 12, match pair 4; half XP for a retry), **combo bonus** +5 XP for every 5 correct answers in a row, +10 XP for finishing a lesson.
@@ -81,7 +91,12 @@ js/
   decks.js                 288 ready-made words (4 levels x 9 topics)
   bulk-parse.js            Bulk import parser and row checks (pure logic)
   locales-bulk.js          Translations for Bulk Import
-  learn-engine.js          Spaced repetition, lesson building, exercises, XP, streak, level, achievements (pure logic)
+  learn-engine.js          Spaced repetition, word exercises, XP, streak, level, achievements (pure logic)
+  lesson-engine.js         Guided-lesson builder, exercise item factories, sentence checking, mistake review (pure logic)
+  sentences.js             Sentence bank (A1-B1) with Uzbek translations and grammar rules
+  exercises.js             One reusable component per exercise type (render / mount / check / reveal)
+  lesson-player.js         The lesson player: Check -> result panel -> Continue, XP, pause/resume, results page
+  locales-lesson.js        Translations for the player and grammar notes
   speech.js                Text-to-Speech pronunciation
   word-dialogs.js          Shared add/edit/delete dialogs for words and collections
   locales-learn.js         Translations for Word Lessons
@@ -164,7 +179,7 @@ There is **no server, account or login**, so everything is stored locally with I
 npm install --save-dev playwright
 npx playwright install chromium     # once
 node tests/core.test.js
-node tests/lessons.test.js          # ...and bulk-parser / bulk / language / upgrade / storage-fallback
+node tests/lessons.test.js          # ...and lesson-engine / exercises / bulk-parser / bulk / language / upgrade / storage-fallback
 ```
 
 ## Notes & limits

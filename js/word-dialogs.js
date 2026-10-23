@@ -13,10 +13,11 @@ VL.wd = (function () {
       '<div class="field"><label for="e-en">' + esc(t('field.english')) + '</label><input id="e-en" data-autofocus type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="' + esc(t('ph.en')) + '" value="' + esc(w ? w.en : '') + '"></div>' +
       '<div class="field"><label for="e-uz">' + esc(t('field.uzbek')) + '</label><input id="e-uz" type="text" maxlength="200" autocomplete="off" spellcheck="false" placeholder="' + esc(t('ph.uz')) + '" value="' + esc(w ? w.uz : '') + '"></div>' +
       '<div class="field"><label for="e-ex">' + esc(t('field.example')) + '</label><input id="e-ex" type="text" maxlength="300" autocomplete="off" placeholder="' + esc(t('ph.example')) + '" value="' + esc(w ? w.example : '') + '"></div>' +
+      '<div class="field"><label for="e-ph">' + esc(t('field.phonetic')) + '</label><input id="e-ph" type="text" maxlength="100" autocomplete="off" spellcheck="false" placeholder="' + esc(t('ph.phonetic')) + '" value="' + esc(w ? w.phonetic : '') + '"></div>' +
       '<div class="field"><label for="e-col">' + esc(t('field.collection')) + '</label><select id="e-col">' + VL.ui.collectionOptions(w ? w.collectionId : opts.collectionId, false) + '</select></div>' +
       (w ? '<p class="hint">' + esc(t('edit.hint')) + '</p>' : '') + '<p class="form-error" id="e-error" role="alert"></p>';
     const $ = (s) => body.querySelector(s);
-    const read = () => ({ en: $('#e-en').value, uz: $('#e-uz').value, example: $('#e-ex').value, collectionId: $('#e-col').value });
+    const read = () => ({ en: $('#e-en').value, uz: $('#e-uz').value, example: $('#e-ex').value, phonetic: $('#e-ph').value, collectionId: $('#e-col').value });
     const buttons = [{ label: t('btn.cancel'), value: 'cancel' }];
     if (!w) buttons.push({ label: t('wd.addMore'), value: 'more' });
     buttons.push({ label: w ? t('btn.saveChanges') : t('btn.save'), value: 'save', kind: 'primary' });
@@ -28,7 +29,7 @@ VL.wd = (function () {
         const r = w ? await store.updateWord(w.id, input) : await store.addWord(input);
         if (!r.ok) { $('#e-error').textContent = r.error; return false; }
         VL.ui.toast(t(w ? 'vocab.updated' : 'vocab.added', { en: r.word.en }), 'success', 1800);
-        if (v === 'more') { $('#e-en').value = ''; $('#e-uz').value = ''; $('#e-ex').value = ''; $('#e-error').textContent = ''; $('#e-en').focus(); return false; }
+        if (v === 'more') { $('#e-en').value = ''; $('#e-uz').value = ''; $('#e-ex').value = ''; $('#e-ph').value = ''; $('#e-error').textContent = ''; $('#e-en').focus(); return false; }
         return true;
       },
     });
