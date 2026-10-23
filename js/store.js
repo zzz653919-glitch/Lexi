@@ -2,11 +2,11 @@
    persists; a failed write surfaces an error toast but never loses the UI state. */
 VL.store = (function () {
   const { uid } = VL.util;
-  const DEFAULTS = { direction: 'en-uz', length: 'all', autoAdvance: false, lenient: true, dailyGoal: 50, learnSelected: [], autoSpeak: false, lessonSize: 10 };
+  const DEFAULTS = { direction: 'en-uz', length: 'all', autoAdvance: false, lenient: true, dailyGoal: 50, learnSelected: [], autoSpeak: false, lessonSize: 10, lessonLength: 12, sentenceHistory: [], typoMode: 'careful' };
   const MAX_LEN = 200;
   const MASTERED_STREAK = 3;
 
-  const state = { words: [], collections: [], sessions: [], days: [], lesson: null, settings: Object.assign({}, DEFAULTS) };
+  const state = { words: [], collections: [], sessions: [], days: [], lesson: null, custom: [], settings: Object.assign({}, DEFAULTS) };
   const listeners = new Set();
 
   const key = (s) => String(s).trim().replace(/\s+/g, ' ').toLowerCase();
@@ -33,10 +33,15 @@ VL.store = (function () {
   function withLearnFields(w) {
     if (w.box === undefined) { w.box = 0; w.reps = 0; w.lapses = 0; w.due = null; }
     if (w.example === undefined) w.example = '';
+    if (w.phonetic === undefined) w.phonetic = '';
+    if (!Array.isArray(w.alts)) w.alts = [];
+    if (typeof w.sense !== 'string') w.sense = '';
+    if (typeof w.pos !== 'string') w.pos = '';
     return w;
   }
-  function blankWord(en, uz, collectionId, example) {
-    return { id: uid(), en, uz, example: clean(example || ''), collectionId, createdAt: Date.now(), updatedAt: Date.now(), correct: 0, wrong: 0, streak: 0, lastSeenAt: null, lastWrongAt: null, box: 0, reps: 0, lapses: 0, due: null };
+  function blankWord(en, uz, collectionId, example, phonetic, extras) {
+    const x = extras || {};
+    return { id: uid(), en, uz, example: clean(example || ''), phonetic: clean(phonetic || ''), alts: x.alts || [], sense: clean(x.sense || ''), pos: x.pos || '', collectionId, createdAt: Date.now(), updatedAt: Date.now(), correct: 0, wrong: 0, streak: 0, lastSeenAt: null, lastWrongAt: null, box: 0, reps: 0, lapses: 0, due: null };
   }
 
   async function load() {
@@ -48,10 +53,12 @@ VL.store = (function () {
     state.days = days.sort((a, b) => (a.date < b.date ? -1 : 1));
     const saved = settings.find((s) => s.key === 'lessonState');
     state.lesson = saved ? saved.value : null;
+    const cs = settings.find((x) => x.key === 'customSessions');
+    state.custom = cs && Array.isArray(cs.value) ? cs.value : [];
     state.collections = collections.sort((a, b) => a.createdAt - b.createdAt);
     state.sessions = sessions.sort((a, b) => a.date - b.date);
     state.settings = Object.assign({}, DEFAULTS);
-    settings.forEach((s) => { if (s.key !== 'lessonState') state.settings[s.key] = s.value; });
+    settings.forEach((s) => { if (s.key !== 'lessonState' && s.key !== 'customSessions') state.settings[s.key] = s.value; });
     if (!state.collections.length) {
       const c = newCollection(VL.t('default.collection'));
       state.collections.push(c);
@@ -99,12 +106,26 @@ VL.store = (function () {
     return null;
   }
 
+  // extra translations / meaning / part of speech from a dialog or import; { ok, extras } or { ok:false, error }
+  function readExtras(input, current) {
+    const x = {
+      alts: input.alts === undefined ? (current ? current.alts : []) : (Array.isArray(input.alts) ? input.alts.map((a) => ({ text: clean(a.text), context: clean(a.context || '') })).filter((a) => a.text) : VL.answers.parseAlts(input.alts)),
+      sense: input.sense === undefined ? (current ? current.sense : '') : clean(input.sense),
+      pos: input.pos === undefined ? (current ? current.pos : '') : String(input.pos || ''),
+    };
+    const err = VL.answers.validateExtras(x);
+    return err ? { ok: false, error: VL.t(err) } : { ok: true, extras: x };
+  }
+
   async function addWord(input) {
     const en = clean(input.en), uz = clean(input.uz);
     const error = validateWord(en, uz, input.collectionId);
     if (error) return { ok: false, error };
     if (clean(input.example).length > 300) return { ok: false, error: VL.t('err.exampleLong') };
-    const w = blankWord(en, uz, input.collectionId, input.example);
+    if (clean(input.phonetic).length > 100) return { ok: false, error: VL.t('err.phoneticLong') };
+    const ex = readExtras(input);
+    if (!ex.ok) return ex;
+    const w = blankWord(en, uz, input.collectionId, input.example, input.phonetic, ex.extras);
     state.words.push(w);
     await save(() => VL.db.put('words', [w]));
     notify();
@@ -118,8 +139,11 @@ VL.store = (function () {
     const error = validateWord(en, uz, input.collectionId, id);
     if (error) return { ok: false, error };
     if (clean(input.example).length > 300) return { ok: false, error: VL.t('err.exampleLong') };
+    if (clean(input.phonetic).length > 100) return { ok: false, error: VL.t('err.phoneticLong') };
+    const ex = readExtras(input, w);
+    if (!ex.ok) return ex;
     if (key(en) !== key(w.en) || key(uz) !== key(w.uz)) { w.correct = 0; w.wrong = 0; w.streak = 0; w.lastWrongAt = null; w.box = 0; w.reps = 0; w.lapses = 0; w.due = null; }
-    Object.assign(w, { en, uz, example: clean(input.example || ''), collectionId: input.collectionId, updatedAt: Date.now() });
+    Object.assign(w, { en, uz, example: clean(input.example || ''), phonetic: input.phonetic === undefined ? w.phonetic : clean(input.phonetic), alts: ex.extras.alts, sense: ex.extras.sense, pos: ex.extras.pos, collectionId: input.collectionId, updatedAt: Date.now() });
     await save(() => VL.db.put('words', [w]));
     notify();
     return { ok: true, word: w };
@@ -257,18 +281,58 @@ VL.store = (function () {
     return c;
   }
 
+  /* ---------- custom sessions (created by the user: name, topic, words, exercise types, run history) ---------- */
+  const saveCustom = () => save(() => VL.db.put('settings', [{ key: 'customSessions', value: state.custom }]));
+  const customSession = (id) => state.custom.find((c) => c.id === id) || null;
+  async function addCustom(rec) {
+    const c = Object.assign({ id: uid(), createdAt: Date.now(), runs: [] }, rec);
+    state.custom.push(c);
+    await saveCustom(); notify();
+    return c;
+  }
+  async function renameCustom(id, name) {
+    const c = customSession(id), nm = clean(name);
+    if (!c) return { ok: false, error: VL.t('err.noSession') };
+    if (!nm) return { ok: false, error: VL.t('cs.errName') };
+    if (nm.length > 60) return { ok: false, error: VL.t('cs.errNameLong') };
+    c.name = nm;
+    await saveCustom(); notify();
+    return { ok: true };
+  }
+  async function removeCustom(id) {
+    state.custom = state.custom.filter((c) => c.id !== id);
+    await saveCustom(); notify();
+  }
+  // run: { total, correct, wrong, pct, missedIds, goodIds, mode }; words that went wrong are remembered for later sessions
+  async function recordCustomRun(id, run) {
+    const c = customSession(id);
+    const rec = Object.assign({ date: Date.now() }, run);
+    if (c) { c.runs.push(rec); c.runs = c.runs.slice(-30); await saveCustom(); }
+    const prev = state.settings.mistakeIds || [];
+    const next = prev.filter((x) => !run.goodIds.includes(x) && !run.missedIds.includes(x)).concat(run.missedIds).filter((x) => word(x)).slice(-200);
+    await setSetting('mistakeIds', next);
+    return rec;
+  }
+  // words the user got wrong (remembered from sessions, plus words whose latest answer was wrong)
+  function mistakeWords() {
+    const ids = new Set(state.settings.mistakeIds || []);
+    return state.words.filter((w) => ids.has(w.id) || (w.lastWrongAt && w.streak === 0 && w.wrong > 0)).sort((a, b) => (b.lastWrongAt || 0) - (a.lastWrongAt || 0));
+  }
+
   async function resetProgress() {
     state.words.forEach((w) => { w.correct = 0; w.wrong = 0; w.streak = 0; w.lastSeenAt = null; w.lastWrongAt = null; w.box = 0; w.reps = 0; w.lapses = 0; w.due = null; });
     state.sessions = []; state.days = []; state.lesson = null;
-    await save(async () => { await VL.db.put('words', state.words); await VL.db.clear(['sessions', 'days']); await VL.db.remove('settings', ['lessonState']); });
+    state.custom.forEach((c) => { c.runs = []; }); state.settings.mistakeIds = [];
+    await save(async () => { await VL.db.put('words', state.words); await VL.db.clear(['sessions', 'days']); await VL.db.remove('settings', ['lessonState', 'mistakeIds']); });
+    await saveCustom();
     notify();
   }
 
   async function clearAll() {
-    state.words = []; state.collections = []; state.sessions = []; state.days = []; state.lesson = null;
-    state.settings.learnSelected = [];
+    state.words = []; state.collections = []; state.sessions = []; state.days = []; state.lesson = null; state.custom = [];
+    state.settings.learnSelected = []; state.settings.mistakeIds = [];
     await save(() => VL.db.clear(['words', 'collections', 'sessions', 'days']));
-    await save(() => VL.db.remove('settings', ['lessonState', 'learnSelected']));
+    await save(() => VL.db.remove('settings', ['lessonState', 'learnSelected', 'customSessions', 'mistakeIds']));
     const c = newCollection(VL.t('default.collection'));
     state.collections.push(c);
     await save(() => VL.db.put('collections', [c]));
@@ -295,13 +359,13 @@ VL.store = (function () {
       state.words.push(w);
       added.push(w);
     });
-    await save(() => VL.db.put('words', added));
+    const ok = await save(() => VL.db.put('words', added));
     notify();
-    return { added: added.length, duplicates };
+    return { added: added.length, duplicates, ok };
   }
 
   function backup() {
-    return { app: 'lexi', version: 2, exportedAt: new Date().toISOString(), collections: state.collections, words: state.words, sessions: state.sessions, days: state.days, lesson: state.lesson, settings: state.settings };
+    return { app: 'lexi', version: 2, exportedAt: new Date().toISOString(), collections: state.collections, words: state.words, sessions: state.sessions, days: state.days, lesson: state.lesson, custom: state.custom, settings: state.settings };
   }
 
   async function restore(data) {
@@ -317,20 +381,27 @@ VL.store = (function () {
       correct: Number(w.correct) || 0, wrong: Number(w.wrong) || 0, streak: Number(w.streak) || 0,
       lastSeenAt: w.lastSeenAt || null, lastWrongAt: w.lastWrongAt || null,
       example: typeof w.example === 'string' ? w.example.slice(0, 300) : '',
+      phonetic: typeof w.phonetic === 'string' ? w.phonetic.slice(0, 100) : '',
+      alts: Array.isArray(w.alts) ? w.alts.filter((a) => a && typeof a.text === 'string' && a.text.trim()).slice(0, 12).map((a) => ({ text: clean(a.text).slice(0, 200), context: clean(a.context || '').slice(0, 100) })) : [],
+      sense: typeof w.sense === 'string' ? w.sense.slice(0, 200) : '',
+      pos: VL.answers.POS.includes(w.pos) ? w.pos : '',
       box: Math.min(5, Math.max(0, Number(w.box) || 0)), reps: Number(w.reps) || 0, lapses: Number(w.lapses) || 0, due: Number(w.due) || null,
     }));
     const days = (Array.isArray(data.days) ? data.days : []).filter((d) => d && /^\d{4}-\d{2}-\d{2}$/.test(d.date)).map((d) => ({ date: d.date, xp: Number(d.xp) || 0, answers: Number(d.answers) || 0, correct: Number(d.correct) || 0, sessions: Number(d.sessions) || 0, lessons: Number(d.lessons) || 0, goalMet: !!d.goalMet }));
     const sessions = (Array.isArray(data.sessions) ? data.sessions : []).filter((s) => s && typeof s.id === 'string' && Number(s.date));
     const settings = Object.assign({}, DEFAULTS, data.settings || {});
+    const wordIdSet = new Set(words.map((w) => w.id));
+    const customList = (Array.isArray(data.custom) ? data.custom : []).filter((c) => c && typeof c.id === 'string' && typeof c.name === 'string' && Array.isArray(c.wordIds)).map((c) => Object.assign({}, c, { name: clean(c.name).slice(0, 60), wordIds: c.wordIds.filter((x) => wordIdSet.has(x)), runs: Array.isArray(c.runs) ? c.runs.slice(-30) : [] }));
     await VL.db.clear(['words', 'collections', 'sessions', 'settings', 'days']);
     await VL.db.put('collections', cols);
     await VL.db.put('days', days);
     await VL.db.put('words', words);
     await VL.db.put('sessions', sessions);
-    await VL.db.put('settings', Object.keys(settings).map((k) => ({ key: k, value: settings[k] })));
+    await VL.db.put('settings', Object.keys(settings).map((k) => ({ key: k, value: settings[k] })).concat([{ key: 'customSessions', value: customList }]));
     state.collections = cols.sort((a, b) => a.createdAt - b.createdAt);
     state.words = words; state.sessions = sessions.sort((a, b) => a.date - b.date); state.settings = settings;
     state.days = days.sort((a, b) => (a.date < b.date ? -1 : 1)); state.lesson = null;
+    state.custom = customList;
     notify();
     return { words: words.length, collections: cols.length };
   }
@@ -339,6 +410,6 @@ VL.store = (function () {
     state, DEFAULTS, MASTERED_STREAK, load, onChange,
     collection, word, wordsIn, status, difficultWords, summarize, findDuplicate,
     addWord, updateWord, deleteWords, addCollection, renameCollection, deleteCollection, ensureCollection,
-    recordAnswer, markLearned, addSession, dayRecord, logLearn, recordLearn, saveLesson, ensureDeckCollection, resetProgress, clearAll, setSetting, importWords, backup, restore,
+    recordAnswer, markLearned, addSession, customSession, addCustom, renameCustom, removeCustom, recordCustomRun, mistakeWords, dayRecord, logLearn, recordLearn, saveLesson, ensureDeckCollection, resetProgress, clearAll, setSetting, importWords, backup, restore,
   };
 })();

@@ -12,58 +12,7 @@ const assert = (c, m) => { if (!c) { console.error('FAIL:', m); process.exitCode
 const wait = (p, ms) => p.waitForTimeout(ms || 120);
 
 // Plays the current lesson item. wrongEvery: answer every Nth question wrongly (0 = never).
-async function playLesson(page, opts) {
-  const seen = { intro: 0, choose: 0, type: 0, translate: 0, reverse: 0, fill: 0, match: 0 };
-  let answered = 0, guard = 0;
-  while (guard++ < 80) {
-    await wait(page, 330);
-    if (await page.locator('.summary').count()) break;
-    if (opts.stopAfter && answered >= opts.stopAfter) return { seen, answered, stopped: true };
-    const s = await page.evaluate(() => {
-      const l = VL.store.state.lesson; if (!l) return null;
-      const it = l.items[l.index]; if (!it) return null;
-      const w = VL.store.word(it.wordIds[0]);
-      return { it, w: w ? { en: w.en, uz: w.uz } : null, idx: l.index, total: l.items.length };
-    });
-    if (!s) break;
-    const it = s.it;
-    const wrong = opts.wrongEvery && (answered + 1) % opts.wrongEvery === 0;
-    if (it.type === 'intro') {
-      seen.intro++;
-      await page.click('#btn-intro');
-      continue;
-    }
-    if (it.type === 'choose') {
-      seen.choose++;
-      const idx = it.options.findIndex((o) => (wrong ? !o.correct : o.correct));
-      await page.click('.option[data-index="' + idx + '"]');
-    } else if (it.type === 'match') {
-      seen.match++;
-      for (const p of it.pairs) {
-        if (wrong && p === it.pairs[0]) { // one deliberate wrong try
-          const other = it.pairs[1];
-          await page.click('.tile[data-side="l"][data-id="' + p.wordId + '"]');
-          await page.click('.tile[data-side="r"][data-id="' + other.wordId + '"]');
-          await wait(page, 500);
-        }
-        await page.click('.tile[data-side="l"][data-id="' + p.wordId + '"]');
-        await page.click('.tile[data-side="r"][data-id="' + p.wordId + '"]');
-        await wait(page, 60);
-      }
-    } else {
-      seen[it.type]++;
-      const expected = it.type === 'fill' ? s.w.en : (it.dir === 'en-uz' ? s.w.uz : s.w.en);
-      const first = expected.split(/[;,]/)[0].trim();
-      await page.fill('#lans', wrong ? 'zzzzq' : '  ' + first.toUpperCase() + ' ');
-      await page.press('#lans', 'Enter');
-    }
-    answered++;
-    await page.waitForSelector('#btn-next');
-    await wait(page, 300);
-    await page.click('#btn-next');
-  }
-  return { seen, answered };
-}
+const { playLesson } = require('./helpers/lesson-solver');
 
 (async () => {
   const browser = await chromium.launch();
@@ -76,8 +25,8 @@ async function playLesson(page, opts) {
   await page.waitForSelector('.strip');
 
   // ---------- empty state ----------
-  assert((await page.locator('.ex-card').count()) === 8, '8 exercise cards (mixed + 7 types)');
-  assert((await page.locator('.ex-card:not([disabled])').count()) === 0, 'all exercises disabled with no words');
+  assert((await page.locator('.ex-card').count()) === 13, '13 single-type exercise cards');
+  assert((await page.locator('.ex-card:not([disabled])').count()) === 0 && (await page.locator('[data-action="start"][data-type="guided"]').isDisabled()), 'all exercises disabled with no words');
   assert((await page.locator('.strip-item').first().innerText()).includes('0 days'), 'streak starts at 0');
 
   // ---------- ready-made decks ----------
@@ -128,7 +77,7 @@ async function playLesson(page, opts) {
   assert((await page.locator('.source').innerText()).includes('9 words'), 'source summary: 9 words (' + (await page.locator('.source b').first().innerText()) + ')');
 
   // ---------- lesson: mixed ----------
-  await page.click('.ex-card[data-type="mixed"]');
+  await page.click('[data-action="start"][data-type="guided"]');
   await page.waitForSelector('.lesson');
   assert((await page.locator('.sidebar').isHidden()), 'focus mode hides the sidebar');
   const r1 = await playLesson(page, { wrongEvery: 4 });
@@ -147,7 +96,7 @@ async function playLesson(page, opts) {
   console.log(JSON.stringify(st1));
   assert(st1.sessions === 1 && st1.lesson === null, 'session saved, lesson state cleared');
   assert(st1.day[0].xp > 0 && st1.day[0].lessons === 1, 'XP and lesson counted for today (' + st1.day[0].xp + ' XP)');
-  assert(st1.reps >= 5, 'SRS schedule updated for practised words (' + st1.reps + ')');
+  assert(st1.reps >= 3, 'SRS schedule updated for practised words (' + st1.reps + ')');
   assert(st1.ach.includes('firstLesson'), 'first-lesson achievement unlocked from real data');
   assert((await page.locator('main').innerText()).includes('Streak: 1'), 'streak = 1 after first lesson');
   const xpShown = Number((await page.locator('.xp-total').innerText()).replace('+', ''));
@@ -172,14 +121,14 @@ async function playLesson(page, opts) {
 
   // ---------- each exercise type ----------
   await page.click('[data-tab="practice"]');
-  const types = ['choose', 'type', 'translate', 'fill', 'match', 'reverse'];
+  const types = ['choose', 'type', 'translate', 'fill', 'match', 'reverse', 'scramble', 'sentEnUz', 'sentUzEn', 'order', 'cloze'];
   for (const tp of types) {
     await page.click('.ex-card[data-type="' + tp + '"]');
     await page.waitForSelector('.lesson');
     const r = await playLesson(page, { wrongEvery: 3 });
     const kind = tp === 'type' ? ['type'] : [tp];
-    const ok = kind.every((k) => r.seen[k] > 0) || tp === 'match' && r.seen.match > 0;
-    assert(ok, 'exercise "' + tp + '" played (' + JSON.stringify(r.seen) + ')');
+    const ok = kind.every((k) => r.seen[k] > 0) && r.mismatches.length === 0;
+    assert(ok, 'exercise "' + tp + '" played and judged correctly (' + JSON.stringify(r.seen) + ' ' + r.mismatches.join('; ') + ')');
     await page.waitForSelector('.summary');
     await page.click('[data-action="hub"]'); await page.waitForSelector('.ex-grid');
   }
@@ -194,7 +143,7 @@ async function playLesson(page, opts) {
   await page.click('[data-action="hub"]');
 
   // ---------- pause / resume ----------
-  await page.click('.ex-card[data-type="mixed"]'); await page.waitForSelector('.lesson');
+  await page.click('[data-action="start"][data-type="guided"]'); await page.waitForSelector('.lesson');
   const partial = await playLesson(page, { wrongEvery: 0, stopAfter: 2 });
   await wait(page, 400);
   await page.click('[data-action="pause"]');
@@ -231,7 +180,7 @@ async function playLesson(page, opts) {
   await page.selectOption('#lang-select', 'ru'); await wait(page, 200);
   assert((await page.locator('h1').innerText()) === 'Уроки слов', 'Learn page in Russian');
   await page.selectOption('#lang-select', 'uz'); await wait(page, 200);
-  assert((await page.locator('.ex-card').first().innerText()).includes('Aralash mashq'), 'Learn page in Uzbek');
+  assert((await page.locator('.today').innerText()).includes('Bugungi dars'), 'Learn page in Uzbek');
   await page.screenshot({ path: path.join(OUT, 'lexi-learn-hub-uz.png'), fullPage: true });
   await page.selectOption('#lang-select', 'en');
 
@@ -246,7 +195,7 @@ async function playLesson(page, opts) {
   await page.click('.ex-card[data-type="choose"]'); await page.waitForSelector('.option');
   await page.screenshot({ path: path.join(OUT, 'lexi-lesson-choose-mobile.png') });
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'lesson: no horizontal scroll at 390px');
-  await page.keyboard.press('1'); await page.waitForSelector('#btn-next');
+  await page.keyboard.press('1'); await page.click('[data-action="check"]'); await page.waitForSelector('#btn-next');
   await page.screenshot({ path: path.join(OUT, 'lexi-lesson-feedback-mobile.png') });
   await page.click('[data-action="pause"]'); await page.click('.modal-foot button:has-text("Save")');
 

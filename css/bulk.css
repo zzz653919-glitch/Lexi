@@ -1,0 +1,59 @@
+/* Bulk Vocabulary Import */
+.bulk-input textarea { min-height: 200px; font-size: .92rem; line-height: 1.5; tab-size: 12; white-space: pre; overflow: auto; }
+.bulk-formats { margin-bottom: 12px; max-width: 80ch; }
+.bulk-controls { display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap; margin-top: 14px; }
+.bulk-controls .field { margin: 0; min-width: 220px; }
+label.btn { cursor: pointer; }
+input.sr-only:focus-visible + * , label.btn:focus-within { outline: 3px solid var(--accent); outline-offset: 2px; }
+#bulk-table-card, #bulk-save-card { margin-top: 18px; }
+#bulk-table-card[hidden] { display: none; }
+.bulk-summary { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 14px; }
+.bulk-summary .chip { display: inline-flex; align-items: center; gap: 5px; }
+.notice.warn { background: var(--warn-soft); }
+.notice.danger { background: var(--danger-soft); }
+.notice.danger .icon { color: var(--danger); }
+.bulk-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin: 14px 0 10px; }
+.bulk-options { display: flex; gap: 20px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
+.bulk-options .check { margin: 0; }
+.field.inline { flex-direction: row; align-items: center; gap: 8px; margin: 0; }
+.field.inline select { width: auto; padding: 6px 10px; }
+
+/* table */
+.bulk-table { border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+.bulk-row { display: grid; grid-template-columns: 44px 40px minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(190px, 1fr); gap: 8px; align-items: center; padding: 8px 10px; border-bottom: 1px solid var(--border); background: var(--surface); transition: background-color .15s; }
+.bulk-row { grid-template-columns: 44px 40px minmax(0, 1.1fr) minmax(0, 1.1fr) minmax(200px, .9fr) 36px; }
+.bulk-row.with-ex { grid-template-columns: 44px 40px minmax(0, 1fr) minmax(0, 1fr) minmax(0, .9fr) minmax(200px, .8fr) 36px; }
+.bulk-row:last-child { border-bottom: 0; }
+.bulk-head { background: var(--surface-2); font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); }
+.b-tick { display: grid; place-items: center; cursor: pointer; }
+.b-tick input { width: 18px; height: 18px; accent-color: var(--accent); cursor: pointer; }
+.b-num { text-align: center; color: var(--muted); font-size: .82rem; font-variant-numeric: tabular-nums; }
+.bulk-row input[type="text"] { padding: 8px 10px; border-radius: 10px; min-width: 0; }
+.b-status { display: flex; flex-wrap: wrap; gap: 4px; min-width: 0; }
+.b-status .chip { display: inline-flex; align-items: flex-start; gap: 5px; white-space: normal; line-height: 1.3; padding: 3px 9px; border-radius: 10px; }
+.b-status .chip .icon { margin-top: 2px; }
+.bulk-row.k-error { background: var(--danger-soft); }
+.bulk-row.k-error input[type="text"] { border-color: color-mix(in srgb, var(--danger) 55%, var(--border)); }
+.bulk-row.k-dup { background: var(--warn-soft); }
+.bulk-row.off:not(.bulk-head) .b-en, .bulk-row.off:not(.bulk-head) .b-uz { opacity: .6; }
+.bulk-pager { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 12px; }
+
+/* save panel */
+.bulk-target { display: flex; gap: 16px; flex-wrap: wrap; }
+.bulk-target .field { flex: 1; min-width: 220px; }
+.bulk-savebar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 8px; padding-top: 14px; border-top: 1px solid var(--border); }
+.bulk-savebar b { font-size: 1.05rem; }
+.bulk-done { display: flex; gap: 16px; align-items: flex-start; }
+.ok-ico { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; background: var(--success-soft); color: var(--success); font-size: 1.5rem; flex: none; }
+.bulk-done .btn-row { margin-top: 12px; }
+
+/* phones and narrow windows: every row becomes a card with stacked fields */
+@media (max-width: 900px) {
+  .bulk-head { display: none; }
+  .bulk-row, .bulk-row.with-ex { grid-template-columns: 40px 28px minmax(0, 1fr) 36px; grid-template-areas: "tick num status del" "en en en en" "uz uz uz uz"; gap: 8px 8px; padding: 12px; }
+  .bulk-row.with-ex { grid-template-areas: "tick num status del" "en en en en" "uz uz uz uz" "ex ex ex ex"; }
+  .b-tick { grid-area: tick; } .b-num { grid-area: num; text-align: left; } .b-status { grid-area: status; } .b-del { grid-area: del; }
+  .b-en { grid-area: en; } .b-uz { grid-area: uz; } .b-ex { grid-area: ex; }
+  .bulk-table { border-radius: 12px; }
+}
+.bulk-toolbar .btn, .bulk-controls .btn { white-space: normal; text-align: left; max-width: 100%; }

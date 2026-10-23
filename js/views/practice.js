@@ -116,7 +116,8 @@ VL.views.practice = (function () {
       root.querySelector('#feedback').innerHTML = '<p class="muted">' + esc(t('quiz.typeFirst')) + '</p>';
       return;
     }
-    const ok = text ? VL.quiz.check(text, expected, VL.store.state.settings.lenient) : false;
+    const verdict = text ? VL.answers.checkWord(text, w, { dir: q.dir, prompt: q.dir === 'en-uz' ? w.en : w.uz, lenient: VL.store.state.settings.lenient }).verdict : 'empty';
+    const ok = verdict === 'correct' || verdict === 'typo';
     run.answered = true;
     run.blockUntil = Date.now() + NEXT_GUARD_MS;
     run.results.push({ wordId: w.id, dir: q.dir, prompt: q.dir === 'en-uz' ? w.en : w.uz, expected, typed: text, correct: ok });

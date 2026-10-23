@@ -4,7 +4,7 @@
   const t = VL.t;
   const main = document.getElementById('main');
   const ROUTES = {
-    dashboard: { view: 'dashboard' }, vocabulary: { view: 'vocabulary' }, learn: { view: 'learn' }, practice: { view: 'practice' },
+    dashboard: { view: 'dashboard' }, vocabulary: { view: 'vocabulary' }, learn: { view: 'learn' }, bulk: { view: 'bulk' }, practice: { view: 'practice' },
     difficult: { view: 'difficult' }, progress: { view: 'progress' }, settings: { view: 'settings' },
   };
   let current = null;
@@ -52,7 +52,7 @@
     const { name, params } = parseHash();
     const route = ROUTES[name];
     document.querySelectorAll('#nav a').forEach((a) => {
-      const on = a.dataset.route === name;
+      const on = a.dataset.route === (name === 'bulk' ? 'vocabulary' : name);
       a.classList.toggle('active', on);
       if (on) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current');
     });

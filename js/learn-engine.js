@@ -189,9 +189,10 @@ VL.learn = (function () {
   }
 
   /* ---------- XP ---------- */
+  const XP_BY_TYPE = { learn: 6, choose: 8, cloze: 8, fill: 10, scramble: 10, listen: 10, order: 12, type: 12, translate: 12, reverse: 12, sentEnUz: 14, sentUzEn: 15, intro: 6 };
   function xpFor(type, correct, isRetry) {
     if (!correct) return 0;
-    const base = type === 'choose' ? XP.choose : type === 'fill' ? XP.fill : XP.type;
+    const base = XP_BY_TYPE[type] || XP.type;
     return isRetry ? Math.round(base * XP.retryFactor) : base;
   }
 
