@@ -41,6 +41,22 @@ VL.answers = (function () {
     return forms.map((f) => parts.concat(f).join(' '));
   }
 
+  /* Everyday Uzbek words/phrases that are interchangeable in an answer ("haddan ortiq ko'p" = "juda ko'p").
+     Kept deliberately short: only intensifiers whose meaning is the same in a translation exercise. */
+  const SYNONYMS = [
+    ['juda', 'haddan ortiq', 'haddan tashqari', 'nihoyatda', "g'oyat", 'behad'],
+    ['bugun', 'hozirgi kunda'],
+  ];
+  const swapSynonyms = (phrase) => {
+    const out = [];
+    const padded = ' ' + phrase + ' ';
+    SYNONYMS.forEach((group) => group.forEach((a) => {
+      if (!padded.includes(' ' + a + ' ')) return;
+      group.forEach((b) => { if (b !== a) out.push(padded.replace(' ' + a + ' ', ' ' + b + ' ').trim()); });
+    }));
+    return out;
+  };
+
   const withoutParens = (s) => s.replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();
 
   // "text | context" lines -> [{ text, context }]
@@ -63,6 +79,7 @@ VL.answers = (function () {
       if (!base) return;
       const variants = new Set([base, norm(withoutParens(text), lenient)]);
       Array.from(variants).forEach((v) => verbForms(v).forEach((f) => variants.add(f)));
+      Array.from(variants).forEach((v) => swapSynonyms(v).forEach((f) => variants.add(f)));
       variants.forEach((v) => { if (v && !keys.has(v)) keys.set(v, text); });
     });
     return keys;

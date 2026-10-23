@@ -32,6 +32,11 @@ ok(good('buzilgan', brk) && good('buzilish', brk) && good('Buzilmoq', brk), 'buz
 ok(good('chiqqan', W('go out', 'chiqmoq')) && good('kelgan', W('come', 'kelmoq')), 'participle after q and plain stems');
 ok(v('buzilgani', brk) !== 'correct' && v('buzildi', brk) === 'wrong', 'other grammatical forms are not guessed');
 
+/* interchangeable intensifiers */
+const much = W('too much work', "haddan ortiq ko’p ish");
+ok(good("juda ko'p ish", much) && good('Haddan tashqari ko‘p ish', much) && good("haddan ortiq ko'p ish", much), "haddan ortiq ko'p ish = juda ko'p ish");
+ok(v("kam ish", much) === 'wrong', 'a different meaning is still rejected');
+
 /* forms and meaning */
 const read = W('read', "o'qimoq");
 ok(good("o'qish", read), "read: o'qish accepted");
