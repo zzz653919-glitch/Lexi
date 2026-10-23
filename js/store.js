@@ -2,7 +2,7 @@
    persists; a failed write surfaces an error toast but never loses the UI state. */
 VL.store = (function () {
   const { uid } = VL.util;
-  const DEFAULTS = { direction: 'en-uz', length: 'all', autoAdvance: false, lenient: true, dailyGoal: 50, learnSelected: [], autoSpeak: false, lessonSize: 10, lessonLength: 12, sentenceHistory: [], typoMode: 'careful' };
+  const DEFAULTS = { direction: 'en-uz', length: 'all', autoAdvance: false, lenient: true, dailyGoal: 50, learnSelected: [], autoSpeak: false, lessonSize: 10, lessonLength: 12, sentenceHistory: [], typoMode: 'careful', mixedWords: 10 };
   const MAX_LEN = 200;
   const MASTERED_STREAK = 3;
 
@@ -37,11 +37,14 @@ VL.store = (function () {
     if (!Array.isArray(w.alts)) w.alts = [];
     if (typeof w.sense !== 'string') w.sense = '';
     if (typeof w.pos !== 'string') w.pos = '';
+    if (typeof w.exUz !== 'string') w.exUz = '';
+    if (typeof w.level !== 'string') w.level = '';
+    if (typeof w.hard !== 'boolean') w.hard = false;
     return w;
   }
   function blankWord(en, uz, collectionId, example, phonetic, extras) {
     const x = extras || {};
-    return { id: uid(), en, uz, example: clean(example || ''), phonetic: clean(phonetic || ''), alts: x.alts || [], sense: clean(x.sense || ''), pos: x.pos || '', collectionId, createdAt: Date.now(), updatedAt: Date.now(), correct: 0, wrong: 0, streak: 0, lastSeenAt: null, lastWrongAt: null, box: 0, reps: 0, lapses: 0, due: null };
+    return { id: uid(), en, uz, example: clean(example || ''), phonetic: clean(phonetic || ''), alts: x.alts || [], sense: clean(x.sense || ''), pos: x.pos || '', exUz: clean(x.exUz || ''), level: x.level || '', hard: false, collectionId, createdAt: Date.now(), updatedAt: Date.now(), correct: 0, wrong: 0, streak: 0, lastSeenAt: null, lastWrongAt: null, box: 0, reps: 0, lapses: 0, due: null };
   }
 
   async function load() {
@@ -319,6 +322,29 @@ VL.store = (function () {
     return state.words.filter((w) => ids.has(w.id) || (w.lastWrongAt && w.streak === 0 && w.wrong > 0)).sort((a, b) => (b.lastWrongAt || 0) - (a.lastWrongAt || 0));
   }
 
+  // star / unstar a word as difficult (shown in the topic lists)
+  async function setHard(ids, flag) {
+    const changed = [];
+    ids.forEach((id) => { const w = word(id); if (w && w.hard !== !!flag) { w.hard = !!flag; changed.push(w); } });
+    if (changed.length) await save(() => VL.db.put('words', changed));
+    notify();
+  }
+  // "I already know this word": moves it to the reviewing box so it counts as learned and comes back later
+  async function markKnown(ids) {
+    const changed = [];
+    ids.forEach((id) => {
+      const w = word(id);
+      if (!w) return;
+      if ((w.box || 0) < 3) w.box = 3;
+      w.reps = Math.max(w.reps || 0, 1);
+      w.due = Date.now() + VL.srs.INTERVALS[w.box];
+      changed.push(w);
+    });
+    await save(() => VL.db.put('words', changed));
+    notify();
+  }
+  const wordByEn = (en) => { const k = VL.quiz.normalize(en, false); return state.words.find((w) => VL.quiz.normalize(w.en, false) === k) || null; };
+
   async function resetProgress() {
     state.words.forEach((w) => { w.correct = 0; w.wrong = 0; w.streak = 0; w.lastSeenAt = null; w.lastWrongAt = null; w.box = 0; w.reps = 0; w.lapses = 0; w.due = null; });
     state.sessions = []; state.days = []; state.lesson = null;
@@ -355,13 +381,13 @@ VL.store = (function () {
       const en = clean(r.en), uz = clean(r.uz);
       if (!en || !uz || en.length > MAX_LEN || uz.length > MAX_LEN) return;
       if (findDuplicate(en, r.collectionId)) { duplicates++; return; }
-      const w = blankWord(en, uz, r.collectionId, String(r.example || '').slice(0, 300));
+      const w = blankWord(en, uz, r.collectionId, String(r.example || '').slice(0, 300), '', { pos: r.pos, exUz: String(r.exUz || '').slice(0, 300), level: r.level });
       state.words.push(w);
       added.push(w);
     });
     const ok = await save(() => VL.db.put('words', added));
     notify();
-    return { added: added.length, duplicates, ok };
+    return { added: added.length, duplicates, ok, words: added };
   }
 
   function backup() {
@@ -385,6 +411,9 @@ VL.store = (function () {
       alts: Array.isArray(w.alts) ? w.alts.filter((a) => a && typeof a.text === 'string' && a.text.trim()).slice(0, 12).map((a) => ({ text: clean(a.text).slice(0, 200), context: clean(a.context || '').slice(0, 100) })) : [],
       sense: typeof w.sense === 'string' ? w.sense.slice(0, 200) : '',
       pos: VL.answers.POS.includes(w.pos) ? w.pos : '',
+      exUz: typeof w.exUz === 'string' ? w.exUz.slice(0, 300) : '',
+      level: ['A1', 'A2', 'B1', 'B2', 'C1'].includes(w.level) ? w.level : '',
+      hard: w.hard === true,
       box: Math.min(5, Math.max(0, Number(w.box) || 0)), reps: Number(w.reps) || 0, lapses: Number(w.lapses) || 0, due: Number(w.due) || null,
     }));
     const days = (Array.isArray(data.days) ? data.days : []).filter((d) => d && /^\d{4}-\d{2}-\d{2}$/.test(d.date)).map((d) => ({ date: d.date, xp: Number(d.xp) || 0, answers: Number(d.answers) || 0, correct: Number(d.correct) || 0, sessions: Number(d.sessions) || 0, lessons: Number(d.lessons) || 0, goalMet: !!d.goalMet }));
@@ -410,6 +439,6 @@ VL.store = (function () {
     state, DEFAULTS, MASTERED_STREAK, load, onChange,
     collection, word, wordsIn, status, difficultWords, summarize, findDuplicate,
     addWord, updateWord, deleteWords, addCollection, renameCollection, deleteCollection, ensureCollection,
-    recordAnswer, markLearned, addSession, customSession, addCustom, renameCustom, removeCustom, recordCustomRun, mistakeWords, dayRecord, logLearn, recordLearn, saveLesson, ensureDeckCollection, resetProgress, clearAll, setSetting, importWords, backup, restore,
+    recordAnswer, markLearned, addSession, setHard, markKnown, wordByEn, customSession, addCustom, renameCustom, removeCustom, recordCustomRun, mistakeWords, dayRecord, logLearn, recordLearn, saveLesson, ensureDeckCollection, resetProgress, clearAll, setSetting, importWords, backup, restore,
   };
 })();

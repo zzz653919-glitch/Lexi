@@ -21,7 +21,7 @@ await p.goto(APP + '#/vocabulary');await p.waitForSelector('#v-list tbody tr');
 console.log('old word visible:',await p.locator('#v-list').innerText().then(t=>t.includes('legacy')));
 const w=await p.evaluate(()=>VL.store.state.words[0]);console.log(JSON.stringify(w));
 await p.goto(APP + '#/learn');await p.waitForSelector('.strip');
-console.log('lessons on migrated data:');await p.click('[data-action=start][data-type=translate]').catch(()=>console.log('translate disabled?'));
+console.log('lessons on migrated data:');await p.evaluate(()=>VL.views.learn.startType('translate')).catch(()=>console.log('translate disabled?'));
 await p.waitForTimeout(400);console.log('lesson started:',await p.locator('.lesson').count());
 console.log('version',await p.evaluate(()=>new Promise(r=>{const q=indexedDB.open('lexi-vocabulary');q.onsuccess=()=>{r(q.result.version+' stores:'+[...q.result.objectStoreNames]);q.result.close()}})));
 console.log('errors',errs);await b.close()})()

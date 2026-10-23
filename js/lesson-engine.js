@@ -351,5 +351,36 @@
     return { items, wordIds: ids, newCount: words.filter((w) => !w.reps).length, sentenceIds };
   }
 
-  Object.assign(E, { buildCustom, CUSTOM_TYPES, CUSTOM_DEFAULT, buildSingle, checkSentence, normSentence, sentenceTokens, tilesFrom, mk, levelFor, pickSentences, buildGuided, sequence, reviewItemFor, insertReview, GUIDED_LENGTHS: [10, 12, 15] });
+
+  /* ---------- mixed exercise: six steps for every word, one word after another ---------- */
+  const MIX_STEPS = ['choose', 'type', 'translate', 'fill', 'match', 'reverse'];
+
+  /* cfg: { words }. For each word: 1 choose the translation, 2 type the translation (en->uz), 3 translate
+     the Uzbek word into English, 4 fill the missing letters, 5 match pairs, 6 Uzbek (another form) -> English.
+     Always exactly 6 items per word, in this order; the word is finished before the next one starts. */
+  function buildMixed(cfg, allWords) {
+    const words = cfg.words.filter(Boolean);
+    const items = [];
+    words.forEach((w, i) => {
+      const others = words.slice(i + 1).concat(words.slice(0, i)).concat(shuffle(allWords.filter((x) => !words.includes(x))));
+      const group = [w].concat(others.slice(0, 3));
+      const steps = {
+        choose: () => mk.choose(w, allWords),
+        type: () => Object.assign(mk.wordType('type', w), { dir: 'en-uz' }),
+        translate: () => Object.assign(mk.wordType('translate', w), { dir: 'uz-en' }),
+        fill: () => mk.fill(w),
+        match: () => (group.length >= 2 ? Object.assign(mk.match(group), { focusId: w.id }) : null),
+        reverse: () => { const it = Object.assign(mk.wordType('reverse', w), { dir: 'uz-en' }); const v = VL.answers && VL.answers.promptVariant(w); if (v) it.prompt = v; return it; },
+      };
+      MIX_STEPS.forEach((k, step) => {
+        // a step that cannot be built (e.g. a one-letter word has nothing to fill) becomes a typed translation, so every word keeps six exercises
+        const it = steps[k]() || Object.assign(mk.wordType('type', w), { dir: step % 2 ? 'uz-en' : 'en-uz' });
+        it.mixStep = step + 1; it.mixWord = i;
+        items.push(it);
+      });
+    });
+    return { items, wordIds: words.map((w) => w.id), newCount: words.filter((w) => !w.reps).length, sentenceIds: [] };
+  }
+
+  Object.assign(E, { buildMixed, MIX_STEPS, buildCustom, CUSTOM_TYPES, CUSTOM_DEFAULT, buildSingle, checkSentence, normSentence, sentenceTokens, tilesFrom, mk, levelFor, pickSentences, buildGuided, sequence, reviewItemFor, insertReview, GUIDED_LENGTHS: [10, 12, 15] });
 })();

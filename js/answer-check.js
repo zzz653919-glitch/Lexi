@@ -188,6 +188,18 @@ VL.answers = (function () {
     return { verdict: 'wrong' };
   }
 
+  /* A second way to say the same Uzbek word, used as the prompt of the last mixed-exercise step
+     (yo'qotmoq -> Yo'qotish). null when the word has no other form. */
+  function promptVariant(word) {
+    const main = Q.acceptedAnswers(word.uz)[0] || '';
+    const base = norm(main, false);
+    const forms = verbForms(base);
+    const pick = forms.find((f) => /(ish|sh)$/.test(f)) || forms[0];
+    if (pick && pick !== base) return pick.charAt(0).toUpperCase() + pick.slice(1);
+    const alt = altsOf(word).find((a) => !a.context);
+    return alt ? alt.text : null;
+  }
+
   /* ---------- Uzbek -> English: which English words fit this Uzbek prompt? ---------- */
   function englishFor(promptText, word) {
     const key = norm(promptText, true);
@@ -244,5 +256,5 @@ VL.answers = (function () {
     return null;
   }
 
-  return { POS, MAX_ALTS, norm, verbForms, parseAlts, formatAlts, accepted, describe, contextsOf, checkTranslation, checkEnglish, checkWord, editDistance, validateExtras, englishFor };
+  return { promptVariant, POS, MAX_ALTS, norm, verbForms, parseAlts, formatAlts, accepted, describe, contextsOf, checkTranslation, checkEnglish, checkWord, editDistance, validateExtras, englishFor };
 })();

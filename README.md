@@ -44,7 +44,23 @@ How the lesson is put together: new words are introduced first (“learn”), th
 
 **Pronunciation:** a speaker button next to English words uses the browser's built-in Text-to-Speech (it prefers natural-sounding US/UK English voices). If the browser has no speech support the buttons are simply hidden and everything else keeps working. Optional setting: read English words aloud automatically.
 
-### Smarter translation checking and custom sessions (new)
+### Vocabulary Topics: 120 topics, about 4,900 words (new)
+
+*Lug'at mavzulari* in the main menu: 10 categories and 120 topics (Home and daily life, Travel and transport, Work and business, Education and English, Food, People, Health and sport, Nature and weather, Technology, Shopping).
+
+- Every topic has real words with an Uzbek translation, part of speech, level (A1–C1), an English example sentence with its Uzbek translation and an audio button (browser voice). Topics have 38–46 words each.
+- Cards show the real numbers: words in the topic, words learned and the percentage. A word counts as learned when it reaches box 3 of the spaced-repetition schedule (or when you press the check mark "I know this word").
+- Search topics, English words and Uzbek translations; filter by category, level, not-learned, learned and difficult words; star difficult words; select words by hand.
+- *Start learning* runs the mixed exercise (six exercises for every word, one word after another) on the topic; *Practise the selected words* does the same for the ticked words; *Create a new session* opens the session window with the topic's words.
+- Words are copied into your own vocabulary only when you start learning or mark them. A word you already have (same English spelling) is reused, so nothing is duplicated and progress is shared. Progress, difficult flags and sessions live in the same browser database as the rest of your data.
+- Adding a topic or words: edit `js/data/topic-index.js` (one row per topic) and the `VL.defVocab('tNNN', [...])` call in `js/data/words-*.js`. There is no admin panel; the app has no backend. `node tests/vocab-data.test.js` checks the data (fields, levels, duplicates inside a topic, stray characters) and prints which topics are empty or thin.
+- Honest limits: the lists were written for this project and have not been reviewed by a native speaker or teacher; phonetic transcription is **not** included (it cannot be checked offline), use the speaker button; words shared by several topics are stored once (782 words appear in more than one topic).
+
+### Mixed exercise
+
+The six single-type cards were merged into one button, *Aralash mashqni boshlash*: for each word in turn — choose the translation → type the answer → translate the word → fill in the letters → match pairs → reverse (Uzbek → English). N words give N × 6 exercises (matching counts as one exercise). Mistakes are not repeated inside the run; the results page lists the difficult words and offers *Review the mistakes*, *Create a new session* and *Restart*.
+
+### Smarter translation checking and custom sessions
 
 **Answer checking** (`js/answer-check.js`, a separate module with no UI; used by every typed translation exercise and by the Practice page):
 
@@ -112,6 +128,10 @@ js/
   decks.js                 288 ready-made words (4 levels x 9 topics)
   answer-check.js          Translation checking: forms, synonyms, context, careful spelling (pure logic)
   topics.js                Topics for custom sessions
+  data/topic-index.js      120 vocabulary topics (names, icons, categories)
+  data/words-a..j.js       The words of each topic (one defVocab call per topic)
+  locales-topics.js        Translations for the topics page
+  views/topics.js          Vocabulary topics page
   custom-sessions.js       Custom sessions: creation window, Sessions tab, history
   locales-sessions.js      Translations for custom sessions
   bulk-parse.js            Bulk import parser and row checks (pure logic)
@@ -205,6 +225,9 @@ npm install --save-dev playwright
 npx playwright install chromium     # once
 node tests/core.test.js
 node tests/answer-check.test.js     # pure logic, no browser
+node tests/vocab-data.test.js       # vocabulary data checks (no browser)
+node tests/topics.test.js           # topics page
+node tests/mixed.test.js            # mixed exercise
 node tests/sessions.test.js         # custom sessions + typed-answer checking in the real exercise
 node tests/lessons.test.js          # ...and lesson-engine / exercises / bulk-parser / bulk / language / upgrade / storage-fallback
 ```

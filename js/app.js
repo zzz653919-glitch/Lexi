@@ -4,7 +4,7 @@
   const t = VL.t;
   const main = document.getElementById('main');
   const ROUTES = {
-    dashboard: { view: 'dashboard' }, vocabulary: { view: 'vocabulary' }, learn: { view: 'learn' }, bulk: { view: 'bulk' }, practice: { view: 'practice' },
+    dashboard: { view: 'dashboard' }, vocabulary: { view: 'vocabulary' }, learn: { view: 'learn' }, topics: { view: 'topics' }, bulk: { view: 'bulk' }, practice: { view: 'practice' },
     difficult: { view: 'difficult' }, progress: { view: 'progress' }, settings: { view: 'settings' },
   };
   let current = null;
