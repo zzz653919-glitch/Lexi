@@ -24,21 +24,21 @@ VL.answers = (function () {
   }
   const endsWithVowel = (stem) => /[aeiou]'?$/.test(stem) || /o'$/.test(stem);
 
-  /* Uzbek verb: infinitive (-moq) and verbal noun (-ish / -sh) are two forms of the same word.
-     Returns the other form(s) of a normalised phrase (only its last word changes). */
+  /* Uzbek verb: the infinitive (-moq), the verbal noun (-ish / -sh) and the participle (-gan / -kan / -qan,
+     "buzilmoq" = "buzilish" = "buzilgan") are treated as forms of the same word.
+     Returns the other forms of a normalised phrase (only its last word changes). */
   function verbForms(phrase) {
     const parts = phrase.split(' ');
     const last = parts.pop();
-    const out = [];
-    if (last.length >= 5 && last.endsWith('moq')) {
-      const stem = last.slice(0, -3);
-      out.push(stem + (endsWithVowel(stem) ? 'sh' : 'ish'));
-    } else if (last.length >= 6 && last.endsWith('ish')) {
-      out.push(last.slice(0, -3) + 'moq');
-    } else if (last.length >= 5 && last.endsWith('sh') && /[aeiou]'?$/.test(last.slice(0, -2))) {
-      out.push(last.slice(0, -2) + 'moq');
-    }
-    return out.map((f) => parts.concat(f).join(' '));
+    let stem = null;
+    if (last.length >= 5 && last.endsWith('moq')) stem = last.slice(0, -3);
+    else if (last.length >= 6 && last.endsWith('ish')) stem = last.slice(0, -3);
+    else if (last.length >= 5 && last.endsWith('sh') && /[aeiou]'?$/.test(last.slice(0, -2))) stem = last.slice(0, -2);
+    else if (last.length >= 6 && /(gan|kan|qan)$/.test(last)) stem = last.slice(0, -3);
+    if (!stem || stem.length < 2) return [];
+    const part = stem + (/k$/.test(stem) ? 'kan' : /q$/.test(stem) ? 'qan' : 'gan');
+    const forms = [stem + 'moq', stem + (endsWithVowel(stem) ? 'sh' : 'ish'), part].filter((f) => f !== last);
+    return forms.map((f) => parts.concat(f).join(' '));
   }
 
   const withoutParens = (s) => s.replace(/\([^)]*\)/g, ' ').replace(/\s+/g, ' ').trim();

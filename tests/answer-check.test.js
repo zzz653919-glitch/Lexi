@@ -26,6 +26,12 @@ ok(good("ta'mirlash", repair) && good('ta’mirlamoq', repair), "repair: ta'mirl
 ok(good('tez', quick) && good('Tezkor', quick), 'quick: tez and tezkor accepted');
 ok(v('sekin', quick) === 'wrong', 'quick: unrelated word rejected');
 
+/* participle: "To'g'ri javob: buzilmoq / Siz yozdingiz: buzilgan" */
+const brk = W('break down', 'buzilmoq');
+ok(good('buzilgan', brk) && good('buzilish', brk) && good('Buzilmoq', brk), 'buzilmoq = buzilgan = buzilish');
+ok(good('chiqqan', W('go out', 'chiqmoq')) && good('kelgan', W('come', 'kelmoq')), 'participle after q and plain stems');
+ok(v('buzilgani', brk) !== 'correct' && v('buzildi', brk) === 'wrong', 'other grammatical forms are not guessed');
+
 /* forms and meaning */
 const read = W('read', "o'qimoq");
 ok(good("o'qish", read), "read: o'qish accepted");
