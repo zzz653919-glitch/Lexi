@@ -2,7 +2,7 @@
    persists; a failed write surfaces an error toast but never loses the UI state. */
 VL.store = (function () {
   const { uid } = VL.util;
-  const DEFAULTS = { direction: 'en-uz', length: 'all', autoAdvance: false, lenient: true, dailyGoal: 50, learnSelected: [], autoSpeak: false, lessonSize: 10, lessonLength: 12, sentenceHistory: [], typoMode: 'careful' };
+  const DEFAULTS = { direction: 'en-uz', length: 'all', autoAdvance: false, lenient: true, dailyGoal: 50, learnSelected: [], autoSpeak: false, lessonSize: 10, lessonLength: 12, sentenceHistory: [], typoMode: 'careful', mixedWords: 10 };
   const MAX_LEN = 200;
   const MASTERED_STREAK = 3;
 

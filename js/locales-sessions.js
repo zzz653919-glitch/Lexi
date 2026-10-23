@@ -76,3 +76,22 @@ VL.addRows([
   ['cs.learnedWords', 'Learned words', "O'zlashtirilgan so'zlar", 'Усвоенные слова'],
   ['cs.mistakenWords', 'Mistaken words', "Xato qilingan so'zlar", 'Слова с ошибками'],
 ]);
+
+VL.addRows([
+  ['ex.mix6', 'Mixed exercise', 'Aralash mashq', 'Смешанное упражнение'],
+  ['mx.title', 'Mixed exercise', 'Aralash mashq', 'Смешанное упражнение'],
+  ['mx.intro', 'Every chosen word goes through six exercises, one after another. When a word is finished, the next one begins.', "Tanlangan har bir so'z ketma-ket oltita mashqdan o'tadi. So'z tugagach, keyingisi boshlanadi.", 'Каждое выбранное слово проходит шесть упражнений подряд. Когда слово закончено, начинается следующее.'],
+  ['mx.step.1', 'Choose the translation', 'Tarjimani tanlash', 'Выбери перевод'],
+  ['mx.step.2', 'Type the answer', 'Javobni yozish', 'Впиши ответ'],
+  ['mx.step.3', 'Translate the word', "So'zni tarjima qilish", 'Переведи слово'],
+  ['mx.step.4', 'Fill in the letters', "Harflarni to'ldirish", 'Заполни буквы'],
+  ['mx.step.5', 'Match the pairs', 'Juftlarni moslashtirish', 'Сопоставь пары'],
+  ['mx.step.6', 'Reverse: Uzbek → English', "Teskari mashq: o'zbekchadan inglizchaga", 'Обратное: узбекский → английский'],
+  ['mx.plan', '{w} × 6 = {e} exercises', '{w} × 6 = {e} ta mashq', '{w} × 6 = {e} упражнений'],
+  ['mx.words', 'Words per session', "Sessiyadagi so'zlar", 'Слов в сессии'],
+  ['mx.start', 'Start the mixed exercise', 'Aralash mashqni boshlash', 'Начать смешанное упражнение'],
+  ['mx.restart', 'Restart', 'Qayta boshlash', 'Начать заново'],
+  ['mx.reviewMistakes', 'Review the mistakes', 'Xatolarni qayta ishlash', 'Проработать ошибки'],
+  ['mx.hardWords', 'Difficult words', "Qiyin bo'lgan so'zlar", 'Трудные слова'],
+  ['mx.wrongN', '{n} wrong', '{n} ta xato', 'ошибок: {n}'],
+]);

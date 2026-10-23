@@ -13,7 +13,7 @@ const errs=[];p.on('pageerror',e=>errs.push(e.message));
 await p.goto(APP + '#/learn');await p.waitForSelector('.strip');
 console.log('backend:',await p.evaluate(()=>VL.db.backend));
 await p.evaluate(()=>VL.io.loadSample());await p.waitForTimeout(300);
-await p.click('.ex-card[data-type="translate"]');await p.waitForSelector('.lesson');
+await p.evaluate(()=>VL.views.learn.startType('translate'));await p.waitForSelector('.lesson');
 for(let i=0;i<4;i++){await p.waitForTimeout(350);const s=await p.evaluate(()=>{const l=VL.store.state.lesson;const it=l.items[l.index];const w=VL.store.word(it.wordIds[0]);return{t:it.type,w:{en:w.en,uz:w.uz}}});
  if(s.t==='intro'){await p.click('#btn-intro');continue}
  await p.fill('#lans',s.w.uz.split(';')[0]);await p.press('#lans','Enter');await p.waitForSelector('#btn-next');await p.waitForTimeout(300);await p.click('#btn-next')}

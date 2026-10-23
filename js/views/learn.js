@@ -11,7 +11,9 @@ VL.views.learn = (function () {
     review: { icon: 'clock', color: 'blue' }, scramble: { icon: 'shuffle', color: 'orange' }, listen: { icon: 'volume', color: 'blue' },
     sentEnUz: { icon: 'book', color: 'teal' }, sentUzEn: { icon: 'refresh', color: 'violet' }, order: { icon: 'list', color: 'green' }, cloze: { icon: 'type', color: 'pink' },
   };
-  const SINGLE_TYPES = ['choose', 'scramble', 'listen', 'type', 'translate', 'reverse', 'fill', 'match', 'sentEnUz', 'sentUzEn', 'order', 'cloze', 'review'];
+  // choose, type, translate, fill, match and reverse are no longer started one by one: the mixed exercise runs all six for every word
+  const SINGLE_TYPES = ['scramble', 'listen', 'sentEnUz', 'sentUzEn', 'order', 'cloze', 'review'];
+  const MIX_ICONS = ['list', 'edit', 'book', 'type', 'link', 'refresh'];
   const TABS = ['practice', 'sessions', 'collections', 'decks', 'words', 'achievements'];
 
   let root, off;
@@ -101,6 +103,13 @@ VL.views.learn = (function () {
       '<p><b>' + esc(ids.length ? t('src.some', { n: ids.length }) : t('src.all')) + '</b> · ' + esc(n('n.word', pool.length)) + '</p>' +
       '<p class="hint">' + esc(t('src.hint')) + '</p></div>' +
       '<div class="source-side"><button class="btn btn-sm" data-tab="collections">' + icon('folder') + esc(t('src.change')) + '</button></div></section>';
+    const mixN = Math.min(pool.length, store.state.settings.mixedWords || 10);
+    const mixBlock = !pool.length ? t('ex.needWords') : store.state.words.length < 4 ? t('ex.needFour') : '';
+    html += '<section class="card mix-card"><div class="mix-main"><span class="mix-ico">' + icon('shuffle') + '</span><div><h2 class="card-title">' + esc(t('mx.title')) + '</h2><p class="muted">' + esc(t('mx.intro')) + '</p>' +
+      '<ol class="mix-steps">' + E.MIX_STEPS.map((k, i) => '<li>' + icon(MIX_ICONS[i]) + '<span>' + esc(t('mx.step.' + (i + 1))) + '</span></li>').join('') + '</ol>' +
+      '<p class="today-plan"><b>' + esc(mixBlock || t('mx.plan', { w: n('n.word', mixN), e: mixN * 6 })) + '</b></p></div></div>' +
+      '<div class="mix-side"><div class="field"><label for="mix-words">' + esc(t('mx.words')) + '</label><select id="mix-words">' + [5, 10, 15, 20].map((v) => '<option value="' + v + '"' + (v === (store.state.settings.mixedWords || 10) ? ' selected' : '') + '>' + v + '</option>').join('') + '</select></div>' +
+      '<button class="btn btn-primary btn-xl" data-action="start-mix"' + (mixBlock ? ' disabled' : '') + '>' + icon('play') + esc(t('mx.start')) + '</button></div></section>';
     html += '<h2 class="section-title">' + esc(t('lesson.only')) + '</h2><div class="ex-grid">' + SINGLE_TYPES.map((k) => {
       const m = EX_META[k];
       const block = exerciseAvailability(k, pool, due);
@@ -262,6 +271,7 @@ VL.views.learn = (function () {
     const row = a.closest('li[data-id]');
     switch (a.dataset.action) {
       case 'start': VL.player.start(root, { type: a.dataset.type, words: poolWords() }, { onExit: drawHub }); break;
+      case 'start-mix': VL.player.start(root, { type: 'mix6', words: poolWords() }, { onExit: drawHub }); break;
       case 'resume': VL.player.resume(root, { onExit: drawHub }); break;
       case 'discard':
         if (await VL.ui.confirm({ title: t('btn.discard'), message: t('pause.title'), confirmLabel: t('btn.discard'), danger: true })) { await store.saveLesson(null); drawHub(); }
@@ -300,7 +310,8 @@ VL.views.learn = (function () {
   async function onChange(e) {
     const el = e.target;
     if (VL.player.active()) return;
-    if (el.id === 'lesson-length') await store.setSetting('lessonLength', Number(el.value));
+    if (el.id === 'mix-words') await store.setSetting('mixedWords', Number(el.value));
+    else if (el.id === 'lesson-length') await store.setSetting('lessonLength', Number(el.value));
     else if (el.id === 'goal-select') await store.setSetting('dailyGoal', Number(el.value));
     else if (el.dataset && el.dataset.action === 'toggle-col') {
       const id = el.closest('[data-col]').dataset.col;
@@ -314,6 +325,8 @@ VL.views.learn = (function () {
   }
 
   return {
+    // starts one exercise type directly (used by the tests and by links; the cards for six types were merged into the mixed exercise)
+    startType(type) { return VL.player.start(root, { type, words: poolWords() }, { onExit: drawHub }); },
     mount(el, params) {
       root = el;
       const want = params.get('tab');

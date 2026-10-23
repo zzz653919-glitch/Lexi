@@ -228,7 +228,7 @@ VL.exercises = (function () {
     render({ item, word: w }) {
       const toUz = item.dir === 'en-uz';
       const key = item.type === 'type' ? 'ex.type' : item.type === 'translate' ? 'ex.translate' : 'ex.reverse';
-      return label(key) + '<p class="q-label">' + esc(t(toUz ? 'q.typeUz' : 'q.typeEn')) + '</p><p class="q-word" lang="' + (toUz ? 'en' : 'uz') + '">' + esc(toUz ? w.en : w.uz) + (toUz ? sayBtn(w.en, true) : '') + '</p>' +
+      return label(key) + '<p class="q-label">' + esc(t(toUz ? 'q.typeUz' : 'q.typeEn')) + '</p><p class="q-word" lang="' + (toUz ? 'en' : 'uz') + '">' + esc(toUz ? w.en : (item.prompt || w.uz)) + (toUz ? sayBtn(w.en, true) : '') + '</p>' +
         typedInput(toUz ? 'quiz.phUz' : 'quiz.phEn', toUz ? 'quiz.ariaUz' : 'quiz.ariaEn');
     },
     mount: (root, ctx, api) => mountTyped(root, api),

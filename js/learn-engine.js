@@ -164,7 +164,7 @@ VL.learn = (function () {
 
   /* ---------- checking ---------- */
   function expectedFor(item, word) { return item.dir === 'en-uz' ? word.uz : word.en; }
-  function promptFor(item, word) { return item.dir === 'en-uz' ? word.en : word.uz; }
+  function promptFor(item, word) { return item.dir === 'en-uz' ? word.en : (item.prompt || word.uz); }
 
   // Result of a typed answer: { correct, closeCall } — closeCall = one typo away (still wrong, but we say so).
   function checkTyped(input, expected, lenient) {

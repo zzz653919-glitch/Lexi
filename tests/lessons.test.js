@@ -25,7 +25,8 @@ const { playLesson } = require('./helpers/lesson-solver');
   await page.waitForSelector('.strip');
 
   // ---------- empty state ----------
-  assert((await page.locator('.ex-card').count()) === 13, '13 single-type exercise cards');
+  assert((await page.locator('.ex-card').count()) === 7, '7 single-type exercise cards (six merged into the mixed exercise)');
+  assert(await page.locator('[data-action="start-mix"]').isDisabled(), 'mixed exercise disabled with no words');
   assert((await page.locator('.ex-card:not([disabled])').count()) === 0 && (await page.locator('[data-action="start"][data-type="guided"]').isDisabled()), 'all exercises disabled with no words');
   assert((await page.locator('.strip-item').first().innerText()).includes('0 days'), 'streak starts at 0');
 
@@ -123,7 +124,8 @@ const { playLesson } = require('./helpers/lesson-solver');
   await page.click('[data-tab="practice"]');
   const types = ['choose', 'type', 'translate', 'fill', 'match', 'reverse', 'scramble', 'sentEnUz', 'sentUzEn', 'order', 'cloze'];
   for (const tp of types) {
-    await page.click('.ex-card[data-type="' + tp + '"]');
+    if (page.locator('.ex-card[data-type="' + tp + '"]').count && (await page.locator('.ex-card[data-type="' + tp + '"]').count())) await page.click('.ex-card[data-type="' + tp + '"]');
+    else await page.evaluate((x) => VL.views.learn.startType(x), tp);
     await page.waitForSelector('.lesson');
     const r = await playLesson(page, { wrongEvery: 3 });
     const kind = tp === 'type' ? ['type'] : [tp];
@@ -192,7 +194,7 @@ const { playLesson } = require('./helpers/lesson-solver');
     assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), tab + ' tab: no horizontal scroll at 390px');
   }
   await page.click('[data-tab="practice"]');
-  await page.click('.ex-card[data-type="choose"]'); await page.waitForSelector('.option');
+  await page.evaluate(() => VL.views.learn.startType('choose')); await page.waitForSelector('.option');
   await page.screenshot({ path: path.join(OUT, 'lexi-lesson-choose-mobile.png') });
   assert(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'lesson: no horizontal scroll at 390px');
   await page.keyboard.press('1'); await page.click('[data-action="check"]'); await page.waitForSelector('#btn-next');
