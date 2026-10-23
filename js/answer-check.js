@@ -20,7 +20,7 @@ VL.answers = (function () {
   const clean = (s) => String(s == null ? '' : s).replace(/[   ]/g, ' ').replace(/\s+/g, ' ').trim();
   // comparison form: lower case, one apostrophe style, no accents/punctuation, single spaces
   function norm(s, lenient) {
-    return Q.normalize(s, lenient).replace(/[.,!?;:"“”()\[\]]/g, ' ').replace(/\s+/g, ' ').trim();
+    return Q.normalize(s, lenient).replace(/[.,!?;:"“”()\[\]\-–—]/g, ' ').replace(/\s+/g, ' ').trim();
   }
   const endsWithVowel = (stem) => /[aeiou]'?$/.test(stem) || /o'$/.test(stem);
 
@@ -42,10 +42,28 @@ VL.answers = (function () {
   }
 
   /* Everyday Uzbek words/phrases that are interchangeable in an answer ("haddan ortiq ko'p" = "juda ko'p").
-     Kept deliberately short: only intensifiers whose meaning is the same in a translation exercise. */
+     Only pairs whose meaning is the same in a translation exercise (not near-synonyms such as happy/glad). */
   const SYNONYMS = [
+    // intensifiers, quantity
     ['juda', 'haddan ortiq', 'haddan tashqari', 'nihoyatda', "g'oyat", 'behad'],
-    ['bugun', 'hozirgi kunda'],
+    ['kam', 'oz'], ['bir oz', 'biroz', 'ozgina'], ['hamma', 'barcha'], ['boshqa', "o'zga"],
+    // time and frequency
+    ['bugun', 'hozirgi kunda'], ['hozir', 'hozirda', 'ayni paytda'], ['hamisha', 'doim', 'doimo'], ["ba'zan", "ba'zida"],
+    ["tez-tez", "ko'pincha"], ['darhol', 'zudlik bilan'], ['qish', 'qish fasli'], ['yoz', 'yoz fasli'], ['bahor', 'bahor fasli'], ['kuz', 'kuz fasli'],
+    // linking words, replies
+    ['lekin', 'ammo', 'biroq'], ['va', 'hamda'], ['agar', 'basharti'], ['albatta', 'shubhasiz'], ['ehtimol', 'balki'],
+    ['salom', 'assalomu alaykum'], ['xayr', "xayr-xo'sh"], ['rahmat', 'tashakkur'],
+    // adjectives
+    ['katta', 'yirik'], ['kichik', 'kichkina'], ['chiroyli', "go'zal", "ko'rkam"], ['sekin', 'asta'], ['xavfli', 'havfli'],
+    ['qiyin', 'mushkul'], ['oson', 'yengil'], ['kuchli', 'qudratli'], ['zaif', 'kuchsiz'], ['tinch', 'sokin', 'osoyishta'],
+    ['boy', 'badavlat'], ["kambag'al", 'qashshoq'], ['aqlli', 'zehnli'], ['dangasa', 'yalqov'], ['mazali', 'totli', 'lazzatli'], ['muhim', 'ahamiyatli'],
+    // nouns
+    ['odam', 'kishi', 'inson'], ["o'qituvchi", 'ustoz', 'muallim'], ['shifokor', 'doktor', 'vrach'], ['mashina', 'avtomobil'],
+    ['dunyo', 'olam', 'jahon'], ['mamlakat', 'davlat'], ['ovqat', 'taom'], ['nonushta', 'ertalabki ovqat'], ['yordam', "ko'mak"], ['samolyot', 'tayyora'],
+    // verbs (infinitive forms; -ish / -gan forms are handled by verbForms)
+    ['izlamoq', 'qidirmoq'], ['tugatmoq', 'yakunlamoq', 'tamomlamoq'], ['sotib olmoq', 'xarid qilmoq'], ['tuzatmoq', "ta'mirlamoq"],
+    ['tushunmoq', 'anglamoq'], ["o'ylamoq", 'fikr qilmoq'], ['aytmoq', 'demoq'], ['qaramoq', 'boqmoq'], ['dam olmoq', 'hordiq chiqarmoq'],
+    ['yordam bermoq', "ko'maklashmoq"],
   ];
   const swapSynonyms = (phrase) => {
     const out = [];

@@ -37,6 +37,26 @@ const much = W('too much work', "haddan ortiq ko’p ish");
 ok(good("juda ko'p ish", much) && good('Haddan tashqari ko‘p ish', much) && good("haddan ortiq ko'p ish", much), "haddan ortiq ko'p ish = juda ko'p ish");
 ok(v("kam ish", much) === 'wrong', 'a different meaning is still rejected');
 
+/* more interchangeable words */
+const syn = (en, uz, ok1, bad) => { const w = W(en, uz); ok(good(ok1, w), en + ': ' + uz + ' = ' + ok1); if (bad) ok(v(bad, w) === 'wrong', en + ': ' + bad + ' rejected'); };
+syn('but', 'lekin', 'ammo', 'va');
+syn('beautiful', 'chiroyli', "go'zal", 'xunuk');
+syn('difficult', 'qiyin', 'mushkul', 'oson');
+syn('doctor', 'shifokor', 'vrach', "o'qituvchi");
+syn('teacher', "o'qituvchi", 'ustoz', 'shifokor');
+syn('search', 'izlamoq', 'qidirmoq', 'topmoq');
+syn('finish', 'tugatmoq', 'yakunlamoq', 'boshlamoq');
+syn('car', 'mashina', 'avtomobil', 'poyezd');
+syn('thanks', 'rahmat', 'tashakkur', 'iltimos');
+syn('always', 'hamisha', 'doim', 'hech qachon');
+syn('often', "tez-tez", 'tez tez', 'kamdan-kam');
+syn('person', 'odam', 'inson', 'hayvon');
+syn('clever', 'aqlli', 'zehnli', 'dangasa');
+syn('spring', 'bahor', 'bahor fasli', 'kuz');
+syn('buy', 'sotib olmoq', 'xarid qilmoq', 'sotmoq');
+syn('quiet', 'tinch', 'sokin', 'shovqinli');
+ok(good('sotib olish', words.find((w) => w.en === 'buy')), 'multi-word verb: sotib olish');
+
 /* forms and meaning */
 const read = W('read', "o'qimoq");
 ok(good("o'qish", read), "read: o'qish accepted");
