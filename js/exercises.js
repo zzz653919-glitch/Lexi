@@ -20,7 +20,7 @@ VL.exercises = (function () {
   const lenient = () => store.state.settings.lenient;
 
   /* ---------- shared pieces ---------- */
-  const exampleLine = (w) => (w && w.example ? esc(t('les.example')) + ': ' + esc(w.example) : '');
+  const exampleLine = (w) => (w && w.example ? esc(t('les.example')) + ': ' + esc(w.example) + (w.exUz ? ' — ' + esc(w.exUz) : '') : '');
   const ruleLine = (s) => (s && s.rule ? [esc(t('fb.ruleLine', { t: t('rule.' + s.rule + '.t'), d: t('rule.' + s.rule + '.d') }))] : []);
   const label = (key) => '<p class="lesson-type">' + esc(t(key)) + '</p>';
   const sayBtn = (text, big) => VL.speech.button(text, big ? 'big' : '');
