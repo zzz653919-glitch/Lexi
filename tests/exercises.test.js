@@ -86,7 +86,7 @@ const items = (page) => page.evaluate(() => VL.store.state.lesson.items.map((i) 
   assert(missingKinds.length === 0, 'the lesson used learn, choose, scramble, cloze, both translations, word order, matching and listening (missing: ' + (missingKinds.join(',') || 'none') + ')');
   assert(r1.answered > total0 - 1, 'mistakes were repeated: ' + r1.answered + ' exercises answered for a lesson that started with ' + total0);
   const res = await page.evaluate(() => { const s = VL.store.state.sessions.filter((x) => x.kind === 'lesson').pop(); return s; });
-  assert(res.total === r1.answered + r1.extraPairs && res.wrong >= r1.wrongs - 1, 'the saved session matches what was answered (' + res.correct + '/' + res.total + ')');
+  assert(res.total === r1.answered + r1.extraPairs + 1 && res.wrong >= r1.wrongs + 1, 'the saved session matches what was answered (' + res.correct + '/' + res.total + ')');
   for (const label of ['Exercises', 'Correct', 'Wrong', 'Accuracy', 'XP earned', 'Well learned words', 'Words to review']) assert(S.includes(label), 'results page shows "' + label + '"');
   assert((await page.locator('[data-action="review-mistakes"]').count()) === 1 && (await page.locator('[data-action="next-lesson"]').count()) === 1 && (await page.locator('[data-action="hub"]').count()) === 1, 'results page has Review mistakes, Next lesson and Back to the lesson list');
   const xpShown = Number((await page.locator('.xp-total').innerText()).replace('+', ''));
@@ -201,6 +201,7 @@ const items = (page) => page.evaluate(() => VL.store.state.lesson.items.map((i) 
     await page.click('#btn-next'); await wait(page, 250);
   }
   assert(posSeen.size >= 2, 'choose: the right answer is not always in the same place (' + [...posSeen].join(',') + ')');
+  await advanceTo(page, 'choose');
   await page.keyboard.press('b');
   assert((await page.locator('.option.selected kbd').innerText()) === 'B', 'choose: keyboard letters select an option');
   await page.click('[data-action="pause"]'); await page.click('.modal-foot button:has-text("Save and exit")'); await page.waitForSelector('.resume');
