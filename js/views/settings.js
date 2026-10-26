@@ -16,6 +16,9 @@ VL.views.settings = (function () {
       '<section class="card settings-group"><h2 class="card-title">' + esc(t('set.appearance')) + '</h2>' +
       '<fieldset class="field"><legend>' + esc(t('set.theme')) + '</legend><div class="segmented">' + radio('theme', 'light', theme, t('theme.optLight')) + radio('theme', 'dark', theme, t('theme.optDark')) + radio('theme', 'system', theme, t('theme.optSystem')) + '</div></fieldset>' +
       '<fieldset class="field"><legend>' + esc(t('set.language')) + '</legend><div class="segmented">' + VL.i18n.LANGS.map((l) => radio('lang', l, lang, VL.i18n.NAMES[l])).join('') + '</div></fieldset></section>' +
+      '<section class="card settings-group"><h2 class="card-title">' + esc(t('set.profile')) + '</h2>' +
+      '<div class="field"><label for="set-name">' + esc(t('set.name')) + '</label><input id="set-name" type="text" maxlength="30" autocomplete="nickname" placeholder="' + esc(t('set.namePh')) + '" value="' + esc(s.profileName || '') + '"></div>' +
+      '<h3 class="card-title" style="margin-top:14px">' + esc(t('set.pathTitle')) + '</h3><label class="check"><input type="checkbox" id="set-freepath"' + (s.freePath ? ' checked' : '') + '><span>' + esc(t('set.freePath')) + '</span></label><p class="hint">' + esc(t('set.freePathHint')) + '</p></section>' +
       '<section class="card settings-group"><h2 class="card-title">' + esc(t('set.quiz')) + '</h2>' +
       '<fieldset class="field"><legend>' + esc(t('set.defDir')) + '</legend><div class="segmented">' + radio('direction', 'en-uz', s.direction, t('dir.en-uz')) + radio('direction', 'uz-en', s.direction, t('dir.uz-en')) + radio('direction', 'mixed', s.direction, t('dir.short.mixed')) + '</div></fieldset>' +
       '<div class="field"><label for="set-len">' + esc(t('set.defLen')) + '</label><select id="set-len">' +
@@ -70,6 +73,8 @@ VL.views.settings = (function () {
     else if (el.name === 'direction') VL.store.setSetting('direction', el.value);
     else if (el.name === 'typoMode') VL.store.setSetting('typoMode', el.value);
     else if (el.id === 'set-len') VL.store.setSetting('length', el.value);
+    else if (el.id === 'set-name') VL.store.setSetting('profileName', el.value.replace(/\s+/g, ' ').trim().slice(0, 30));
+    else if (el.id === 'set-freepath') VL.store.setSetting('freePath', el.checked);
     else if (el.id === 'set-lenient') VL.store.setSetting('lenient', el.checked);
     else if (el.id === 'set-auto') VL.store.setSetting('autoAdvance', el.checked);
     else if (el.id === 'set-goal') VL.store.setSetting('dailyGoal', Number(el.value));

@@ -21,6 +21,8 @@
   <link rel="stylesheet" href="css/learn.css">
   <link rel="stylesheet" href="css/bulk.css">
   <link rel="stylesheet" href="css/lesson.css">
+  <link rel="stylesheet" href="css/path.css">
+  <link rel="stylesheet" href="css/home.css">
 </head>
 <body>
   <div id="splash" class="splash" role="status" aria-live="polite" aria-label="Lexi">
@@ -53,6 +55,9 @@
     <symbol id="i-arrow" viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></symbol>
     <symbol id="i-refresh" viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></symbol>
     <symbol id="i-volume" viewBox="0 0 24 24"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2.5"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+    <symbol id="i-map" viewBox="0 0 24 24"><path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z"/><path d="M9 4v13.5M15 6.5V20"/></symbol>
+    <symbol id="i-dots" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.6"/><circle cx="12" cy="12" r="1.6"/><circle cx="19" cy="12" r="1.6"/></symbol>
     <symbol id="i-flame" viewBox="0 0 24 24"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.07-2.14-.22-4.05 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.15.43-2.29 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
     <symbol id="i-star" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
     <symbol id="i-flag" viewBox="0 0 24 24"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"/><line x1="4" y1="22" x2="4" y2="15"/></symbol>
@@ -75,14 +80,17 @@
         <span class="brand-name">Lexi</span>
       </a>
       <nav class="nav" id="nav">
-        <a href="#/dashboard" data-route="dashboard"><svg class="icon" aria-hidden="true"><use href="#i-home"/></svg><span data-i18n="nav.dashboard">Dashboard</span></a>
-        <a href="#/vocabulary" data-route="vocabulary"><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><span data-i18n="nav.vocabulary">My Vocabulary</span></a>
-        <a href="#/learn" data-route="learn"><svg class="icon" aria-hidden="true"><use href="#i-zap"/></svg><span data-i18n="nav.learn">Word Lessons</span></a>
-        <a href="#/topics" data-route="topics"><svg class="icon" aria-hidden="true"><use href="#i-list"/></svg><span data-i18n="nav.topics">Vocabulary Topics</span></a>
-        <a href="#/practice" data-route="practice"><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg><span data-i18n="nav.practice">Practice</span></a>
-        <a href="#/difficult" data-route="difficult"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span data-i18n="nav.difficult">Difficult Words</span><b class="nav-badge" id="difficult-badge" hidden>0</b></a>
-        <a href="#/progress" data-route="progress"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg><span data-i18n="nav.progress">Progress</span></a>
-        <a href="#/settings" data-route="settings"><svg class="icon" aria-hidden="true"><use href="#i-settings"/></svg><span data-i18n="nav.settings">Settings</span></a>
+        <a href="#/dashboard" data-route="dashboard" data-primary><svg class="icon" aria-hidden="true"><use href="#i-home"/></svg><span data-i18n="nav.dashboard">Bosh sahifa</span></a>
+        <a href="#/path" data-route="path" data-primary><svg class="icon" aria-hidden="true"><use href="#i-map"/></svg><span data-i18n="nav.path">O'rganish xaritasi</span></a>
+        <a href="#/topics" data-route="topics" data-primary><svg class="icon" aria-hidden="true"><use href="#i-list"/></svg><span data-i18n="nav.topics">Lug'at mavzulari</span></a>
+        <a href="#/vocabulary" data-route="vocabulary" data-primary><svg class="icon" aria-hidden="true"><use href="#i-book"/></svg><span data-i18n="nav.vocabulary">Mening lug'atlarim</span></a>
+        <a href="#/learn" data-route="learn"><svg class="icon" aria-hidden="true"><use href="#i-zap"/></svg><span data-i18n="nav.learn">Mashq markazi</span></a>
+        <a href="#/sessions" data-route="sessions"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span data-i18n="nav.sessions">Yangi sessiya yaratish</span></a>
+        <a href="#/difficult" data-route="difficult"><svg class="icon" aria-hidden="true"><use href="#i-alert"/></svg><span data-i18n="nav.difficult">Xatolarni takrorlash</span><b class="nav-badge" id="difficult-badge" hidden>0</b></a>
+        <a href="#/progress" data-route="progress"><svg class="icon" aria-hidden="true"><use href="#i-chart"/></svg><span data-i18n="nav.progress">Statistika</span></a>
+        <a href="#/practice" data-route="practice"><svg class="icon" aria-hidden="true"><use href="#i-target"/></svg><span data-i18n="nav.practice">Tezkor yozma test</span></a>
+        <a href="#/settings" data-route="settings"><svg class="icon" aria-hidden="true"><use href="#i-settings"/></svg><span data-i18n="nav.settings">Profil va sozlamalar</span></a>
+        <button type="button" class="nav-more" id="nav-more" aria-expanded="false" aria-controls="nav"><svg class="icon" aria-hidden="true"><use href="#i-dots"/></svg><span data-i18n="nav.more">Yana</span></button>
       </nav>
       <div class="sidebar-tools">
         <div class="lang-switch">
@@ -113,6 +121,7 @@
   <script src="js/locales-lesson.js"></script>
   <script src="js/locales-sessions.js"></script>
   <script src="js/locales-topics.js"></script>
+  <script src="js/locales-path.js"></script>
   <script src="js/i18n.js"></script>
   <script src="js/db.js"></script>
   <script src="js/store.js"></script>
@@ -143,11 +152,14 @@
   <script src="js/exercises.js"></script>
   <script src="js/lesson-player.js"></script>
   <script src="js/custom-sessions.js"></script>
+  <script src="js/path.js"></script>
   <script src="js/import-export.js"></script>
   <script src="js/views/dashboard.js"></script>
   <script src="js/views/vocabulary.js"></script>
   <script src="js/views/learn.js"></script>
   <script src="js/views/topics.js"></script>
+  <script src="js/views/path.js"></script>
+  <script src="js/views/sessions.js"></script>
   <script src="js/views/bulk.js"></script>
   <script src="js/views/practice.js"></script>
   <script src="js/views/difficult.js"></script>

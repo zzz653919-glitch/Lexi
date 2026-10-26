@@ -4,7 +4,7 @@
   const t = VL.t;
   const main = document.getElementById('main');
   const ROUTES = {
-    dashboard: { view: 'dashboard' }, vocabulary: { view: 'vocabulary' }, learn: { view: 'learn' }, topics: { view: 'topics' }, bulk: { view: 'bulk' }, practice: { view: 'practice' },
+    dashboard: { view: 'dashboard' }, vocabulary: { view: 'vocabulary' }, learn: { view: 'learn' }, topics: { view: 'topics' }, path: { view: 'path' }, sessions: { view: 'sessions' }, bulk: { view: 'bulk' }, practice: { view: 'practice' },
     difficult: { view: 'difficult' }, progress: { view: 'progress' }, settings: { view: 'settings' },
   };
   let current = null;
@@ -74,6 +74,12 @@
     main.innerHTML = '<div class="empty"><h3>' + esc(t('err.storageTitle')) + '</h3><p>' + esc(err && err.message ? err.message : String(err)) +
       '</p><p class="muted">' + esc(t('err.storageHelp')) + '</p></div>';
   }
+
+  // phone: the bottom bar shows the four main pages; "Yana" opens the rest
+  const navEl = document.getElementById('nav'), moreBtn = document.getElementById('nav-more');
+  moreBtn.addEventListener('click', () => { const open = navEl.classList.toggle('more-open'); moreBtn.setAttribute('aria-expanded', String(open)); });
+  navEl.addEventListener('click', (e) => { if (e.target.closest('a')) { navEl.classList.remove('more-open'); moreBtn.setAttribute('aria-expanded', 'false'); } });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') { navEl.classList.remove('more-open'); moreBtn.setAttribute('aria-expanded', 'false'); } });
 
   window.addEventListener('hashchange', render);
   VL.store.onChange(updateBadge);

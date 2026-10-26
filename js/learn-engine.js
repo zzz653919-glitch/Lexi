@@ -26,15 +26,25 @@ VL.srs = (function () {
   }
   const isLearned = (w) => (w.box || 0) >= 3;
   const isDue = (w, now) => !!w.reps && w.due != null && w.due <= (now || Date.now());
+  // five mastery states shown to the user: new, learning, partial, good, due (time to review)
+  function state(w, now) {
+    if (!w.reps) return 'new';
+    if (isDue(w, now)) return 'due';
+    if ((w.box || 0) >= 4) return 'good';
+    if ((w.box || 0) >= 2) return 'partial';
+    return 'learning';
+  }
+  // words that were missed often look "more overdue", so they come back sooner
+  const urgency = (w) => (w.due || 0) - (w.lapses || 0) * 6 * 3600 * 1000;
 
   /* Chooses which words go into a lesson of `size` words:
      1) words that are due (most overdue first), 2) up to NEW_PER_LESSON new words, 3) more new words,
      4) words that will be due soonest (extra practice). */
   function pick(words, size, now) {
     const t = now || Date.now();
-    const due = words.filter((w) => isDue(w, t)).sort((a, b) => a.due - b.due);
+    const due = words.filter((w) => isDue(w, t)).sort((a, b) => urgency(a) - urgency(b));
     const fresh = VL.util.shuffle(words.filter((w) => !w.reps));
-    const later = words.filter((w) => w.reps && !isDue(w, t)).sort((a, b) => a.due - b.due);
+    const later = words.filter((w) => w.reps && !isDue(w, t)).sort((a, b) => urgency(a) - urgency(b));
     const out = [];
     const take = (list, max) => { for (const w of list) { if (out.length >= size || max <= 0) break; if (!out.includes(w)) { out.push(w); max--; } } };
     take(due, size);
@@ -50,7 +60,7 @@ VL.srs = (function () {
     return words.filter((w) => isDue(w, t) || VL.store.status(w) === 'difficult');
   }
 
-  return { INTERVALS, MAX_BOX, NEW_PER_LESSON, schedule, level, isLearned, isDue, pick, reviewPool };
+  return { INTERVALS, MAX_BOX, NEW_PER_LESSON, schedule, level, state, isLearned, isDue, pick, reviewPool };
 })();
 
 VL.learn = (function () {
@@ -189,7 +199,7 @@ VL.learn = (function () {
   }
 
   /* ---------- XP ---------- */
-  const XP_BY_TYPE = { learn: 6, choose: 8, cloze: 8, fill: 10, scramble: 10, listen: 10, order: 12, type: 12, translate: 12, reverse: 12, sentEnUz: 14, sentUzEn: 15, intro: 6 };
+  const XP_BY_TYPE = { learn: 6, chooseRev: 8, choose: 8, cloze: 8, fill: 10, scramble: 10, listen: 10, order: 12, type: 12, translate: 12, reverse: 12, sentEnUz: 14, sentUzEn: 15, intro: 6 };
   function xpFor(type, correct, isRetry) {
     if (!correct) return 0;
     const base = XP_BY_TYPE[type] || XP.type;
@@ -226,6 +236,9 @@ VL.learn = (function () {
   }
 
   const ACHIEVEMENTS = [
+    { id: 'pathFirst', icon: 'flag', target: 1, value: (c) => c.pathLessons },
+    { id: 'path10', icon: 'flag', target: 10, value: (c) => c.pathLessons },
+    { id: 'path50', icon: 'flag', target: 50, value: (c) => c.pathLessons },
     { id: 'firstLesson', icon: 'target', target: 1, value: (c) => c.lessons },
     { id: 'lessons10', icon: 'target', target: 10, value: (c) => c.lessons },
     { id: 'streak3', icon: 'flame', target: 3, value: (c) => c.bestStreak },
@@ -256,6 +269,7 @@ VL.learn = (function () {
       learned: state.words.filter(VL.srs.isLearned).length,
       goalDays: days.filter((d) => d.goalMet).length,
       bestStreak: st.best,
+      pathLessons: Object.keys((state.path && state.path.lessons) || {}).filter((k) => state.path.lessons[k].done).length,
     };
   }
 

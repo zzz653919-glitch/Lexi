@@ -112,3 +112,18 @@
 
 .study-go { margin-top: 1rem; }
 .study-hint { margin-top: 1rem; }
+
+/* every kind of exercise has its own colour */
+.lesson-card { border-top: 6px solid var(--xc, var(--accent)); }
+.lesson-card .lesson-type { color: var(--xc, var(--accent-strong)); }
+.lesson-card[data-xtype="study"] { --xc: var(--gold); }
+.lesson-card[data-xtype="choose"] { --xc: #1fb26b; }
+.lesson-card[data-xtype="chooseRev"] { --xc: #3b9cf0; }
+.lesson-card[data-xtype="type"], .lesson-card[data-xtype="translate"] { --xc: #8e63e6; }
+.lesson-card[data-xtype="reverse"] { --xc: #f0803c; }
+.lesson-card[data-xtype="scramble"] { --xc: #e0559a; }
+.lesson-card[data-xtype="fill"] { --xc: #14a3a8; }
+.lesson-card[data-xtype="cloze"] { --xc: #4f6fe6; }
+.lesson-card[data-xtype="order"] { --xc: #a050d8; }
+.lesson-card[data-xtype="listen"] { --xc: #e8a317; }
+.lesson-card[data-xtype="match"] { --xc: #7bc62d; }

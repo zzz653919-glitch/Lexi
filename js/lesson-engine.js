@@ -97,6 +97,46 @@
       if (tokens.length < 3) return null;
       return base('order', { sentenceId: s.id, dir: 'uz-en', tiles: tilesFrom(tokens, false) });
     },
+    // Uzbek word -> choose the English word
+    chooseRev(w, all) {
+      const key = (x) => VL.quiz.normalize(x, true);
+      const used = new Set([key(w.en)]);
+      const pool = shuffle(all.filter((x) => x.id !== w.id));
+      const same = pool.filter((x) => x.collectionId === w.collectionId && (!w.pos || x.pos === w.pos)).concat(pool.filter((x) => x.collectionId === w.collectionId), pool);
+      const wrong = [];
+      for (const x of same) {
+        const k = key(x.en);
+        if (used.has(k) || VL.quiz.check(x.en, w.en, true) || VL.quiz.acceptedAnswers(x.uz).some((a) => VL.quiz.check(a, w.uz, true))) continue;
+        used.add(k); wrong.push(x.en);
+        if (wrong.length === 3) break;
+      }
+      if (wrong.length < 3) return null;
+      return base('chooseRev', { wordIds: [w.id], dir: 'uz-en', options: shuffle([w.en].concat(wrong)).map((text) => ({ text, correct: key(text) === key(w.en) })) });
+    },
+    // the word's own example sentence with the word blanked out
+    clozeW(w, all) {
+      const s = VL.dynamicSentence(w);
+      if (!s || !s.cloze) return null;
+      const used = new Set([s.cloze.answer.toLowerCase()]);
+      const wrong = [];
+      const cap = /^[A-Z]/.test(s.cloze.answer);
+      for (const x of shuffle(all.filter((y) => y.id !== w.id && !/\s/.test(y.en.trim())))) {
+        const k = x.en.trim().toLowerCase();
+        if (used.has(k)) continue;
+        used.add(k); wrong.push(cap ? k.charAt(0).toUpperCase() + k.slice(1) : k);
+        if (wrong.length === 2) break;
+      }
+      if (wrong.length < 2) return null;
+      return base('cloze', { wordIds: [w.id], sentenceId: s.id, options: shuffle([s.cloze.answer].concat(wrong)).map((text) => ({ text, correct: text === s.cloze.answer })) });
+    },
+    // build the word's example sentence from tiles
+    orderW(w) {
+      const s = VL.dynamicSentence(w);
+      if (!s) return null;
+      const tokens = sentenceTokens(s.en);
+      if (tokens.length < 3 || tokens.length > 12) return null;
+      return base('order', { wordIds: [w.id], sentenceId: s.id, dir: 'uz-en', tiles: tilesFrom(tokens, false) });
+    },
     cloze(s) {
       if (!s.cloze) return null;
       return base('cloze', { sentenceId: s.id, options: shuffle(s.cloze.options.slice()).map((text) => ({ text, correct: text === s.cloze.answer })) });
@@ -232,7 +272,7 @@
   /* ---------- mistake review ---------- */
   /* After a wrong answer: a different kind of exercise for the same word or sentence. */
   function reviewItemFor(item, allWords, speech) {
-    if (item.sentenceId) {
+    if (item.sentenceId && !String(item.sentenceId).startsWith('w:')) {
       const s = VL.sentenceById(item.sentenceId);
       if (!s) return null;
       const options = ['cloze', 'order', 'sentEnUz', 'sentUzEn'].filter((t) => t !== item.type && (t !== 'cloze' || s.cloze));
@@ -290,8 +330,52 @@
   }
 
 
+  /* ---------- a lesson of the learning path ---------- */
+  /* words: 3-8 words of one lesson. For every word a translation card comes first, then one recognition exercise
+     (choose the translation / choose the English word); after that every word gets one production exercise (typing,
+     letters, fill, example sentence, audio...) in an order that avoids repeating a kind; one matching round closes
+     the lesson. Mistakes made while playing come back near the end (see the player). */
+  function buildPathLesson(words, allWords, speech) {
+    const ws = words.filter(Boolean);
+    const items = [];
+    const PROD = ['translate', 'scramble', 'clozeW', 'reverse', 'orderW', 'fill'].concat(speech ? ['listen'] : []);
+    const make = {
+      choose: (w) => mk.choose(w, allWords), chooseRev: (w) => mk.chooseRev(w, allWords),
+      translate: (w) => Object.assign(mk.wordType('translate', w), { dir: 'en-uz' }), reverse: (w) => Object.assign(mk.wordType('reverse', w), { dir: 'uz-en' }),
+      scramble: (w) => mk.scramble(w), fill: (w) => mk.fill(w), clozeW: (w) => mk.clozeW(w, allWords), orderW: (w) => mk.orderW(w), listen: (w) => mk.listenWord(w, allWords),
+    };
+    ws.forEach((w, i) => {
+      items.push(Object.assign(base('study', { wordIds: [w.id] }), { mixStep: 0, mixWord: i }));
+      const first = [i % 2 ? 'chooseRev' : 'choose', i % 2 ? 'choose' : 'chooseRev'];
+      let it = null;
+      for (const k of first) { it = make[k](w); if (it) break; }
+      if (!it) it = make.translate(w);
+      it.pathStep = 'recog';
+      items.push(it);
+    });
+    // production round: rotate the kinds, never the same kind twice in a row
+    const prod = [];
+    const order = shuffle(ws.slice());
+    let prev = null;
+    order.forEach((w, i) => {
+      const start = (i * 2 + Math.floor(Math.random() * PROD.length)) % PROD.length;
+      let it = null;
+      for (let k = 0; k < PROD.length && !it; k++) {
+        const kind = PROD[(start + k) % PROD.length];
+        if (kind === prev && PROD.length > 1 && k < PROD.length - 1) continue;
+        it = make[kind](w);
+      }
+      if (!it) it = make.translate(w);
+      it.pathStep = 'prod'; prev = it.type + (it.variant || '');
+      prod.push(it);
+    });
+    items.push(...prod);
+    if (ws.length >= 2) { const m = mk.match(ws.slice(0, 5)); m.pathStep = 'match'; items.push(m); }
+    return { items, wordIds: ws.map((w) => w.id), newCount: ws.filter((w) => !w.reps).length, sentenceIds: [] };
+  }
+
   /* ---------- custom sessions ---------- */
-  const CUSTOM_TYPES = ['translate', 'choose', 'scramble', 'order', 'listen', 'fill', 'match'];
+  const CUSTOM_TYPES = ['translate', 'choose', 'chooseRev', 'scramble', 'order', 'cloze', 'listen', 'fill', 'match'];
   const CUSTOM_DEFAULT = ['translate', 'choose', 'scramble', 'fill', 'listen', 'match'];
 
   /* cfg: { words (the session's words), count: 5|10|15|20|'all', types: [custom types], speech: bool }
@@ -327,7 +411,9 @@
       if (type === 'scramble') return mk.scramble(w);
       if (type === 'fill') return mk.fill(w);
       if (type === 'listen') return mk.listenWord(w, allWords);
-      if (type === 'order') { const s = sentenceFor(w); const it = s ? mk.order(s) : null; if (it) sentenceIds.push(s.id); return it; }
+      if (type === 'order') { const s = sentenceFor(w); const it = s ? mk.order(s) : null; if (it) { sentenceIds.push(s.id); return it; } return mk.orderW(w); }
+      if (type === 'chooseRev') return mk.chooseRev(w, allWords);
+      if (type === 'cloze') return mk.clozeW(w, allWords);
       if (type === 'match') {
         const others = shuffle(words.filter((x) => x.id !== w.id)).concat(shuffle(allWords.filter((x) => x.id !== w.id && !words.includes(x))));
         const group = [w].concat(others.slice(0, 3));
@@ -383,5 +469,5 @@
     return { items, wordIds: words.map((w) => w.id), newCount: words.filter((w) => !w.reps).length, sentenceIds: [] };
   }
 
-  Object.assign(E, { buildMixed, MIX_STEPS, buildCustom, CUSTOM_TYPES, CUSTOM_DEFAULT, buildSingle, checkSentence, normSentence, sentenceTokens, tilesFrom, mk, levelFor, pickSentences, buildGuided, sequence, reviewItemFor, insertReview, GUIDED_LENGTHS: [10, 12, 15] });
+  Object.assign(E, { buildPathLesson, buildMixed, MIX_STEPS, buildCustom, CUSTOM_TYPES, CUSTOM_DEFAULT, buildSingle, checkSentence, normSentence, sentenceTokens, tilesFrom, mk, levelFor, pickSentences, buildGuided, sequence, reviewItemFor, insertReview, GUIDED_LENGTHS: [10, 12, 15] });
 })();

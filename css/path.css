@@ -1,0 +1,44 @@
+/* learning path map */
+.plevels { display: grid; grid-template-columns: repeat(auto-fit, minmax(92px, 1fr)); gap: 10px; margin: 6px 0 18px; }
+.plevel { position: relative; display: grid; justify-items: center; gap: 4px; padding: 12px 8px 10px; border-radius: 18px; border: 2px solid var(--border); border-bottom-width: 4px; background: var(--surface); color: var(--text); font: inherit; cursor: pointer; transition: transform .12s var(--ease), border-color .15s, background-color .15s; }
+.plevel:hover { border-color: var(--accent); }
+.plevel:active { transform: translateY(2px); border-bottom-width: 2px; }
+.plevel.active { border-color: var(--accent-edge); background: var(--accent-soft); }
+.plevel.closed { opacity: .8; }
+.plevel-emoji { font-size: 1.5rem; line-height: 1; }
+.plevel b { font-size: .95rem; }
+.plevel-bar { display: block; width: 100%; height: 6px; border-radius: 99px; background: var(--surface-2); overflow: hidden; }
+.plevel-bar span { display: block; height: 100%; background: var(--accent); border-radius: inherit; }
+.plevel-lock { position: absolute; top: 6px; right: 8px; color: var(--muted); }
+.plevel-card { display: grid; gap: 10px; margin-bottom: 18px; }
+.plevel-card h2 { font-size: 1.3rem; }
+.path-lockmsg { color: var(--warn); }
+.plegend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: .82rem; color: var(--muted); }
+.plegend li { display: flex; align-items: center; gap: 6px; }
+.pnode-dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+.punit { margin-bottom: 18px; overflow: hidden; }
+.punit-head { display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; align-items: center; margin-bottom: 8px; }
+.punit-emoji { display: grid; place-items: center; width: 46px; height: 46px; font-size: 1.6rem; border-radius: 16px; background: var(--accent-soft); }
+.punit-title h3 { margin: 0; font-size: 1.05rem; overflow-wrap: anywhere; }
+.punit-bar { grid-column: 1 / -1; }
+.ppath { list-style: none; margin: 0; padding: 4px 0 8px; display: grid; justify-items: center; gap: 10px; }
+.pnode-wrap { display: flex; flex-direction: column; align-items: center; gap: 2px; transition: transform .2s; }
+.pos-0 { transform: translateX(0); } .pos-1 { transform: translateX(44px); } .pos-2 { transform: translateX(0); } .pos-3 { transform: translateX(-44px); }
+.pnode { position: relative; width: 68px; height: 62px; border-radius: 50%; border: 0; cursor: pointer; display: grid; place-items: center; color: #fff; font: inherit; transition: transform .12s var(--ease); }
+.pnode:active { transform: translateY(3px); }
+.pnode-ico { display: grid; place-items: center; }
+.pnode-ico .icon { width: 1.7rem; height: 1.7rem; stroke-width: 2.4; }
+.pnode-n { margin-top: 8px; font-size: .78rem; font-weight: 700; color: var(--muted); display: grid; justify-items: center; line-height: 1.1; }
+.pnode-n small { font-weight: 600; font-size: .68rem; color: var(--accent-strong); }
+.pnode-available, .pnode-dot.pnode-available { background: var(--accent); box-shadow: 0 6px 0 var(--accent-edge); }
+.pnode-inprogress, .pnode-dot.pnode-inprogress { background: var(--sky); box-shadow: 0 6px 0 #2275c4; }
+.pnode-done, .pnode-dot.pnode-done { background: var(--gold); box-shadow: 0 6px 0 #d48f0c; color: #5a3a00; }
+.pnode-review, .pnode-dot.pnode-review { background: #f0803c; box-shadow: 0 6px 0 #c2601f; }
+.pnode-locked, .pnode-dot.pnode-locked { background: #c9d3cd; box-shadow: 0 6px 0 #a5b1aa; color: #6b7a72; }
+:root[data-theme="dark"] .pnode-locked, :root[data-theme="dark"] .pnode-dot.pnode-locked { background: #34463d; box-shadow: 0 6px 0 #253229; color: #8aa095; }
+.pnode-dot { box-shadow: none !important; }
+.pnode-available { animation: pnode-pulse 2.2s ease-in-out infinite; }
+@keyframes pnode-pulse { 0% { box-shadow: 0 6px 0 var(--accent-edge), 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent); } 70%, 100% { box-shadow: 0 6px 0 var(--accent-edge), 0 0 0 14px transparent; } }
+@media (prefers-reduced-motion: reduce) { .pnode-available { animation: none; } }
+.ptotal { text-align: center; margin-top: 8px; }
+@media (max-width: 420px) { .pos-1 { transform: translateX(34px); } .pos-3 { transform: translateX(-34px); } }

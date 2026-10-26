@@ -5,15 +5,16 @@
 
 /* buttons */
 .btn {
-  display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 16px; border-radius: 12px;
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 16px; border-radius: 14px;
   border: 1px solid var(--border); background: var(--surface); color: var(--text); font: inherit; font-weight: 600; cursor: pointer;
   box-shadow: var(--shadow-sm); transition: transform .12s var(--ease), background-color .15s, border-color .15s, box-shadow .15s; text-decoration: none; white-space: nowrap;
 }
 .btn:hover { background: var(--surface-2); text-decoration: none; }
 .btn:active { transform: translateY(1px); }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
-.btn-primary { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
-.btn-primary:hover { background: var(--accent-strong); border-color: var(--accent-strong); }
+.btn-primary { background: var(--accent); border-color: var(--accent-edge); border-bottom-width: 4px; color: var(--on-accent); box-shadow: none; }
+.btn-primary:hover { background: var(--accent); filter: brightness(1.05); }
+.btn-primary:active { transform: translateY(2px); border-bottom-width: 2px; margin-bottom: 2px; }
 .btn-danger { background: var(--danger); border-color: var(--danger); color: #fff; }
 .btn-danger:hover { background: var(--danger); filter: brightness(.92); }
 .btn-danger-outline { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, var(--border)); }
@@ -106,3 +107,10 @@ table.words .grow { width: 40%; }
 .modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px 18px; }
 .modal-text { color: var(--muted); }
 @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+.chip-srs-new { background: var(--surface-2); color: var(--muted); }
+.chip-srs-learning { background: var(--sky-soft); color: var(--sky); }
+.chip-srs-partial { background: var(--gold-soft); color: #a86f00; }
+.chip-srs-good { background: var(--success-soft); color: var(--success); }
+.chip-srs-due { background: #ffe9d6; color: #c2601f; }
+:root[data-theme="dark"] .chip-srs-due { background: #43291a; color: #ff9a5c; }
+:root[data-theme="dark"] .chip-srs-partial { color: var(--gold); }

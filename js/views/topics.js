@@ -123,9 +123,8 @@ VL.views.topics = (function () {
   }
 
   function statusChip(e) {
-    if (!e.word) return '<span class="chip">' + esc(t('st.new')) + '</span>';
-    const s = store.status(e.word);
-    return '<span class="chip chip-' + s + '">' + esc(t('st.' + s)) + '</span>';
+    if (!e.word) return '<span class="chip chip-srs-new">' + esc(t('srs.new')) + '</span>';
+    return VL.ui.srsChip(e.word);
   }
 
   function drawWords() {

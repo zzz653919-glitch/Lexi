@@ -101,3 +101,22 @@ VL.addRows([
   ['mx.studyHint', 'Read the word and its translation. Then six exercises follow for this word.', "So'z va uning tarjimasini o'qing. Keyin shu so'z uchun oltita mashq keladi.", 'Прочитайте слово и перевод. Затем будут шесть упражнений для этого слова.'],
   ['mx.begin', 'Start the exercises', 'Mashqlarni boshlash', 'Начать упражнения'],
 ]);
+
+VL.addRows([
+  ['ex.chooseRev', "O'zbekchadan inglizchani tanlash", "O'zbekchadan inglizchani tanlash", 'Выбери английское слово'],
+  ['q.chooseRev', 'Which English word is this?', 'Bu inglizcha qaysi so‘z?', 'Какое это английское слово?'],
+]);
+
+VL.addRows([
+  ['ex.path', "O'rganish xaritasi darsi", "O'rganish xaritasi darsi", 'Урок карты обучения'],
+  ['path.continue', 'Continue', 'Davom ettirish', 'Продолжить'],
+  ['path.again', 'Practise again', 'Yana mashq qilish', 'Ещё раз'],
+  ['path.retry', 'Try again', "Yana urinib ko'rish", 'Попробовать снова'],
+  ['path.toMap', 'Back to the map', 'Xaritaga qaytish', 'К карте'],
+  ['path.passed', 'Lesson finished! The next lesson is open.', 'Dars tugallandi! Keyingi dars ochildi.', 'Урок пройден! Следующий урок открыт.'],
+  ['path.failed', 'To finish the lesson you need at least {p}% right answers. Try again!', "Darsni tugatish uchun kamida {p}% to'g'ri javob kerak. Yana urinib ko'ring!", 'Чтобы пройти урок, нужно минимум {p}% верных ответов. Попробуйте ещё раз!'],
+  ['path.unfinished', 'The lesson was not finished, so it is not counted as done.', "Dars oxirigacha bajarilmadi, shuning uchun tugallangan hisoblanmaydi.", 'Урок не завершён и не засчитан.'],
+  ['path.lessonN', 'Lesson {n}', '{n}-dars', 'Урок {n}'],
+  ['path.lockLesson', 'Finish the previous lesson first.', 'Avval oldingi darsni tugating.', 'Сначала пройдите предыдущий урок.'],
+  ['path.lockLevel', 'This level opens when 40% of the previous level is finished.', "Bu daraja oldingi darajaning 40% i tugagach ochiladi.", 'Этот уровень откроется, когда пройдено 40% предыдущего.'],
+]);
