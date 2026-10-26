@@ -44,6 +44,21 @@ How the lesson is put together: new words are introduced first (“learn”), th
 
 **Pronunciation:** a speaker button next to English words uses the browser's built-in Text-to-Speech (it prefers natural-sounding US/UK English voices). If the browser has no speech support the buttons are simply hidden and everything else keeps working. Optional setting: read English words aloud automatically.
 
+### New in this version: a game-like learning platform (green redesign)
+
+- **Interface language**: Uzbek by default for everybody (English and Russian stay available in the language menu / Settings).
+- **Design**: bright green, white and light grey; rounded cards, chunky buttons, soft shadows, an original round logo (two speech bubbles), original illustrations (`img/hero.svg`), light and dark themes. Nothing is copied from any other app.
+- **Navigation**: left menu on a computer; on a phone a bottom bar with four main pages and "Yana" (more).
+- **Home page** (`js/views/dashboard.js`): greeting with your name, today's goal ring, streak, XP and level, learned words, overall progress, last session result, a 7-day activity chart, nearest achievements, and a big *O'rganishni davom ettirish* button (resumes a paused lesson, otherwise opens the next lesson of the path). Also: *Yangi sessiya yaratish*, *Lug'at mavzulari*, *Xatolar ustida ishlash*.
+- **Learning path** (`js/path.js`, `js/views/path.js`): six levels (A1, A2, B1, B2, C1, IELTS); every level has units (topics) and every unit has lessons of 6–8 words, built from the 4,900 words in `js/data`. About 900 lessons in total. States: locked, ready to start, in progress, finished, needs review (a finished lesson whose words are due again).
+  - Locks are real: inside a unit lesson 2 opens only after lesson 1 is finished (60% right answers or more); a level opens when 40% of the previous level is finished. *Settings → Free practice mode* opens everything.
+  - Each lesson: a translation card for every word, then one recognition exercise per word, one production exercise per word (typing, letters, blank in the word's own example sentence, sentence building, audio…), and a matching round. Mistakes come back near the end.
+  - Progress is stored per lesson (best result, number of runs) in the same browser database; reloading never gives XP again.
+- **Exercise kinds**: choose the translation, choose the English word, type the translation, type the English word, build a word from letters, match pairs, fill the blank in a sentence, build a sentence, audio, and review of earlier mistakes. Each kind has its own colour. Typed answers accept the stored alternatives and forms (see answer checking below), never "similar-looking" words.
+- **Word mastery**: every word is *new / learning / partly learned / well learned / time to review*, shown in *Mening lug'atlarim* and in the topics; wrongly answered words drop back in the schedule and come back sooner.
+- **Pages**: Home, Learning path, Vocabulary topics, My vocabularies, New session, Practice centre (lesson window and results are part of it), Review mistakes, Statistics, Profile and settings.
+- Still a browser-only app: there is no login and no server database. Data lives in this browser (IndexedDB, or localStorage as a fallback); back up and restore it in Settings.
+
 ### Vocabulary Topics: 120 topics, about 4,900 words (new)
 
 *Lug'at mavzulari* in the main menu: 10 categories and 120 topics (Home and daily life, Travel and transport, Work and business, Education and English, Food, People, Health and sport, Nature and weather, Technology, Shopping).
