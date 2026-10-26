@@ -8,7 +8,7 @@ VL.player = (function () {
   const t = VL.t, n = VL.n;
   const store = VL.store, E = VL.learn;
   const GUARD_MS = 250;
-  const SRS_TYPES = new Set(['choose', 'type', 'translate', 'reverse', 'fill', 'scramble']);
+  const SRS_TYPES = new Set(['chooseRev', 'choose', 'type', 'translate', 'reverse', 'fill', 'scramble']);
 
   let root = null, hooks = null, L = null, cur = null, timer = null, chain = Promise.resolve(), listening = false;
 
@@ -17,7 +17,8 @@ VL.player = (function () {
   const fmtTime = (ms) => { const s = Math.max(1, Math.round(ms / 1000)); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); };
   const clone = (o) => JSON.parse(JSON.stringify(o));
   const snapshot = (extra) => clone(Object.assign({}, L, extra));
-  const isSrsItem = (item) => SRS_TYPES.has(item.type) || (item.type === 'listen' && !item.sentenceId);
+  const isOwnSentence = (item) => String(item.sentenceId || '').startsWith('w:');   // a word's own example sentence
+  const isSrsItem = (item) => SRS_TYPES.has(item.type) || (item.type === 'listen' && !item.sentenceId) || isOwnSentence(item);
 
   /* ---------- starting, resuming, leaving ---------- */
   function attach(container, h) {
@@ -45,6 +46,7 @@ VL.player = (function () {
     let built;
     if (config.items) built = { items: config.items, wordIds: [], newCount: 0 };
     else if (config.type === 'mix6') built = E.buildMixed({ words: VL.srs.pick(pool, Math.min(pool.length, config.words_n || store.state.settings.mixedWords || 10)) }, all);
+    else if (config.type === 'path') built = E.buildPathLesson(pool, all, VL.speech.supported);
     else if (config.type === 'session') built = E.buildCustom({ words: pool, count: config.count, types: config.types, speech: VL.speech.supported }, all);
     else if (config.type === 'guided') built = E.buildGuided({ words: pool, length: config.length || store.state.settings.lessonLength || 12, speech: VL.speech.supported, history: store.state.settings.sentenceHistory || [] }, all);
     else built = E.buildSingle(config.type, { words: pool, size: config.size || store.state.settings.lessonSize || 10, speech: VL.speech.supported, history: store.state.settings.sentenceHistory || [] }, all);
@@ -53,7 +55,7 @@ VL.player = (function () {
     L = {
       v: 2, type: config.type, items: built.items, index: 0, correct: 0, wrong: 0, answers: 0, xp: 0, comboBonus: 0, combo: 0, bestCombo: 0,
       results: [], attempted: {}, retried: {}, retryCount: 0, wordIds: built.wordIds || [], wordCount: (built.wordIds || []).length, newCount: built.newCount || 0,
-      sentenceIds: built.sentenceIds || [], custom: config.custom || null, mixedWordIds: config.type === 'mix6' ? built.wordIds : null, mixed: config.type === 'mix6', noRetry: config.type === 'mix6', customMode: config.mode || '', activeMs: 0, tick: Date.now(), achBefore: E.achievements(store.state).filter((a) => a.unlocked).map((a) => a.id), levelBefore: stats.level.level,
+      sentenceIds: built.sentenceIds || [], custom: config.custom || null, pathLesson: config.pathLesson || null, pathTitle: config.pathTitle || '', mixedWordIds: config.type === 'mix6' ? built.wordIds : null, mixed: config.type === 'mix6', noRetry: config.type === 'mix6', customMode: config.mode || '', activeMs: 0, tick: Date.now(), achBefore: E.achievements(store.state).filter((a) => a.unlocked).map((a) => a.id), levelBefore: stats.level.level,
     };
     queue(() => store.saveLesson(clone(L)));
     renderItem();
@@ -286,7 +288,7 @@ VL.player = (function () {
     }
     const totalXp = done.xp + done.comboBonus + finishBonus;
     const missedWordIds = Array.from(new Set(done.results.filter((r) => !r.correct && r.wordId).map((r) => r.wordId)));
-    const missedSentenceIds = Array.from(new Set(done.results.filter((r) => !r.correct && r.sentenceId).map((r) => r.sentenceId)));
+    const missedSentenceIds = Array.from(new Set(done.results.filter((r) => !r.correct && r.sentenceId && !String(r.sentenceId).startsWith('w:')).map((r) => r.sentenceId)));
     const goodWordIds = Array.from(new Set(done.results.filter((r) => r.wordId && r.type !== 'learn').map((r) => r.wordId))).filter((id) => !done.results.some((r) => r.wordId === id && !r.correct));
     await store.addSession(Object.assign({ kind: 'lesson', mode: done.type, scope: 'lesson', direction: 'en-uz', total: done.answers, correct: done.correct, wrong: done.wrong, xp: totalXp, missedIds: missedWordIds, newWords: done.newCount, durationMs: done.activeMs }, done.custom ? { customId: done.custom.id, customName: done.custom.name } : {}));
     if (done.custom) await store.recordCustomRun(done.custom.id, { ended: !completed, total: done.answers, correct: done.correct, wrong: done.wrong, pct: pct(done.correct, done.answers), missedIds: missedWordIds, goodIds: goodWordIds, mode: done.customMode });
@@ -294,10 +296,12 @@ VL.player = (function () {
       const hist = (store.state.settings.sentenceHistory || []).concat(done.items.filter((i) => i.sentenceId).map((i) => i.sentenceId)).slice(-40);
       await store.setSetting('sentenceHistory', hist);
     }
+    let pathRes = null;
+    if (done.pathLesson && completed) pathRes = await store.completeLesson(done.pathLesson, { pct: pct(done.correct, done.answers) });
     await store.saveLesson(null);
     const after = E.stats(store.state);
     const newAch = E.achievements(store.state).filter((a) => a.unlocked && !done.achBefore.includes(a.id));
-    renderResult({ done, completed, finishBonus, totalXp, missedWordIds, missedSentenceIds, goodWordIds, after, newAch });
+    renderResult({ done, completed, finishBonus, totalXp, missedWordIds, missedSentenceIds, goodWordIds, after, newAch, pathRes });
   }
 
   const wrongCount = (done, id) => done.results.filter((r) => r.wordId === id && !r.correct).length;
@@ -316,20 +320,22 @@ VL.player = (function () {
     const goodWords = R.goodWordIds.map((id) => store.word(id)).filter(Boolean);
     const missedSentences = R.missedSentenceIds.map((id) => VL.sentenceById(id)).filter(Boolean);
     root.innerHTML =
-      '<header class="page-head"><div><h1>' + esc(t(R.completed ? 'res.title' : 'res.ended')) + '</h1><p class="muted">' + esc(done.custom ? done.custom.name + ' · ' + done.custom.topic : t('ex.' + done.type)) + '</p></div></header>' +
+      '<header class="page-head"><div><h1>' + esc(t(R.completed ? 'res.title' : 'res.ended')) + '</h1><p class="muted">' + esc(done.pathLesson ? done.pathTitle : done.custom ? done.custom.name + ' · ' + done.custom.topic : t('ex.' + done.type)) + '</p></div></header>' +
       '<section class="card summary"><div class="ring" role="img" aria-label="' + esc(t('sum.ringAria', { p })) + '"><svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="' + Rr + '"/><circle class="ring-fg" cx="60" cy="60" r="' + Rr + '" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + (C * (1 - p / 100)).toFixed(1) + '"/></svg><div class="ring-text">' + p + '%</div></div>' +
       '<div class="res-main"><h2>' + esc(t(p === 100 ? 'sum.m100' : p >= 80 ? 'sum.m80' : p >= 50 ? 'sum.m50' : 'sum.m0')) + '</h2>' +
       '<div class="res-stats"><div><b>' + done.answers + '</b><span>' + esc(t('res.exercises')) + '</span></div><div><b class="ok-text">' + done.correct + '</b><span>' + esc(t('res.correctN')) + '</span></div><div><b class="bad-text">' + done.wrong + '</b><span>' + esc(t('res.wrongN')) + '</span></div>' +
       '<div><b>' + p + '%</b><span>' + esc(t('stat.accuracy')) + '</span></div><div><b class="xp-total">+' + R.totalXp + '</b><span>' + esc(t('res.xp')) + '</span></div><div><b>' + fmtTime(done.activeMs) + '</b><span>' + esc(t('res.time')) + '</span></div>' +
       '<div><b>×' + done.bestCombo + '</b><span>' + esc(t('res.bestCombo')) + '</span></div></div>' +
-      '<p class="small muted">' + (done.comboBonus ? esc(t('res.bonusCombo', { n: done.comboBonus })) + ' · ' : '') + (R.finishBonus ? esc(t('res.bonusFinish', { n: R.finishBonus })) : '') + '</p>' +
+      '<p class="notice path-banner' + (done.pathLesson && R.pathRes && !R.pathRes.passed ? ' warn' : '') + '"' + (done.pathLesson ? '' : ' hidden') + '>' + (done.pathLesson ? esc(t(R.pathRes ? (R.pathRes.passed ? 'path.passed' : 'path.failed') : 'path.unfinished', { p: store.PASS_PCT })) : '') + '</p><p class="small muted">' + (done.comboBonus ? esc(t('res.bonusCombo', { n: done.comboBonus })) + ' · ' : '') + (R.finishBonus ? esc(t('res.bonusFinish', { n: R.finishBonus })) : '') + '</p>' +
       '<div class="btn-row">' + (missedWords.length || missedSentences.length ? '<button class="btn btn-primary" data-action="review-mistakes">' + icon('refresh') + esc(t(done.mixed ? 'mx.reviewMistakes' : done.custom ? 'cs.onlyMistakes' : 'res.reviewMistakes')) + '</button>' : '') +
-      (done.mixed
+      (done.pathLesson
+        ? (R.pathRes && R.pathRes.passed ? '<button class="btn btn-primary" data-action="path-next">' + icon('arrow') + esc(t('path.continue')) + '</button><button class="btn" data-action="path-again">' + icon('refresh') + esc(t('path.again')) + '</button>' : '<button class="btn btn-primary" data-action="path-again">' + icon('refresh') + esc(t('path.retry')) + '</button>')
+        : done.mixed
         ? '<button class="btn" data-action="mx-restart">' + icon('play') + esc(t('mx.restart')) + '</button><button class="btn" data-action="cs-new">' + icon('plus') + esc(t('cs.new')) + '</button>'
         : done.custom
         ? '<button class="btn' + (missedWords.length || missedSentences.length ? '' : ' btn-primary') + '" data-action="cs-restart">' + icon('play') + esc(t('cs.restart')) + '</button><button class="btn" data-action="cs-new">' + icon('plus') + esc(t('cs.new')) + '</button>'
         : '<button class="btn' + (missedWords.length || missedSentences.length ? '' : ' btn-primary') + '" data-action="next-lesson">' + icon('arrow') + esc(t('res.next')) + '</button>') +
-      '<button class="btn btn-ghost" data-action="hub">' + esc(t(done.custom ? 'cs.toSessions' : 'res.hubLessons')) + '</button></div></div></section>' +
+      '<button class="btn btn-ghost" data-action="hub">' + esc(t(done.pathLesson ? 'path.toMap' : done.custom ? 'cs.toSessions' : 'res.hubLessons')) + '</button></div></div></section>' +
       '<section class="card res-progress"><div class="res-row">' + icon('flame') + '<span>' + esc(t('res.streak', { n: after.streak.current })) + '</span></div>' +
       '<div class="res-row">' + icon('flag') + '<span>' + esc(t('res.goal', { a: Math.min(todayRec.xp, goal), b: goal })) + '</span><div class="bar"><span style="width:' + Math.min(100, pct(todayRec.xp, goal)) + '%"></span></div></div>' +
       (after.level.level > done.levelBefore ? '<div class="res-row level-up">' + icon('star') + '<b>' + esc(t('res.levelUp', { n: after.level.level })) + '</b></div>' : '') + '</section>' +
@@ -385,6 +391,8 @@ VL.player = (function () {
       case 'next-lesson': { const c = root; const h = hooks; start(c, { type: 'guided' }, h); break; }
       case 'review-mistakes': reviewMistakes(root._result); break;
       case 'cs-restart': { const cu = root._result.done.custom; const c = root, h = hooks; VL.custom.start(c, cu.id, h, { replace: true }); break; }
+      case 'path-next': { const lesson = VL.path.after(VL.path.build().lessonsById[root._result.done.pathLesson]); const c = root, h = hooks; if (lesson) VL.path.start(c, lesson.id, h, { replace: true, restart: true }); else exit(); break; }
+      case 'path-again': { const c = root, h = hooks; VL.path.start(c, root._result.done.pathLesson, h, { replace: true, restart: true }); break; }
       case 'mx-restart': { const ids = root._result.done.mixedWordIds || []; const c = root, h = hooks; start(c, { type: 'mix6', words: ids.map((id) => store.word(id)).filter(Boolean), words_n: ids.length }, h); break; }
       case 'cs-new': VL.custom.create(root, hooks); break;
     }

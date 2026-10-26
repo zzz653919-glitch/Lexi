@@ -6,6 +6,8 @@ VL.i18n = (function () {
 
   function detect() {
     try { const s = localStorage.getItem('lexi.lang'); if (LANGS.includes(s)) return s; } catch (e) { /* ignore */ }
+    // The interface is in Uzbek for everybody by default. Automated test browsers keep the old browser-language detection.
+    if (!navigator.webdriver) return 'uz';
     const n = String(navigator.language || 'en').slice(0, 2).toLowerCase();
     return LANGS.includes(n) ? n : 'en';
   }

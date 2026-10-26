@@ -2,11 +2,11 @@
    persists; a failed write surfaces an error toast but never loses the UI state. */
 VL.store = (function () {
   const { uid } = VL.util;
-  const DEFAULTS = { direction: 'en-uz', length: 'all', autoAdvance: false, lenient: true, dailyGoal: 50, learnSelected: [], autoSpeak: false, lessonSize: 10, lessonLength: 12, sentenceHistory: [], typoMode: 'careful', mixedWords: 10 };
+  const DEFAULTS = { direction: 'en-uz', length: 'all', autoAdvance: false, lenient: true, dailyGoal: 50, learnSelected: [], autoSpeak: false, lessonSize: 10, lessonLength: 12, sentenceHistory: [], typoMode: 'careful', mixedWords: 10, freePath: false, profileName: '' };
   const MAX_LEN = 200;
   const MASTERED_STREAK = 3;
 
-  const state = { words: [], collections: [], sessions: [], days: [], lesson: null, custom: [], settings: Object.assign({}, DEFAULTS) };
+  const state = { words: [], collections: [], sessions: [], days: [], lesson: null, custom: [], path: { lessons: {} }, settings: Object.assign({}, DEFAULTS) };
   const listeners = new Set();
 
   const key = (s) => String(s).trim().replace(/\s+/g, ' ').toLowerCase();
@@ -56,12 +56,14 @@ VL.store = (function () {
     state.days = days.sort((a, b) => (a.date < b.date ? -1 : 1));
     const saved = settings.find((s) => s.key === 'lessonState');
     state.lesson = saved ? saved.value : null;
+    const pp = settings.find((x) => x.key === 'pathProgress');
+    state.path = { lessons: pp && pp.value && typeof pp.value.lessons === 'object' ? pp.value.lessons : {} };
     const cs = settings.find((x) => x.key === 'customSessions');
     state.custom = cs && Array.isArray(cs.value) ? cs.value : [];
     state.collections = collections.sort((a, b) => a.createdAt - b.createdAt);
     state.sessions = sessions.sort((a, b) => a.date - b.date);
     state.settings = Object.assign({}, DEFAULTS);
-    settings.forEach((s) => { if (s.key !== 'lessonState' && s.key !== 'customSessions') state.settings[s.key] = s.value; });
+    settings.forEach((s) => { if (s.key !== 'lessonState' && s.key !== 'customSessions' && s.key !== 'pathProgress') state.settings[s.key] = s.value; });
     if (!state.collections.length) {
       const c = newCollection(VL.t('default.collection'));
       state.collections.push(c);
@@ -285,6 +287,19 @@ VL.store = (function () {
   }
 
   /* ---------- custom sessions (created by the user: name, topic, words, exercise types, run history) ---------- */
+  /* ---------- learning path progress (one record per lesson id: done, best result, runs) ---------- */
+  const PASS_PCT = 60;   // a lesson counts as finished with at least this share of right answers
+  const savePath = () => save(() => VL.db.put('settings', [{ key: 'pathProgress', value: { lessons: state.path.lessons } }]));
+  async function completeLesson(id, run) {
+    const rec = state.path.lessons[id] || { runs: 0, best: 0, done: false };
+    rec.runs += 1; rec.last = Date.now(); rec.lastPct = run.pct; rec.best = Math.max(rec.best, run.pct);
+    const passed = run.pct >= PASS_PCT;
+    if (passed && !rec.done) rec.doneAt = Date.now();
+    rec.done = rec.done || passed;
+    state.path.lessons[id] = rec;
+    await savePath(); notify();
+    return { passed, first: passed && rec.doneAt === rec.last };
+  }
   const saveCustom = () => save(() => VL.db.put('settings', [{ key: 'customSessions', value: state.custom }]));
   const customSession = (id) => state.custom.find((c) => c.id === id) || null;
   async function addCustom(rec) {
@@ -347,18 +362,18 @@ VL.store = (function () {
 
   async function resetProgress() {
     state.words.forEach((w) => { w.correct = 0; w.wrong = 0; w.streak = 0; w.lastSeenAt = null; w.lastWrongAt = null; w.box = 0; w.reps = 0; w.lapses = 0; w.due = null; });
-    state.sessions = []; state.days = []; state.lesson = null;
+    state.sessions = []; state.days = []; state.lesson = null; state.path = { lessons: {} };
     state.custom.forEach((c) => { c.runs = []; }); state.settings.mistakeIds = [];
     await save(async () => { await VL.db.put('words', state.words); await VL.db.clear(['sessions', 'days']); await VL.db.remove('settings', ['lessonState', 'mistakeIds']); });
-    await saveCustom();
+    await saveCustom(); await savePath();
     notify();
   }
 
   async function clearAll() {
-    state.words = []; state.collections = []; state.sessions = []; state.days = []; state.lesson = null; state.custom = [];
+    state.words = []; state.collections = []; state.sessions = []; state.days = []; state.lesson = null; state.custom = []; state.path = { lessons: {} };
     state.settings.learnSelected = []; state.settings.mistakeIds = [];
     await save(() => VL.db.clear(['words', 'collections', 'sessions', 'days']));
-    await save(() => VL.db.remove('settings', ['lessonState', 'learnSelected', 'customSessions', 'mistakeIds']));
+    await save(() => VL.db.remove('settings', ['lessonState', 'learnSelected', 'customSessions', 'mistakeIds', 'pathProgress']));
     const c = newCollection(VL.t('default.collection'));
     state.collections.push(c);
     await save(() => VL.db.put('collections', [c]));
@@ -391,7 +406,7 @@ VL.store = (function () {
   }
 
   function backup() {
-    return { app: 'lexi', version: 2, exportedAt: new Date().toISOString(), collections: state.collections, words: state.words, sessions: state.sessions, days: state.days, lesson: state.lesson, custom: state.custom, settings: state.settings };
+    return { app: 'lexi', version: 2, exportedAt: new Date().toISOString(), collections: state.collections, words: state.words, sessions: state.sessions, days: state.days, lesson: state.lesson, custom: state.custom, path: state.path, settings: state.settings };
   }
 
   async function restore(data) {
@@ -419,6 +434,8 @@ VL.store = (function () {
     const days = (Array.isArray(data.days) ? data.days : []).filter((d) => d && /^\d{4}-\d{2}-\d{2}$/.test(d.date)).map((d) => ({ date: d.date, xp: Number(d.xp) || 0, answers: Number(d.answers) || 0, correct: Number(d.correct) || 0, sessions: Number(d.sessions) || 0, lessons: Number(d.lessons) || 0, goalMet: !!d.goalMet }));
     const sessions = (Array.isArray(data.sessions) ? data.sessions : []).filter((s) => s && typeof s.id === 'string' && Number(s.date));
     const settings = Object.assign({}, DEFAULTS, data.settings || {});
+    const pathLessons = {};
+    if (data.path && data.path.lessons && typeof data.path.lessons === 'object') Object.keys(data.path.lessons).forEach((k) => { const r = data.path.lessons[k]; if (r && typeof r === 'object') pathLessons[k] = { runs: Number(r.runs) || 0, best: Math.min(100, Number(r.best) || 0), done: r.done === true, last: Number(r.last) || 0, lastPct: Number(r.lastPct) || 0, doneAt: Number(r.doneAt) || 0 }; });
     const wordIdSet = new Set(words.map((w) => w.id));
     const customList = (Array.isArray(data.custom) ? data.custom : []).filter((c) => c && typeof c.id === 'string' && typeof c.name === 'string' && Array.isArray(c.wordIds)).map((c) => Object.assign({}, c, { name: clean(c.name).slice(0, 60), wordIds: c.wordIds.filter((x) => wordIdSet.has(x)), runs: Array.isArray(c.runs) ? c.runs.slice(-30) : [] }));
     await VL.db.clear(['words', 'collections', 'sessions', 'settings', 'days']);
@@ -426,11 +443,11 @@ VL.store = (function () {
     await VL.db.put('days', days);
     await VL.db.put('words', words);
     await VL.db.put('sessions', sessions);
-    await VL.db.put('settings', Object.keys(settings).map((k) => ({ key: k, value: settings[k] })).concat([{ key: 'customSessions', value: customList }]));
+    await VL.db.put('settings', Object.keys(settings).map((k) => ({ key: k, value: settings[k] })).concat([{ key: 'customSessions', value: customList }, { key: 'pathProgress', value: { lessons: pathLessons } }]));
     state.collections = cols.sort((a, b) => a.createdAt - b.createdAt);
     state.words = words; state.sessions = sessions.sort((a, b) => a.date - b.date); state.settings = settings;
     state.days = days.sort((a, b) => (a.date < b.date ? -1 : 1)); state.lesson = null;
-    state.custom = customList;
+    state.custom = customList; state.path = { lessons: pathLessons };
     notify();
     return { words: words.length, collections: cols.length };
   }
@@ -439,6 +456,6 @@ VL.store = (function () {
     state, DEFAULTS, MASTERED_STREAK, load, onChange,
     collection, word, wordsIn, status, difficultWords, summarize, findDuplicate,
     addWord, updateWord, deleteWords, addCollection, renameCollection, deleteCollection, ensureCollection,
-    recordAnswer, markLearned, addSession, setHard, markKnown, wordByEn, customSession, addCustom, renameCustom, removeCustom, recordCustomRun, mistakeWords, dayRecord, logLearn, recordLearn, saveLesson, ensureDeckCollection, resetProgress, clearAll, setSetting, importWords, backup, restore,
+    recordAnswer, markLearned, addSession, PASS_PCT, completeLesson, setHard, markKnown, wordByEn, customSession, addCustom, renameCustom, removeCustom, recordCustomRun, mistakeWords, dayRecord, logLearn, recordLearn, saveLesson, ensureDeckCollection, resetProgress, clearAll, setSetting, importWords, backup, restore,
   };
 })();

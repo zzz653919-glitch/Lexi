@@ -223,6 +223,23 @@ VL.exercises = (function () {
     reveal: (root, ctx, res) => revealOptions(root, ctx.item.options, res.chosen),
   };
 
+  // Uzbek word -> choose the English word
+  C.chooseRev = {
+    render({ item, word: w }) {
+      return label('ex.chooseRev') + '<p class="q-label">' + esc(t('q.chooseRev')) + '</p><p class="q-word" lang="uz">' + esc(E.primary(w.uz)) + '</p>' + optionsHtml(item.options, t('ex.chooseRev'));
+    },
+    mount: mountOptions,
+    collect: collectOption,
+    evaluate(answer, { item, word: w }) {
+      const correct = answer != null && !!item.options[answer].correct;
+      const lines = [correct ? esc(w.en) + ' — ' + esc(w.uz) + sayBtn(w.en) : esc(t('fb.rightIs', { a: w.en })) + sayBtn(w.en), meaning(w)];
+      if (w.example) lines.push(exampleLine(w));
+      return { correct, skipped: answer == null, lines, chosen: answer };
+    },
+    speakText: () => null,
+    reveal: (root, ctx, res) => revealOptions(root, ctx.item.options, res.chosen),
+  };
+
   // word typing: English -> Uzbek (translate), Uzbek -> English (reverse) or either (type)
   C.wordType = {
     render({ item, word: w }) {
@@ -487,7 +504,7 @@ VL.exercises = (function () {
   };
 
   // the item type -> component
-  const BY_TYPE = { study: C.study, learn: C.learn, intro: C.learn, choose: C.choose, type: C.wordType, translate: C.wordType, reverse: C.wordType, fill: C.fill, scramble: C.scramble,
+  const BY_TYPE = { chooseRev: C.chooseRev, study: C.study, learn: C.learn, intro: C.learn, choose: C.choose, type: C.wordType, translate: C.wordType, reverse: C.wordType, fill: C.fill, scramble: C.scramble,
     listen: C.listen, sentEnUz: C.sentence, sentUzEn: C.sentence, order: C.order, cloze: C.cloze, match: C.match };
 
   return { components: C, forItem: (item) => BY_TYPE[item.type] || null, TileBoard };

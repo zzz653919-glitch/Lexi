@@ -189,7 +189,7 @@ VL.learn = (function () {
   }
 
   /* ---------- XP ---------- */
-  const XP_BY_TYPE = { learn: 6, choose: 8, cloze: 8, fill: 10, scramble: 10, listen: 10, order: 12, type: 12, translate: 12, reverse: 12, sentEnUz: 14, sentUzEn: 15, intro: 6 };
+  const XP_BY_TYPE = { learn: 6, chooseRev: 8, choose: 8, cloze: 8, fill: 10, scramble: 10, listen: 10, order: 12, type: 12, translate: 12, reverse: 12, sentEnUz: 14, sentUzEn: 15, intro: 6 };
   function xpFor(type, correct, isRetry) {
     if (!correct) return 0;
     const base = XP_BY_TYPE[type] || XP.type;
@@ -226,6 +226,9 @@ VL.learn = (function () {
   }
 
   const ACHIEVEMENTS = [
+    { id: 'pathFirst', icon: 'flag', target: 1, value: (c) => c.pathLessons },
+    { id: 'path10', icon: 'flag', target: 10, value: (c) => c.pathLessons },
+    { id: 'path50', icon: 'flag', target: 50, value: (c) => c.pathLessons },
     { id: 'firstLesson', icon: 'target', target: 1, value: (c) => c.lessons },
     { id: 'lessons10', icon: 'target', target: 10, value: (c) => c.lessons },
     { id: 'streak3', icon: 'flame', target: 3, value: (c) => c.bestStreak },
@@ -256,6 +259,7 @@ VL.learn = (function () {
       learned: state.words.filter(VL.srs.isLearned).length,
       goalDays: days.filter((d) => d.goalMet).length,
       bestStreak: st.best,
+      pathLessons: Object.keys((state.path && state.path.lessons) || {}).filter((k) => state.path.lessons[k].done).length,
     };
   }
 

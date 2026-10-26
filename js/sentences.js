@@ -66,4 +66,20 @@ VL.sentences = [
   { id: 'c06', level: 'B1', en: 'You should improve your skills.', uz: ['Siz ko\'nikmalaringizni yaxshilashingiz kerak.', 'Sen ko\'nikmalaringni yaxshilashing kerak.', 'Siz mahoratingizni oshirishingiz kerak.', 'Siz ko\'nikmalaringizni oshirishingiz kerak.'], words: ['improve', 'skill'], rule: 'modal', cloze: { answer: 'should', options: ['should', 'shoulds', 'to should'] } },
 ];
 
-VL.sentenceById = (id) => VL.sentences.find((s) => s.id === id) || null;
+/* A word's own example sentence used as an exercise sentence (ids look like "w:<wordId>"). The headword (or its
+   simple inflected form, e.g. arrive -> arrived) is found in the sentence so it can be blanked out. */
+VL.dynamicSentence = function (w) {
+  if (!w || !w.example || !w.exUz) return null;
+  const head = w.en.trim();
+  const esc = (x) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  let m = new RegExp('(^|[^A-Za-z])(' + esc(head) + ')(?![A-Za-z])', 'i').exec(w.example);
+  if (!m && !/\s/.test(head) && head.length >= 4) {
+    const stem = head.replace(/(e|y)$/i, '');
+    m = new RegExp('(^|[^A-Za-z])(' + esc(stem) + '[a-z]{0,4})(?![A-Za-z])', 'i').exec(w.example);
+  }
+  return { id: 'w:' + w.id, level: w.level || '', en: w.example, uz: [w.exUz], words: [head.toLowerCase()], rule: null, cloze: m ? { answer: m[2] } : null };
+};
+VL.sentenceById = (id) => {
+  if (typeof id === 'string' && id.startsWith('w:')) return VL.dynamicSentence(VL.store && VL.store.word(id.slice(2)));
+  return VL.sentences.find((s) => s.id === id) || null;
+};

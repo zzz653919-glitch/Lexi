@@ -50,7 +50,7 @@ async function solveCurrent(page, wrong) {
       }
     } else {
       if (await checkBtn.isEnabled()) mismatches.push(it.type + ': Check was enabled before answering');
-      if (it.type === 'choose' || it.type === 'cloze' || (it.type === 'listen' && it.variant === 'choose')) {
+      if (it.type === 'choose' || it.type === 'chooseRev' || it.type === 'cloze' || (it.type === 'listen' && it.variant === 'choose')) {
         const idx = it.options.findIndex((x) => (wrong ? !x.correct : x.correct));
         await page.click('.option[data-index="' + idx + '"]');
       } else if (it.type === 'scramble') {
