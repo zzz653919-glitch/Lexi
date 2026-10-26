@@ -17,8 +17,8 @@ const assert = (c, m) => { if (!c) { console.error('FAIL:', m); process.exitCode
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('console', (m) => m.type() === 'error' && errors.push(m.text()));
   await page.goto(URL);
-  await page.waitForSelector('.empty');
-  assert(await page.locator('h1').innerText() === 'Welcome to Lexi', 'empty dashboard');
+  await page.waitForSelector('.home-hero');
+  assert(await page.locator('h1').innerText() === 'Hello!' && (await page.locator('[data-action="sample"]').count()) === 1, 'new home page with no words offers the sample');
 
   // add words
   await page.click('nav a[data-route=vocabulary]');

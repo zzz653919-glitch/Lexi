@@ -69,14 +69,14 @@ VL.views.dashboard = (function () {
       '<a class="btn" href="#/difficult">' + icon('refresh') + esc(mistakes ? t('home.mistakesN', { n: mistakes }) : t('home.mistakes')) + '</a></div></div>' +
       '<img class="home-hero-art" src="img/hero.svg" alt="" width="240" height="200"></section>' +
       '<div class="home-grid"><div class="home-main">' +
-      '<section class="home-stats" aria-label="' + esc(t('stat.aria')) + '">' +
+      '<section class="home-stats stat-grid" aria-label="' + esc(t('stat.aria')) + '">' +
       '<div class="card hstat hstat-flame"><span class="hstat-ico">' + icon('flame') + '</span><div><b>' + esc(n('n.day', st.streak.current)) + '</b><span>' + esc(st.streak.current ? t('home.streakDays', { n: st.streak.current }) : t('home.streakNone')) + '</span></div></div>' +
       '<div class="card hstat hstat-xp"><span class="hstat-ico">' + icon('star') + '</span><div><b>' + st.xp + ' XP</b><span>' + esc(t('home.level', { n: st.level.level })) + ' · ' + esc(t('home.toNext', { n: st.level.to - st.xp })) + '</span></div></div>' +
       '<div class="card hstat hstat-words"><span class="hstat-ico">' + icon('book') + '</span><div><b>' + st.learned + '</b><span>' + esc(t('home.learned')) + (s.words.length ? ' · ' + esc(t('home.learnedOf', { n: s.words.length })) : '') + '</span></div></div>' +
       '<div class="card hstat hstat-all"><span class="hstat-ico">' + icon('chart') + '</span><div><b>' + totals.pct + '%</b><span>' + esc(t('home.overall')) + ' · ' + esc(t('home.overallSub', { d: totals.done, t: totals.lessons })) + '</span></div></div></section>' +
       '<section class="card"><h2 class="card-title">' + esc(t('home.last')) + '</h2>' + lastSessionHtml() + '</section>' +
       '<section class="card"><div class="week-head"><h2 class="card-title">' + esc(t('home.week')) + '</h2><span class="muted small">' + esc(t('home.weekXp', { n: week().reduce((a, d) => a + d.xp, 0) })) + '</span></div>' + weekHtml() + '</section>' +
-      (s.words.length ? '' : '<section class="card"><p class="muted">' + esc(t('home.empty')) + '</p><div class="btn-row" style="margin-top:12px"><a class="btn" href="#/vocabulary?add=1">' + icon('plus') + esc(t('home.addWords')) + '</a></div></section>') +
+      (s.words.length ? '' : '<section class="card"><p class="muted">' + esc(t('home.empty')) + '</p><div class="btn-row" style="margin-top:12px"><a class="btn" href="#/vocabulary?add=1">' + icon('plus') + esc(t('home.addWords')) + '</a><button class="btn" data-action="sample">' + icon('download') + esc(t('btn.loadSample')) + '</button><button class="btn" data-action="import">' + icon('upload') + esc(t('btn.importFile')) + '</button></div></section>') +
       '</div><aside class="home-side">' +
       '<section class="card goal-card"><h2 class="card-title">' + esc(t('home.goalCard')) + '</h2><div class="goal-body">' + ring(today, goal, 112, t('res.goal', { a: Math.min(today, goal), b: goal })) + '<div><b class="goal-xp">' + today + ' / ' + goal + ' XP</b><p class="muted small">' + esc(goalLeft ? t('home.goalLeft', { n: goalLeft }) : t('home.goalDone')) + '</p></div></div></section>' +
       (achievements.length ? '<section class="card"><h2 class="card-title">' + esc(t('tab.achievements')) + '</h2><ul class="ach-mini">' + achievements.map((a) => '<li><span class="ach-ico">' + icon(a.icon) + '</span><div><b>' + esc(t('ach.' + a.id + '.t')) + '</b><div class="bar"><span style="width:' + pct(a.value, a.target) + '%"></span></div><span class="muted small">' + a.value + ' / ' + a.target + '</span></div></li>').join('') + '</ul></section>' : '') +
@@ -88,6 +88,8 @@ VL.views.dashboard = (function () {
     const a = e.target.closest('[data-action]');
     if (!a) return;
     const hooks = { onExit: draw };
+    if (a.dataset.action === 'sample') { VL.io.loadSample(); return; }
+    if (a.dataset.action === 'import') { VL.io.openImportDialog(); return; }
     if (a.dataset.action === 'continue') {
       const step = nextStep();
       if (step.kind === 'resume') VL.player.resume(root, hooks);
