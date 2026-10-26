@@ -139,6 +139,7 @@ body.focus-mode .app { grid-template-columns: minmax(0, 1fr); }
   .nav-more { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 6px 2px; border: 0; background: none; color: var(--muted); font: inherit; font-size: .6rem; cursor: pointer; border-radius: 12px; min-width: 0; }
   .nav-more .icon { width: 1.4em; height: 1.4em; }
   .nav.more-open { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .nav.more-open a { font-size: .62rem; }
   .nav.more-open a:not([data-primary]) { display: flex; order: -1; }
   .nav.more-open .nav-more { color: var(--accent-strong); background: var(--accent-soft); }
   .nav a { flex: 1; flex-direction: column; gap: 2px; padding: 6px 2px; font-size: .68rem; text-align: center; position: relative; min-width: 0; }

@@ -32,7 +32,7 @@ const store = (page, fn, arg) => page.evaluate(fn, arg);
   ['Kundalik hayot', 'Oila va uy', 'Ish va kasblar', 'Sayohat', 'Oziq-ovqat', 'Grammatika', "Fe'llar", 'Sifatlar', 'Phrasal verbs', 'IELTS vocabulary', "O'zimning so'zlarim"].forEach((x) => assert(topics.includes(x), 'topic offered: ' + x));
   const counts = await page.locator('#cs-count option').evaluateAll((o) => o.map((x) => x.value));
   assert(counts.join(',') === '5,10,15,20,all', 'counts 5/10/15/20/all');
-  assert((await page.locator('input[name="cs-type"]').count()) === 7, 'seven exercise types offered');
+  assert((await page.locator('input[name="cs-type"]').count()) === 9, 'nine exercise types offered');
   // validation
   await page.fill('#cs-name', '   '); await page.click('.modal-foot .btn-primary');
   assert((await page.locator('#cs-error').innerText()).length > 0, 'empty name rejected');

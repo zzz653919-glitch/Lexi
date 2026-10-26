@@ -107,7 +107,7 @@ VL.player = (function () {
     const ctx = { item, words, word: words[0] || null, sentence, lesson: L };
     cur = { item, comp, ctx, ready: false, answered: false, blockUntil: 0, cleanup: null };
     L.tick = Date.now();
-    root.innerHTML = '<div class="lesson">' + topBar() + '<section class="lesson-card" id="lcard">' + comp.render(ctx) + '</section>' +
+    root.innerHTML = '<div class="lesson">' + topBar() + '<section class="lesson-card" id="lcard" data-xtype="' + esc(item.type) + '">' + comp.render(ctx) + '</section>' +
       '<div class="lesson-bottom"><div id="lfeedback" class="lesson-feedback" hidden aria-live="assertive"></div>' +
       '<div class="lesson-actions-bar" id="lactions">' +
       (comp.hideActions ? '' : comp.selfChecked ? '<span class="muted small">' + esc(t('match.hint')) + '</span>' : '<button type="button" class="btn btn-ghost" data-action="skip">' + esc(t('btn.dontKnow')) + '</button><button type="button" class="btn btn-primary btn-lg" data-action="check" disabled>' + esc(t('btn.checkShort')) + '</button>') +

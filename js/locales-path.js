@@ -80,3 +80,20 @@ VL.addRows([
   ['set.freePathHint', 'Without it, a lesson opens after the previous one is finished.', 'Usiz keyingi dars oldingisi tugagach ochiladi.', 'Без него следующий урок открывается после предыдущего.'],
   ['set.pathTitle', 'Learning path', "O'rganish xaritasi", 'Карта обучения'],
 ]);
+
+VL.addRows([
+  ['srs.new', 'New', 'Yangi', 'Новое'],
+  ['srs.learning', 'Learning', "O'rganilmoqda", 'Изучается'],
+  ['srs.partial', 'Partly learned', "Qisman o'zlashtirilgan", 'Частично выучено'],
+  ['srs.good', 'Well learned', "Yaxshi o'zlashtirilgan", 'Хорошо выучено'],
+  ['srs.due', 'Time to review', 'Takrorlash vaqti kelgan', 'Пора повторить'],
+  ['th.mastery', 'Mastery', "O'zlashtirish", 'Усвоение'],
+]);
+
+VL.addRows([
+  ['cs.type.chooseRev', 'Choose the English word', "O'zbekchadan inglizchani tanlash", 'Выбрать английское слово'],
+  ['cs.type.cloze', 'Fill the gap in a sentence', "Gapdagi bo'sh joyni to'ldirish", 'Заполнить пропуск в предложении'],
+  ['nav.sessions', 'New session', 'Yangi sessiya yaratish', 'Новая сессия'],
+  ['sessions.title', 'Sessions', 'Sessiyalar', 'Сессии'],
+  ['sessions.sub', 'Create your own practice session and come back to it any time.', "O'zingizning mashq sessiyangizni yarating va istalgan vaqt unga qayting.", 'Создайте свою сессию и возвращайтесь к ней в любое время.'],
+]);

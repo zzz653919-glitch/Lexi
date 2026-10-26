@@ -123,7 +123,7 @@ const wait = (p, ms) => p.waitForTimeout(ms || 200);
   const vis = await page.locator('#nav a').evaluateAll((a) => a.filter((x) => x.offsetParent).length);
   assert(vis === 4 && (await page.locator('#nav-more').isVisible()), 'phone: bottom bar shows 4 main pages and "Yana"');
   await page.click('#nav-more'); await wait(page, 200);
-  assert((await page.locator('#nav a').evaluateAll((a) => a.filter((x) => x.offsetParent).length)) === 9, 'phone: "Yana" shows the other pages');
+  assert((await page.locator('#nav a').evaluateAll((a) => a.filter((x) => x.offsetParent).length)) === 10, 'phone: "Yana" shows the other pages');
   await page.click('#nav a[data-route="progress"]'); await wait(page, 300);
   assert(page.url().includes('#/progress') && (await page.locator('#nav.more-open').count()) === 0, 'phone: choosing a page closes the menu');
   assert(errors.length === 0, 'no page errors: ' + errors.join(' | '));

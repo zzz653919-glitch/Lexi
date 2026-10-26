@@ -103,6 +103,9 @@ VL.ui = (function () {
     return '<span class="chip chip-' + s + '">' + label + '</span>';
   };
 
+  // Mastery of a word on its review schedule: new / learning / partial / good / due
+  const srsChip = (w) => { const k = VL.srs.state(w); return '<span class="chip chip-srs-' + k + '">' + VL.t('srs.' + k) + '</span>'; };
+
   // Human-readable label for a saved quiz session, in the current UI language.
   function sessionLabel(s) {
     if (s.kind === 'lesson') return VL.t('learn.sessionLabel', { type: VL.t('ex.' + (s.mode || 'mixed')) });
@@ -115,5 +118,5 @@ VL.ui = (function () {
     return scope + ' · ' + VL.t('dir.' + s.direction);
   }
 
-  return { sessionLabel, icon, toast, modal, confirm, download, empty, collectionOptions, statusChip };
+  return { srsChip, sessionLabel, icon, toast, modal, confirm, download, empty, collectionOptions, statusChip };
 })();

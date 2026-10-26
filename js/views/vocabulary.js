@@ -68,11 +68,11 @@ VL.views.vocabulary = (function () {
     if (!total) { host.innerHTML = VL.ui.empty(t('vocab.noWords'), t('vocab.noWordsText')); return; }
     if (!all.length) { host.innerHTML = VL.ui.empty(t('vocab.noMatches'), t('vocab.noMatchesText')); return; }
     host.innerHTML =
-      '<div class="table-wrap"><table class="words"><thead><tr><th scope="col">' + esc(t('th.english')) + '</th><th scope="col">' + esc(t('th.uzbek')) + '</th><th scope="col" class="hide-sm">' + esc(t('th.collection')) + '</th><th scope="col" class="hide-sm">' + esc(t('th.status')) + '</th><th scope="col"><span class="sr-only">' + esc(t('th.actions')) + '</span></th></tr></thead><tbody>' +
+      '<div class="table-wrap"><table class="words"><thead><tr><th scope="col">' + esc(t('th.english')) + '</th><th scope="col">' + esc(t('th.uzbek')) + '</th><th scope="col" class="hide-sm">' + esc(t('th.collection')) + '</th><th scope="col" class="hide-sm">' + esc(t('th.status')) + '</th><th scope="col" class="hide-sm">' + esc(t('th.mastery')) + '</th><th scope="col"><span class="sr-only">' + esc(t('th.actions')) + '</span></th></tr></thead><tbody>' +
       list.map((w) => {
         const c = VL.store.collection(w.collectionId);
         return '<tr data-id="' + esc(w.id) + '"><td class="strong"><span class="word-cell">' + esc(w.en) + VL.speech.button(w.en) + '</span></td><td>' + esc(w.uz) + (w.example ? '<div class="word-example">' + esc(w.example) + '</div>' : '') + '</td><td class="hide-sm"><span class="chip">' + esc(c ? c.name : '—') + '</span></td>' +
-          '<td class="hide-sm">' + VL.ui.statusChip(w) + '</td><td class="row-actions"><button class="icon-btn" data-action="edit" aria-label="' + esc(t('vocab.editAria', { w: w.en })) + '">' + icon('edit') + '</button>' +
+          '<td class="hide-sm">' + VL.ui.statusChip(w) + '</td><td class="hide-sm">' + VL.ui.srsChip(w) + '</td><td class="row-actions"><button class="icon-btn" data-action="edit" aria-label="' + esc(t('vocab.editAria', { w: w.en })) + '">' + icon('edit') + '</button>' +
           '<button class="icon-btn danger" data-action="delete" aria-label="' + esc(t('vocab.deleteAria', { w: w.en })) + '">' + icon('trash') + '</button></td></tr>';
       }).join('') + '</tbody></table></div>' +
       '<div class="list-foot muted small">' + esc(t('vocab.showing', { a: list.length, b: all.length })) + (all.length > list.length ? ' <button class="btn btn-sm" data-action="more">' + esc(t('btn.showMore')) + '</button>' : '') + '</div>';

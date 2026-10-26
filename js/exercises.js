@@ -39,6 +39,8 @@ VL.exercises = (function () {
     form.addEventListener('submit', (e) => { e.preventDefault(); api.submit(); });
     if (input.tagName === 'TEXTAREA') input.addEventListener('keydown', (e) => { if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); api.submit(); } });
     input.focus();
+    // phone: keep the answer field visible when the on-screen keyboard opens
+    input.addEventListener('focus', () => setTimeout(() => { try { input.scrollIntoView({ block: 'center', behavior: 'smooth' }); } catch (e) { /* older browsers */ } }, 280));
   }
   const collectTyped = (root) => root.querySelector('#lans').value.trim();
   function lockTyped(root, res) {

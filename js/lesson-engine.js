@@ -375,7 +375,7 @@
   }
 
   /* ---------- custom sessions ---------- */
-  const CUSTOM_TYPES = ['translate', 'choose', 'scramble', 'order', 'listen', 'fill', 'match'];
+  const CUSTOM_TYPES = ['translate', 'choose', 'chooseRev', 'scramble', 'order', 'cloze', 'listen', 'fill', 'match'];
   const CUSTOM_DEFAULT = ['translate', 'choose', 'scramble', 'fill', 'listen', 'match'];
 
   /* cfg: { words (the session's words), count: 5|10|15|20|'all', types: [custom types], speech: bool }
@@ -411,7 +411,9 @@
       if (type === 'scramble') return mk.scramble(w);
       if (type === 'fill') return mk.fill(w);
       if (type === 'listen') return mk.listenWord(w, allWords);
-      if (type === 'order') { const s = sentenceFor(w); const it = s ? mk.order(s) : null; if (it) sentenceIds.push(s.id); return it; }
+      if (type === 'order') { const s = sentenceFor(w); const it = s ? mk.order(s) : null; if (it) { sentenceIds.push(s.id); return it; } return mk.orderW(w); }
+      if (type === 'chooseRev') return mk.chooseRev(w, allWords);
+      if (type === 'cloze') return mk.clozeW(w, allWords);
       if (type === 'match') {
         const others = shuffle(words.filter((x) => x.id !== w.id)).concat(shuffle(allWords.filter((x) => x.id !== w.id && !words.includes(x))));
         const group = [w].concat(others.slice(0, 3));

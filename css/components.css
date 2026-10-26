@@ -107,3 +107,10 @@ table.words .grow { width: 40%; }
 .modal-foot { display: flex; justify-content: flex-end; gap: 10px; padding: 14px 20px 18px; }
 .modal-text { color: var(--muted); }
 @keyframes pop { from { opacity: 0; transform: translateY(10px) scale(.98); } to { opacity: 1; transform: none; } }
+.chip-srs-new { background: var(--surface-2); color: var(--muted); }
+.chip-srs-learning { background: var(--sky-soft); color: var(--sky); }
+.chip-srs-partial { background: var(--gold-soft); color: #a86f00; }
+.chip-srs-good { background: var(--success-soft); color: var(--success); }
+.chip-srs-due { background: #ffe9d6; color: #c2601f; }
+:root[data-theme="dark"] .chip-srs-due { background: #43291a; color: #ff9a5c; }
+:root[data-theme="dark"] .chip-srs-partial { color: var(--gold); }
