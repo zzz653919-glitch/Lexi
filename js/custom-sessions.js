@@ -145,7 +145,7 @@ VL.custom = (function () {
         const words = r.words.filter((w) => w && !seen.has(w.id) && seen.add(w.id));
         if (!words.length) return err(t('cs.errPickWords'));
         created = await store.addCustom({
-          name, topicId, topic: VL.topicName(topicById(topicId)), source: form.source,
+          name, topicId, topic: p.topicLabel || VL.topicName(topicById(topicId)), source: form.source,
           wordIds: words.map((w) => w.id),
         });
         return true;
