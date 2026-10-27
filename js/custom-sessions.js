@@ -7,7 +7,7 @@ VL.custom = (function () {
   const t = VL.t, n = VL.n;
   const store = VL.store, E = VL.learn;
   const COUNTS = ['5', '10', '15', '20', 'all'];
-  const SOURCES = ['topic', 'specific', 'typed', 'collection', 'mistakes'];
+  const SOURCES = ['specific', 'typed', 'collection', 'mistakes'];
 
   const topicById = (id) => VL.topics.find((x) => x.id === id);
   const sessionWords = (c) => c.wordIds.map((id) => store.word(id)).filter(Boolean);
@@ -35,20 +35,6 @@ VL.custom = (function () {
   // -> { words } or { error }
   async function resolveWords(form) {
     const src = form.source;
-    if (src === 'topic') {
-      if (form.topicId === 'custom') {
-        const q = form.topicText.toLowerCase();
-        const cols = store.state.collections.filter((c) => c.name.toLowerCase().includes(q));
-        const words = cols.flatMap((c) => store.wordsIn(c.id));
-        return words.length ? { words } : { error: t('cs.errTopicEmpty', { x: form.topicText }) };
-      }
-      const tp = topicById(form.topicId);
-      if (tp.own) {
-        const own = store.state.collections.filter((c) => !c.deckKey).flatMap((c) => store.wordsIn(c.id));
-        return own.length ? { words: own } : { error: t('cs.errNoOwn') };
-      }
-      return { words: await installTopicWords(tp) };
-    }
     if (src === 'specific') return form.ids.length ? { words: form.ids.map((id) => store.word(id)).filter(Boolean) } : { error: t('cs.errPickWords') };
     if (src === 'collection') {
       const words = store.wordsIn(form.collectionId);
@@ -92,9 +78,7 @@ VL.custom = (function () {
     const defName = t('cs.defName', { n: store.state.custom.length + 1 });
     body.innerHTML =
       '<div class="field"><label for="cs-name">' + esc(t('cs.name')) + '</label><input id="cs-name" data-autofocus type="text" maxlength="60" autocomplete="off" value="' + esc(p.name || defName) + '"></div>' +
-      '<div class="field"><label for="cs-topic">' + esc(t('cs.topic')) + '</label><select id="cs-topic">' + VL.topics.map((tp) => '<option value="' + tp.id + '"' + (!p.topicLabel && p.topicId === tp.id ? ' selected' : '') + '>' + esc(VL.topicName(tp)) + '</option>').join('') + '<option value="custom"' + (p.topicLabel ? ' selected' : '') + '>' + esc(t('cs.topicCustom')) + '</option></select>' +
-      '<input id="cs-topic-text" type="text" maxlength="60" autocomplete="off" value="' + esc(p.topicLabel || '') + '" hidden placeholder="' + esc(t('cs.topicPh')) + '" aria-label="' + esc(t('cs.topicCustom')) + '"></div>' +
-      '<fieldset class="field"><legend>' + esc(t('cs.words')) + '</legend><div class="cs-radios">' + SOURCES.map((k) => '<label class="check"><input type="radio" name="cs-src" value="' + k + '"' + ((p.source || 'topic') === k ? ' checked' : '') + '><span>' + esc(t('cs.src.' + k)) + '</span></label>').join('') + '</div></fieldset>' +
+      '<fieldset class="field"><legend>' + esc(t('cs.words')) + '</legend><div class="cs-radios">' + SOURCES.map((k) => '<label class="check"><input type="radio" name="cs-src" value="' + k + '"' + ((p.source || 'specific') === k ? ' checked' : '') + '><span>' + esc(t('cs.src.' + k)) + '</span></label>').join('') + '</div></fieldset>' +
       '<div class="field" id="cs-p-specific" hidden><input id="cs-find" type="search" autocomplete="off" placeholder="' + esc(t('cs.find')) + '" aria-label="' + esc(t('cs.find')) + '"><div class="cs-pick" id="cs-pick" role="group" aria-label="' + esc(t('cs.src.specific')) + '"></div><p class="hint" id="cs-picked"></p></div>' +
       '<div class="field" id="cs-p-typed" hidden><label for="cs-typed">' + esc(t('cs.typedLabel')) + '</label><textarea id="cs-typed" rows="5" spellcheck="false" placeholder="' + esc(t('cs.typedPh')) + '"></textarea><p class="hint">' + esc(t('cs.typedHint')) + '</p></div>' +
       '<div class="field" id="cs-p-collection" hidden><label for="cs-col">' + esc(t('cs.collection')) + '</label><select id="cs-col">' + store.state.collections.map((c) => '<option value="' + c.id + '">' + esc(c.name + ' (' + store.wordsIn(c.id).length + ')') + '</option>').join('') + '</select></div>' +
@@ -114,16 +98,11 @@ VL.custom = (function () {
     };
     const refresh = () => {
       const src = source();
-      $('#cs-topic-text').hidden = $('#cs-topic').value !== 'custom';
       $('#cs-p-specific').hidden = src !== 'specific';
       $('#cs-p-typed').hidden = src !== 'typed';
       $('#cs-p-collection').hidden = src !== 'collection';
       let info = '';
-      if (src === 'topic') {
-        const tp = topicById($('#cs-topic').value);
-        if (tp && tp.own) info = t('cs.infoOwn');
-        else if (tp) info = t('cs.infoTopic');
-      } else if (src === 'mistakes') info = t('cs.infoMistakes', { n: store.mistakeWords().length });
+      if (src === 'mistakes') info = t('cs.infoMistakes', { n: store.mistakeWords().length });
       $('#cs-info').textContent = info;
       if (src === 'specific') drawPick();
     };
@@ -145,17 +124,14 @@ VL.custom = (function () {
         const name = $('#cs-name').value.replace(/\s+/g, ' ').trim();
         if (!name) return err(t('cs.errName'));
         if (name.length > 60) return err(t('cs.errNameLong'));
-        const topicId = $('#cs-topic').value;
-        const topicText = $('#cs-topic-text').value.replace(/\s+/g, ' ').trim();
-        if (topicId === 'custom' && !topicText) return err(t('cs.errTopic'));
-        const form = { source: source(), topicId, topicText, ids: Array.from(checked), collectionId: $('#cs-col') ? $('#cs-col').value : '', typed: $('#cs-typed').value };
+        const form = { source: source(), ids: Array.from(checked), collectionId: $('#cs-col') ? $('#cs-col').value : '', typed: $('#cs-typed').value };
         const r = await resolveWords(form);
         if (r.error) return err(r.error);
         const seen = new Set();
         const words = r.words.filter((w) => w && !seen.has(w.id) && seen.add(w.id));
         if (!words.length) return err(t('cs.errPickWords'));
         created = await store.addCustom({
-          name, topicId, topic: topicId === 'custom' ? topicText : VL.topicName(topicById(topicId)), source: form.source,
+          name, topic: p.topicLabel || '', source: form.source,
           wordIds: words.map((w) => w.id),
         });
         return true;
@@ -201,7 +177,7 @@ VL.custom = (function () {
       const lr = lastRun(c);
       const open = openHistory.has(c.id);
       const words = sessionWords(c).length;
-      html += '<article class="card cs-card" data-cs="' + c.id + '"><div class="cs-head"><h3>' + esc(c.name) + '</h3><span class="chip">' + esc(c.topic) + '</span></div>' +
+      html += '<article class="card cs-card" data-cs="' + c.id + '"><div class="cs-head"><h3>' + esc(c.name) + '</h3>' + (c.topic ? '<span class="chip">' + esc(c.topic) + '</span>' : '') + '</div>' +
         '<p class="muted small">' + esc(n('n.word', words)) + (c.progress ? ' · ' + esc(t('ss.inProgress', { i: Math.min(c.progress.index, c.progress.items.length), n: c.progress.items.length })) : '') + '</p>' +
         (lr ? '<p class="cs-last">' + esc(t('cs.last')) + ': <b>' + lr.pct + '%</b> (' + lr.correct + ' / ' + lr.total + ') · ' + esc(n('n.run', c.runs.length)) + '</p><div class="bar"><span style="width:' + lr.pct + '%"></span></div>' : '<p class="muted small">' + esc(t('cs.notPlayed')) + '</p>') +
         '<div class="btn-row"><button class="btn btn-primary btn-sm" data-action="cs-start">' + icon('play') + esc(t(c.progress ? 'ss.continue' : lr ? 'cs.restart' : 'cs.start')) + '</button>' +

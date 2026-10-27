@@ -28,31 +28,26 @@ const store = (page, fn, arg) => page.evaluate(fn, arg);
   // ---------- creation window ----------
   assert((await page.locator('[data-action="cs-new"]').first().innerText()).includes('Yangi sessiya yaratish'), 'button "Yangi sessiya yaratish" is visible');
   await page.click('[data-action="cs-new"]'); await page.waitForSelector('#cs-name');
-  const topics = await page.locator('#cs-topic option').allInnerTexts();
-  ['Kundalik hayot', 'Oila va uy', 'Ish va kasblar', 'Sayohat', 'Oziq-ovqat', 'Grammatika', "Fe'llar", 'Sifatlar', 'Phrasal verbs', 'IELTS vocabulary', "O'zimning so'zlarim"].forEach((x) => assert(topics.includes(x), 'topic offered: ' + x));
+  assert((await page.locator('#cs-topic').count()) === 0 && (await page.locator('.field:has-text("Mavzu")').count()) === 0, 'no "Mavzu" field in the creation window');
   assert((await page.locator('#cs-count').count()) === 0 && (await page.locator('input[name="cs-type"]').count()) === 0, 'no exercise-count/type pickers: every session follows the same fixed workflow');
   // validation
   await page.fill('#cs-name', '   '); await page.click('.modal-foot .btn-primary');
   assert((await page.locator('#cs-error').innerText()).length > 0, 'empty name rejected');
-  await page.fill('#cs-name', 'Oila'); await page.selectOption('#cs-topic', 'custom'); await page.click('.modal-foot .btn-primary');
-  assert((await page.locator('#cs-error').innerText()).length > 0, 'custom topic needs a name');
-  await page.selectOption('#cs-topic', 'grammar');
   await page.check('input[name="cs-src"][value="specific"]'); await page.click('.modal-foot .btn-primary');
   assert((await page.locator('#cs-error').innerText()).length > 0, 'no specific words chosen -> error');
   await page.check('input[name="cs-src"][value="mistakes"]'); await page.click('.modal-foot .btn-primary');
   assert((await page.locator('#cs-error').innerText()).length > 0, 'no mistakes yet -> error');
 
-  // ---------- topic session: 5 exercises, two types ----------
-  await page.check('input[name="cs-src"][value="topic"]');
-  await page.selectOption('#cs-topic', 'family'); await page.fill('#cs-name', 'Oila mashqi');
+  // ---------- typed session ----------
+  await page.check('input[name="cs-src"][value="typed"]');
+  await page.fill('#cs-typed', 'mother — ona\nfather — ota'); await page.fill('#cs-name', 'Oila mashqi');
   await page.click('.modal-foot .btn-ghost:has-text("Faqat saqlash")'); await wait(page, 600);
   let cs = await store(page, () => VL.store.state.custom);
-  assert(cs.length === 1 && cs[0].name === 'Oila mashqi' && cs[0].topic === 'Oila va uy', 'session saved with name and topic');
-  assert(cs[0].wordIds.length === 64, 'topic words installed (family+home, 4 levels = 64)');
-  assert((await page.locator('.cs-card').count()) === 1 && (await page.locator('.cs-card').innerText()).includes('Oila mashqi'), 'session card visible with name + topic');
+  assert(cs.length === 1 && cs[0].name === 'Oila mashqi' && cs[0].wordIds.length === 2, 'session saved with name and its two words');
+  assert((await page.locator('.cs-card').count()) === 1 && (await page.locator('.cs-card').innerText()).includes('Oila mashqi'), 'session card visible with its name');
 
   // ---------- play a small session, with mistakes ----------
-  await store(page, async () => { const ws = VL.store.state.words.slice(0, 4); await VL.store.addCustom({ name: 'Kichik', topic: 'Test', source: 'specific', wordIds: ws.map((w) => w.id) }); });
+  await store(page, async () => { await VL.io.loadSample(); const ws = VL.store.state.words.slice(0, 4); await VL.store.addCustom({ name: 'Kichik', topic: 'Test', source: 'specific', wordIds: ws.map((w) => w.id) }); });
   await page.reload(); await page.waitForSelector('.cs-card');
   await page.locator('.cs-card:has(h3:text-is("Kichik")) [data-action="cs-start"]').click(); await page.waitForSelector('.lesson');
   await wait(page, 300);
@@ -123,11 +118,11 @@ const store = (page, fn, arg) => page.evaluate(fn, arg);
 
   // ---------- empty type selection -> default ----------
   await page.click('[data-action="cs-new"]'); await page.waitForSelector('#cs-name');
-  await page.fill('#cs-name', 'Standart'); await page.selectOption('#cs-topic', 'grammar');
+  await page.fill('#cs-name', 'Standart'); await page.check('input[name="cs-src"][value="typed"]'); await page.fill('#cs-typed', 'cat — mushuk\ndog — it\nbird — qush');
   await page.click('.modal-foot .btn-ghost:has-text("Faqat saqlash")'); await wait(page, 500);
   cs = await store(page, () => VL.store.state.custom);
   const def = cs.find((c) => c.name === 'Standart');
-  assert(def && def.wordIds.length === 15, 'Grammar topic has 15 words');
+  assert(def && def.wordIds.length === 3, 'typed session has its 3 words');
 
   // ---------- mistakes source ----------
   await store(page, () => VL.store.setSetting('mistakeIds', VL.store.state.words.slice(0, 3).map((w) => w.id)));
