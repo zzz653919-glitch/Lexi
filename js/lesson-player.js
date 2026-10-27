@@ -380,7 +380,7 @@ VL.player = (function () {
     const goodWords = R.goodWordIds.map((id) => store.word(id)).filter(Boolean);
     const missedSentences = R.missedSentenceIds.map((id) => VL.sentenceById(id)).filter(Boolean);
     root.innerHTML =
-      '<header class="page-head"><div><h1>' + esc(t(R.completed ? 'res.title' : 'res.ended')) + '</h1><p class="muted">' + esc(done.pathLesson ? done.pathTitle : done.custom ? done.custom.name + ' · ' + done.custom.topic : t('ex.' + done.type)) + '</p></div></header>' +
+      '<header class="page-head"><div><h1>' + esc(t(R.completed ? 'res.title' : 'res.ended')) + '</h1><p class="muted">' + esc(done.pathLesson ? done.pathTitle : done.custom ? done.custom.name + (done.custom.topic ? ' · ' + done.custom.topic : '') : t('ex.' + done.type)) + '</p></div></header>' +
       '<section class="card summary"><div class="ring" role="img" aria-label="' + esc(t('sum.ringAria', { p })) + '"><svg viewBox="0 0 120 120"><circle class="ring-bg" cx="60" cy="60" r="' + Rr + '"/><circle class="ring-fg" cx="60" cy="60" r="' + Rr + '" stroke-dasharray="' + C.toFixed(1) + '" stroke-dashoffset="' + (C * (1 - p / 100)).toFixed(1) + '"/></svg><div class="ring-text">' + p + '%</div></div>' +
       '<div class="res-main"><h2>' + esc(t(p === 100 ? 'sum.m100' : p >= 80 ? 'sum.m80' : p >= 50 ? 'sum.m50' : 'sum.m0')) + '</h2>' +
       '<div class="res-stats"><div><b>' + done.answers + '</b><span>' + esc(t('res.exercises')) + '</span></div><div><b class="ok-text">' + done.correct + '</b><span>' + esc(t('res.correctN')) + '</span></div><div><b class="bad-text">' + done.wrong + '</b><span>' + esc(t('res.wrongN')) + '</span></div>' +
