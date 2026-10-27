@@ -34,8 +34,7 @@ const store = (page, fn, arg) => page.evaluate(fn, arg);
   // validation
   await page.fill('#cs-name', '   '); await page.click('.modal-foot .btn-primary');
   assert((await page.locator('#cs-error').innerText()).length > 0, 'empty name rejected');
-  await page.fill('#cs-name', 'Oila'); await page.selectOption('#cs-topic', 'custom'); await page.click('.modal-foot .btn-primary');
-  assert((await page.locator('#cs-error').innerText()).length > 0, 'custom topic needs a name');
+  assert((await page.locator('#cs-topic option[value="custom"]').count()) === 0 && (await page.locator('#cs-topic-text').count()) === 0, 'no free-text "other topic" field');
   await page.selectOption('#cs-topic', 'grammar');
   await page.check('input[name="cs-src"][value="specific"]'); await page.click('.modal-foot .btn-primary');
   assert((await page.locator('#cs-error').innerText()).length > 0, 'no specific words chosen -> error');
