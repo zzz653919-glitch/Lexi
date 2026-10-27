@@ -290,15 +290,16 @@ VL.exercises = (function () {
     hideActions: true,
     render({ word: w, item }) {
       const posKey = w.pos ? 'pos.' + w.pos : '';
-      return '<span class="chip chip-new-word">' + icon('star') + esc(t('mx.studyChip', { i: (item.mixWord || 0) + 1 })) + '</span>' +
+      return '<span class="chip chip-new-word">' + icon('star') + esc(item.sess ? t('ss.introChip', { i: item.wi, n: item.wn }) : t('mx.studyChip', { i: (item.mixWord || 0) + 1 })) + '</span>' +
         '<p class="q-word" lang="en">' + esc(w.en) + sayBtn(w.en, true) + '</p>' +
         (w.phonetic ? '<p class="phonetic">' + esc(w.phonetic) + '</p>' : '') +
-        '<p class="intro-uz" lang="uz">' + esc(w.uz) + '</p>' +
+        '<p class="intro-uz" lang="uz">' + esc(w.uz && String(w.uz).trim() ? w.uz : t('ss.noTranslation')) + '</p>' +
         '<div class="tp-chips">' + (posKey ? '<span class="chip">' + esc(t(posKey)) + '</span>' : '') + (w.level ? '<span class="chip">' + esc(w.level) + '</span>' : '') + '</div>' +
         (w.example ? '<p class="lesson-example"><b>' + esc(t('les.example')) + ':</b> <span lang="en">' + esc(w.example) + '</span>' + sayBtn(w.example) + (w.exUz ? '<br><span class="muted" lang="uz">' + esc(w.exUz) + '</span>' : '') + '</p>' : '') +
         (w.sense ? '<p class="muted small">' + esc(w.sense) + '</p>' : '') +
-        '<p class="muted small study-hint">' + esc(t('mx.studyHint')) + '</p>' +
-        '<button type="button" class="btn btn-primary btn-lg study-go" data-study-go>' + esc(t('mx.begin')) + icon('arrow') + '</button>';
+        '<p class="muted small study-hint">' + esc(t(item.sess ? 'ss.introHint' : 'mx.studyHint')) + '</p>' +
+        (item.sess && item.wi > 1 ? '<button type="button" class="btn btn-lg study-back" data-action="back">' + esc(t('ss.back')) + '</button> ' : '') +
+        '<button type="button" class="btn btn-primary btn-lg study-go" data-study-go>' + esc(t(item.sess ? 'ss.next' : 'mx.begin')) + icon('arrow') + '</button>';
     },
     mount(root, ctx, api) { const b = root.querySelector('[data-study-go]'); b.addEventListener('click', () => api.finish({ neutral: true, skipped: true, lines: [] })); b.focus(); },
     collect: () => null,

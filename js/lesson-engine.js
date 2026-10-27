@@ -67,8 +67,8 @@
 
   const mk = {
     learn: (w) => base('learn', { wordIds: [w.id] }),
-    choose(w, all, avoidIndex) {
-      const options = E.choices(w, all);
+    choose(w, all, avoidIndex, small) {
+      const options = E.choices(w, all, small ? 1 : 3);
       if (!options) return null;
       if (avoidIndex != null && options.findIndex((o) => o.correct) === avoidIndex) options.push(options.shift()); // never the same slot twice in a row
       return base('choose', { wordIds: [w.id], options });
@@ -98,7 +98,8 @@
       return base('order', { sentenceId: s.id, dir: 'uz-en', tiles: tilesFrom(tokens, false) });
     },
     // Uzbek word -> choose the English word
-    chooseRev(w, all) {
+    chooseRev(w, all, maxWrong) {
+      const cap = maxWrong || 3;
       const key = (x) => VL.quiz.normalize(x, true);
       const used = new Set([key(w.en)]);
       const pool = shuffle(all.filter((x) => x.id !== w.id));
@@ -108,9 +109,10 @@
         const k = key(x.en);
         if (used.has(k) || VL.quiz.check(x.en, w.en, true) || VL.quiz.acceptedAnswers(x.uz).some((a) => VL.quiz.check(a, w.uz, true))) continue;
         used.add(k); wrong.push(x.en);
-        if (wrong.length === 3) break;
+        if (wrong.length === cap) break;
       }
-      if (wrong.length < 3) return null;
+      if (wrong.length < Math.min(cap, 3) && !maxWrong) return null;
+      if (!wrong.length) return null;
       return base('chooseRev', { wordIds: [w.id], dir: 'uz-en', options: shuffle([w.en].concat(wrong)).map((text) => ({ text, correct: key(text) === key(w.en) })) });
     },
     // the word's own example sentence with the word blanked out
@@ -340,7 +342,7 @@
     const items = [];
     const PROD = ['translate', 'scramble', 'clozeW', 'reverse', 'orderW', 'fill'].concat(speech ? ['listen'] : []);
     const make = {
-      choose: (w) => mk.choose(w, allWords), chooseRev: (w) => mk.chooseRev(w, allWords),
+      choose: (w) => mk.choose(w, allWords) || mk.choose(w, allWords, null, true), chooseRev: (w) => mk.chooseRev(w, allWords),
       translate: (w) => Object.assign(mk.wordType('translate', w), { dir: 'en-uz' }), reverse: (w) => Object.assign(mk.wordType('reverse', w), { dir: 'uz-en' }),
       scramble: (w) => mk.scramble(w), fill: (w) => mk.fill(w), clozeW: (w) => mk.clozeW(w, allWords), orderW: (w) => mk.orderW(w), listen: (w) => mk.listenWord(w, allWords),
     };
@@ -451,7 +453,7 @@
       const others = words.slice(i + 1).concat(words.slice(0, i)).concat(shuffle(allWords.filter((x) => !words.includes(x))));
       const group = [w].concat(others.slice(0, 3));
       const steps = {
-        choose: () => mk.choose(w, allWords),
+        choose: () => mk.choose(w, allWords) || mk.choose(w, allWords, null, true),
         type: () => Object.assign(mk.wordType('type', w), { dir: 'en-uz' }),
         translate: () => Object.assign(mk.wordType('translate', w), { dir: 'uz-en' }),
         fill: () => mk.fill(w),
@@ -469,5 +471,43 @@
     return { items, wordIds: words.map((w) => w.id), newCount: words.filter((w) => !w.reps).length, sentenceIds: [] };
   }
 
-  Object.assign(E, { buildPathLesson, buildMixed, MIX_STEPS, buildCustom, CUSTOM_TYPES, CUSTOM_DEFAULT, buildSingle, checkSentence, normSentence, sentenceTokens, tilesFrom, mk, levelFor, pickSentences, buildGuided, sequence, reviewItemFor, insertReview, GUIDED_LENGTHS: [10, 12, 15] });
+  /* ---------- session-based vocabulary ---------- */
+  const SESSION_PHASES = ['learn', 'recall', 'choose', 'spell', 'scramble', 'translate', 'review'];
+
+  /* Builds a strictly session-scoped lesson. `words` are the ONLY words that may appear anywhere in it: as the
+     studied word, as a wrong option, in a sentence or in the review. Order: 1 learn (intro screen for every word),
+     2 recall (Uzbek -> type English), 3 multiple choice (English options), 4 spelling (missing letters),
+     5 scrambled letters, 6 sentence translation (the word's own example), 7 review (added by the player at the end
+     for the words answered wrongly). A phase that cannot be built for a word (too short, no example, too few other
+     words in the session for wrong options) is left out for that word instead of borrowing other vocabulary.
+     opts.intro === false leaves the learn phase out (used when re-practising words already seen). */
+  function buildSession(words, opts) {
+    opts = opts || {};
+    const list = [];
+    words.filter(Boolean).forEach((w) => { if (!list.some((x) => x.id === w.id)) list.push(w); });
+    const phases = {};
+    if (opts.intro !== false) phases.learn = list.map((w) => base('study', { wordIds: [w.id], sess: true }));
+    const ex = list.filter((w) => w.uz && String(w.uz).trim() && w.en && String(w.en).trim());
+    const chunk = (fn) => shuffle(ex.slice()).map(fn).filter(Boolean);
+    phases.recall = chunk((w) => Object.assign(mk.wordType('reverse', w), { dir: 'uz-en' }));
+    phases.choose = chunk((w) => mk.chooseRev(w, list, 3));
+    phases.spell = chunk((w) => mk.fill(w));
+    phases.scramble = chunk((w) => mk.scramble(w));
+    phases.translate = chunk((w) => mk.orderW(w));
+    const items = [];
+    SESSION_PHASES.forEach((ph) => {
+      const arr = phases[ph] || [];
+      arr.forEach((it, i) => { it.phase = ph; it.wi = i + 1; it.wn = arr.length; items.push(it); });
+    });
+    return { items, wordIds: list.map((w) => w.id), newCount: list.filter((w) => !w.reps).length, sentenceIds: [] };
+  }
+
+  // review phase: one typed Uzbek -> English item for each word answered wrongly
+  function buildSessionReview(wordIds) {
+    const arr = wordIds.map((id) => VL.store.word(id)).filter(Boolean).map((w) => Object.assign(mk.wordType('reverse', w), { dir: 'uz-en', retry: true }));
+    arr.forEach((it, i) => { it.phase = 'review'; it.wi = i + 1; it.wn = arr.length; });
+    return arr;
+  }
+
+  Object.assign(E, { buildSession, buildSessionReview, SESSION_PHASES, buildPathLesson, buildMixed, MIX_STEPS, buildCustom, CUSTOM_TYPES, CUSTOM_DEFAULT, buildSingle, checkSentence, normSentence, sentenceTokens, tilesFrom, mk, levelFor, pickSentences, buildGuided, sequence, reviewItemFor, insertReview, GUIDED_LENGTHS: [10, 12, 15] });
 })();

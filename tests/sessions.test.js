@@ -30,9 +30,7 @@ const store = (page, fn, arg) => page.evaluate(fn, arg);
   await page.click('[data-action="cs-new"]'); await page.waitForSelector('#cs-name');
   const topics = await page.locator('#cs-topic option').allInnerTexts();
   ['Kundalik hayot', 'Oila va uy', 'Ish va kasblar', 'Sayohat', 'Oziq-ovqat', 'Grammatika', "Fe'llar", 'Sifatlar', 'Phrasal verbs', 'IELTS vocabulary', "O'zimning so'zlarim"].forEach((x) => assert(topics.includes(x), 'topic offered: ' + x));
-  const counts = await page.locator('#cs-count option').evaluateAll((o) => o.map((x) => x.value));
-  assert(counts.join(',') === '5,10,15,20,all', 'counts 5/10/15/20/all');
-  assert((await page.locator('input[name="cs-type"]').count()) === 9, 'nine exercise types offered');
+  assert((await page.locator('#cs-count').count()) === 0 && (await page.locator('input[name="cs-type"]').count()) === 0, 'no exercise-count/type pickers: every session follows the same fixed workflow');
   // validation
   await page.fill('#cs-name', '   '); await page.click('.modal-foot .btn-primary');
   assert((await page.locator('#cs-error').innerText()).length > 0, 'empty name rejected');
@@ -47,64 +45,65 @@ const store = (page, fn, arg) => page.evaluate(fn, arg);
   // ---------- topic session: 5 exercises, two types ----------
   await page.check('input[name="cs-src"][value="topic"]');
   await page.selectOption('#cs-topic', 'family'); await page.fill('#cs-name', 'Oila mashqi');
-  await page.selectOption('#cs-count', '5');
-  await page.check('input[name="cs-type"][value="translate"]'); await page.check('input[name="cs-type"][value="choose"]');
   await page.click('.modal-foot .btn-ghost:has-text("Faqat saqlash")'); await wait(page, 600);
   let cs = await store(page, () => VL.store.state.custom);
   assert(cs.length === 1 && cs[0].name === 'Oila mashqi' && cs[0].topic === 'Oila va uy', 'session saved with name and topic');
-  assert(cs[0].wordIds.length === 64 && cs[0].count === '5' && cs[0].types.join() === 'translate,choose', 'topic words installed (family+home, 4 levels = 64) and types stored');
+  assert(cs[0].wordIds.length === 64, 'topic words installed (family+home, 4 levels = 64)');
   assert((await page.locator('.cs-card').count()) === 1 && (await page.locator('.cs-card').innerText()).includes('Oila mashqi'), 'session card visible with name + topic');
 
-  // ---------- play it, with mistakes ----------
-  await page.click('[data-action="cs-start"]'); await page.waitForSelector('.lesson');
-  const planned = await store(page, () => VL.store.state.lesson.items.map((i) => i.type));
-  assert(planned.length === 5 && planned.every((t) => ['translate', 'choose', 'reverse'].includes(t)), 'exactly 5 exercises, only the chosen types (' + planned + ')');
-  assert(new Set(await store(page, () => VL.store.state.lesson.items.map((i) => i.wordIds[0]))).size === 5, 'no word repeats when there are enough words');
+  // ---------- play a small session, with mistakes ----------
+  await store(page, async () => { const ws = VL.store.state.words.slice(0, 4); await VL.store.addCustom({ name: 'Kichik', topic: 'Test', source: 'specific', wordIds: ws.map((w) => w.id) }); });
+  await page.reload(); await page.waitForSelector('.cs-card');
+  await page.locator('.cs-card:has(h3:text-is("Kichik")) [data-action="cs-start"]').click(); await page.waitForSelector('.lesson');
+  await wait(page, 300);
+  const planned = await store(page, () => VL.store.state.custom.find((c) => c.name === 'Kichik').progress.items.map((i) => i.type));
+  assert(planned.slice(0, 4).every((t) => t === 'study') && planned.slice(4).every((t) => t !== 'study'), 'four intro screens first, then the exercises (' + planned.join(',') + ')');
   const r1 = await playLesson(page, { wrongEvery: 2 });
   await page.waitForSelector('.summary');
   const resText = await page.locator('main, #view, body').first().innerText();
   ['Faqat xatolarni qayta ishlash', 'Sessiyani qayta boshlash', 'Yangi sessiya yaratish'].forEach((x) => assert(resText.includes(x), 'results button: ' + x));
-  assert(resText.includes('Oila mashqi') && resText.includes('Oila va uy'), 'result page shows session name and topic');
-  cs = await store(page, () => VL.store.state.custom);
-  const run = cs[0].runs[0];
-  assert(cs[0].runs.length === 1 && run.total >= 5 && run.total === r1.answered + (run.total - r1.answered) && run.correct + run.wrong === run.total, 'run saved: total ' + run.total + ' = correct ' + run.correct + ' + wrong ' + run.wrong);
+  assert(resText.includes('Kichik') && resText.includes('Test'), 'result page shows session name and topic');
+  const kich = () => store(page, () => VL.store.state.custom.find((c) => c.name === 'Kichik'));
+  let ks = await kich();
+  const run = ks.runs[0];
+  assert(ks.runs.length === 1 && run.total >= 4 && run.correct + run.wrong === run.total, 'run saved: total ' + run.total + ' = correct ' + run.correct + ' + wrong ' + run.wrong);
   assert(run.missedIds.length > 0 && (await store(page, () => VL.store.state.settings.mistakeIds)).length === run.missedIds.length, 'mistaken words saved for future sessions');
   const sess = await store(page, () => VL.store.state.sessions.filter((s) => s.customId));
-  assert(sess.length === 1 && sess[0].customName === 'Oila mashqi', 'global session history records the custom session');
+  assert(sess.length === 1 && sess[0].customName === 'Kichik', 'global session history records the custom session');
 
   // ---------- only mistakes ----------
   await page.click('[data-action="review-mistakes"]'); await page.waitForSelector('.lesson');
-  const miss = await store(page, () => ({ ids: new Set(VL.store.state.lesson.items.flatMap((i) => i.wordIds)), n: VL.store.state.lesson.items.length }));
+  const miss = await store(page, () => ({ ids: new Set(VL.store.state.lesson.items.flatMap((i) => i.wordIds)), types: VL.store.state.lesson.items.map((i) => i.type) }));
   const missedSet = new Set(run.missedIds);
-  assert(Array.from(miss.ids).every((id) => missedSet.has(id)), 'mistakes-only run uses only the mistaken words');
+  assert(Array.from(miss.ids).every((id) => missedSet.has(id)) && !miss.types.includes('study'), 'mistakes-only run uses only the mistaken words (no intro again)');
   await playLesson(page, { wrongEvery: 0 });
   await page.waitForSelector('.summary');
-  cs = await store(page, () => VL.store.state.custom);
-  assert(cs[0].runs.length === 2 && cs[0].runs[1].mode === 'mistakes', 'second run saved as mistakes-only');
+  ks = await kich();
+  assert(ks.runs.length === 2 && ks.runs[1].mode === 'mistakes', 'second run saved as mistakes-only');
   assert((await store(page, () => VL.store.state.settings.mistakeIds)).length < run.missedIds.length + 1, 'corrected words leave the mistake list');
 
-  // ---------- restart / new from results ----------
-  await page.click('[data-action="cs-restart"]'); await page.waitForSelector('.lesson');
-  assert((await store(page, () => VL.store.state.lesson.items.length)) === 5, 'restart rebuilds a fresh 5-exercise run');
+  // ---------- restart from results ----------
+  await page.click('[data-action="cs-restart"]'); await page.waitForSelector('.lesson'); await wait(page, 300);
+  assert((await kich()).progress.items[0].type === 'study', 'restart begins again with the intro');
 
   // ---------- reload keeps progress ----------
-  await page.click('#btn-check, [data-action="skip"]').catch(() => {});
   await page.reload(); await page.waitForSelector('.tabs');
-  assert((await store(page, () => VL.store.state.custom.length)) === 1 && (await store(page, () => VL.store.state.custom[0].runs.length)) === 2, 'sessions and history survive a reload');
-  assert(!!(await store(page, () => VL.store.state.lesson)), 'unfinished run survives a reload');
-  await page.goto(APP + '#/learn?tab=practice'); await page.waitForSelector('[data-action="resume"]');
-  await page.click('[data-action="resume"]'); await page.waitForSelector('.lesson');
+  assert((await store(page, () => VL.store.state.custom.length)) === 2 && (await kich()).runs.length === 2, 'sessions and history survive a reload');
+  assert(!!(await kich()).progress, 'unfinished run survives a reload (its own progress record)');
+  await page.goto(APP + '#/learn?tab=sessions'); await page.waitForSelector('.cs-card');
+  await page.locator('.cs-card:has(h3:text-is("Kichik")) [data-action="cs-start"]').click(); await page.waitForSelector('.lesson');
   await page.click('[data-action="pause"]'); await page.waitForSelector('.modal-foot');
   await page.click('.modal-foot .btn-ghost'); await wait(page, 800);   // end now
   await page.waitForSelector('.summary, .tabs', { timeout: 5000 });
 
   // ---------- history, rename, delete ----------
   await page.goto(APP + '#/learn?tab=sessions'); await page.waitForSelector('.cs-card');
-  await page.click('[data-action="cs-history"]');
+  await page.click('.cs-card:has(h3:text-is("Kichik")) [data-action="cs-history"]');
   assert((await page.locator('.cs-runs li').count()) >= 2, 'history lists the old runs');
-  await page.click('[data-action="cs-rename"]'); await page.fill('#cs-rn', 'Yangi nom'); await page.click('.modal-foot .btn-primary'); await wait(page);
-  assert((await page.locator('.cs-card h3').innerText()) === 'Yangi nom', 'rename works');
-  await page.click('[data-action="cs-rename"]'); await page.fill('#cs-rn', ''); await page.click('.modal-foot .btn-primary');
+  const oila = '.cs-card:has(h3:text-is("Oila mashqi"))';
+  await page.click(oila + ' [data-action="cs-rename"]'); await page.fill('#cs-rn', 'Yangi nom'); await page.click('.modal-foot .btn-primary'); await wait(page);
+  assert((await page.locator('.cs-card h3:text-is("Yangi nom")').count()) === 1 && (await page.locator('.cs-card h3:text-is("Oila mashqi")').count()) === 0, 'rename works');
+  await page.click('.cs-card:has(h3:text-is("Yangi nom")) [data-action="cs-rename"]'); await page.fill('#cs-rn', ''); await page.click('.modal-foot .btn-primary');
   assert((await page.locator('#cs-rn-err').innerText()).length > 0, 'empty rename rejected'); await page.click('.modal-foot .btn-ghost');
 
   // ---------- typed words, few words reused, all types incl. matching ----------
@@ -113,33 +112,27 @@ const store = (page, fn, arg) => page.evaluate(fn, arg);
   await page.fill('#cs-typed', 'sunrise — tong otishi\nsunset — quyosh botishi\nrainbow'); await page.click('.modal-foot .btn-primary');
   assert((await page.locator('#cs-error').innerText()).includes('rainbow'), 'typed word without translation is reported, not invented');
   await page.fill('#cs-typed', 'sunrise — tong otishi\nsunset — quyosh botishi\nvalley — vodiy');
-  await page.selectOption('#cs-count', '15');
-  for (const k of ['translate', 'choose', 'scramble', 'fill', 'match']) await page.check('input[name="cs-type"][value="' + k + '"]');
   await page.click('.modal-foot .btn-ghost:has-text("Faqat saqlash")'); await wait(page, 500);
   cs = await store(page, () => VL.store.state.custom);
   const few = cs.find((c) => c.name.startsWith('Mening 3'));
   assert(few && few.wordIds.length === 3, 'typed words created (3)');
   const fewWords = await store(page, () => VL.store.state.words.filter((w) => ['sunrise', 'sunset', 'valley'].includes(w.en)).length);
   assert(fewWords === 3, 'typed words saved to vocabulary');
-  const built = await store(page, (id) => { const c = VL.store.customSession(id); const b = VL.learn.buildCustom({ words: VL.custom.sessionWords(c), count: c.count, types: c.types, speech: false }, VL.store.state.words); return b.items.map((i) => i.type + ':' + (i.wordIds[0] || '')); }, few.id);
-  assert(built.length === 15, '15 exercises from 3 words (' + built.length + ')');
-  assert(built.every((x, i) => i === 0 || x !== built[i - 1]), 'no identical exercise twice in a row');
-  assert(built.some((x) => x.startsWith('match')), 'matching exercise used');
+  const built = await store(page, (id) => { const c = VL.store.customSession(id); return VL.learn.buildSession(VL.custom.sessionWords(c), {}).items.map((i) => i.phase); }, few.id);
+  assert(built.filter((x) => x === 'learn').length === 3 && built.filter((x) => x === 'recall').length === 3 && built.filter((x) => x === 'choose').length === 3, '3 typed words: 3 intros, 3 recall, 3 multiple choice');
 
   // ---------- empty type selection -> default ----------
   await page.click('[data-action="cs-new"]'); await page.waitForSelector('#cs-name');
-  await page.fill('#cs-name', 'Standart'); await page.selectOption('#cs-topic', 'grammar'); await page.selectOption('#cs-count', 'all');
+  await page.fill('#cs-name', 'Standart'); await page.selectOption('#cs-topic', 'grammar');
   await page.click('.modal-foot .btn-ghost:has-text("Faqat saqlash")'); await wait(page, 500);
   cs = await store(page, () => VL.store.state.custom);
   const def = cs.find((c) => c.name === 'Standart');
-  assert(def && def.types.length >= 5 && def.wordIds.length === 15, 'no types chosen -> default mix; Grammar topic has 15 words');
-  const allB = await store(page, (id) => { const c = VL.store.customSession(id); return VL.learn.buildCustom({ words: VL.custom.sessionWords(c), count: 'all', types: c.types, speech: false }, VL.store.state.words).items.length; }, def.id);
-  assert(allB === 15, '"all" = one exercise per selected word');
+  assert(def && def.wordIds.length === 15, 'Grammar topic has 15 words');
 
   // ---------- mistakes source ----------
   await store(page, () => VL.store.setSetting('mistakeIds', VL.store.state.words.slice(0, 3).map((w) => w.id)));
   await page.click('[data-action="cs-new"]'); await page.waitForSelector('#cs-name');
-  await page.fill('#cs-name', 'Xatolar'); await page.check('input[name="cs-src"][value="mistakes"]'); await page.selectOption('#cs-count', '10');
+  await page.fill('#cs-name', 'Xatolar'); await page.check('input[name="cs-src"][value="mistakes"]');
   await page.click('.modal-foot .btn-ghost:has-text("Faqat saqlash")'); await wait(page, 400);
   assert((await store(page, () => VL.store.state.custom.some((c) => c.name === 'Xatolar'))), 'session from wrong words created');
 
@@ -160,20 +153,19 @@ const store = (page, fn, arg) => page.evaluate(fn, arg);
   assert(colErr.length > 0 || (await store(page, () => VL.store.state.custom.some((c) => c.name === 'Toplam'))), 'collection source handled (error for empty collection or session created)');
   if (await page.locator('.modal-foot').count()) await page.click('.modal-foot .btn-ghost:has-text("Bekor")');
 
-  // ---------- paused lesson replacement is confirmed ----------
+  // ---------- sessions do not replace each other ----------
   await page.goto(APP + '#/learn?tab=sessions'); await page.waitForSelector('.cs-card');
-  await page.locator('.cs-card:has(h3:text-is("Tanlangan")) [data-action="cs-start"]').click(); await page.waitForSelector('.lesson, .modal-foot');
-  if (await page.locator('.modal-foot').count()) { console.log('modal:', await page.locator('dialog').innerText()); await page.click('.modal-foot .btn-danger'); await page.waitForSelector('.lesson'); }
+  await page.locator('.cs-card:has(h3:text-is("Tanlangan")) [data-action="cs-start"]').click(); await page.waitForSelector('.lesson');
+  await wait(page, 300);
   await page.reload(); await page.waitForSelector('.tabs');
   await page.goto(APP + '#/learn?tab=sessions'); await page.waitForSelector('.cs-card');
-  await page.locator('.cs-card:has(h3:text-is("Standart")) [data-action="cs-start"]').click();
-  await page.waitForSelector('.modal-foot');
-  await page.click('.modal-foot .btn-ghost'); await wait(page, 700);
-  const nm = await store(page, () => VL.store.state.lesson && VL.store.state.lesson.custom && VL.store.state.lesson.custom.name); console.log('paused:', nm);
-  assert(nm === 'Tanlangan', 'cancelling the warning keeps the paused session');
+  await page.locator('.cs-card:has(h3:text-is("Standart")) [data-action="cs-start"]').click(); await page.waitForSelector('.lesson'); await wait(page, 300);
+  assert(!(await page.locator('.modal-foot').count()), 'no warning when another session is unfinished');
+  const both = await store(page, () => ['Tanlangan', 'Standart'].map((n) => !!VL.store.state.custom.find((c) => c.name === n).progress));
+  assert(both.every(Boolean), 'both sessions keep their own unfinished progress');
 
   // ---------- delete ----------
-  await page.goto(APP + '#/learn?tab=sessions'); await page.waitForSelector('.cs-card');
+  await page.goto(APP + '#/learn?tab=sessions'); await page.reload(); await page.waitForSelector('.cs-card');
   const before = await page.locator('.cs-card').count();
   await page.locator('.cs-card:has(h3:text-is("Xatolar")) [data-action="cs-delete"]').click(); await page.click('.modal-foot .btn-danger'); await wait(page, 400);
   assert((await page.locator('.cs-card').count()) === before - 1, 'delete removes the session');

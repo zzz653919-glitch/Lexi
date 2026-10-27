@@ -5,7 +5,9 @@ const wait = (p, ms) => p.waitForTimeout(ms || 120);
 
 async function readItem(page) {
   return page.evaluate(() => {
-    const l = VL.store.state.lesson;
+    // a session keeps its own progress record; the most recently saved one is the lesson on screen
+    const sess = VL.store.state.custom.filter((c) => c.progress).sort((a, b) => b.progressAt - a.progressAt)[0];
+    const l = VL.store.state.lesson && VL.store.state.lesson.items.length ? VL.store.state.lesson : (sess && sess.progress);
     const it = l.items[l.index];
     return {
       it,

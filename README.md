@@ -90,9 +90,16 @@ The six single-type cards were merged into one button, *Aralash mashqni boshlash
 
 **Custom sessions** (`js/custom-sessions.js`, `js/topics.js`): *Word Lessons → Sessions → Create a new session* (also on the Exercises tab and on the results page).
 
-- Name, topic (11 ready topics or your own text), words (all words of the topic / specific words / words you type / a saved collection / words you got wrong), 5/10/15/20/all exercises, any of seven exercise types (none chosen = default mix).
-- With few words, words are reused with different exercise types and never twice in a row; with many words nothing repeats.
-- Each session keeps its words and a history of runs (result, percent, date); it can be restarted, renamed and deleted. Words answered wrongly are remembered for later sessions ("Words I got wrong"). A paused run survives a page reload.
+- Name, topic (11 ready topics or your own text) and words (all words of the topic / specific words / words you type / a saved collection / words you got wrong). The number of exercises and the exercise kinds are no longer chosen: every session follows the workflow below.
+- Each session keeps its words, a history of runs (result, percent, date) and **its own saved progress**; it can be restarted, renamed and deleted. Words answered wrongly are remembered for later sessions ("Words I got wrong").
+
+**Session-based vocabulary (strict workflow).** A session only ever uses the words assigned to it - as the studied word, as a wrong option, in a sentence, in the review. Nothing is taken from other sessions or from the rest of your vocabulary (when a session is too small for an exercise, that exercise is shortened or left out instead of borrowing words).
+
+1. **Learn** - an intro screen for every word, always first: English word, Uzbek meaning, English example with its Uzbek translation (when the word has one), a pronunciation button when the browser has speech synthesis, *Next* (and *Back* to the previous intro). A word without a translation shows a placeholder and gets no exercises.
+2. **Recall** - Uzbek -> type the English word. 3. **Multiple choice** - the Uzbek word, English options taken from the session (2-4 options; skipped for a one-word session). 4. **Spelling** - fill the missing letters. 5. **Scrambled letters**. 6. **Sentence translation** - the word's own example sentence, built from tiles (left out when the word has no example). 7. **Review** - the words answered wrongly come back once, at the end.
+- The top bar shows "Word 3 of 10" for the current step and a progress bar over the whole session. Progress is saved after every step in the session's own record, so it can be resumed (*Continue*) after leaving or reloading, independently of every other session and of the single paused lesson used elsewhere. *Restart session* only resets the exercise progress; words, history and statistics stay.
+- The completion screen shows the score and percentage (first pass; the review phase is extra practice), the incorrect words, a review button, *Restart* and *Next session* (the next session in your list - it is only offered, its words are never introduced automatically).
+- The learning path and the mixed exercise are scoped the same way: their wrong options and retries come from the words of that lesson only.
 - Results page: total / correct / wrong / percent, learned words, mistaken words and the buttons *Faqat xatolarni qayta ishlash*, *Sessiyani qayta boshlash*, *Yangi sessiya yaratish*.
 - The topic word lists are short and unreviewed (like the ready-made decks). Typed words need a translation; the app never invents one.
 
@@ -245,6 +252,7 @@ node tests/vocab-data.test.js       # vocabulary data checks (no browser)
 node tests/topics.test.js           # topics page
 node tests/mixed.test.js            # mixed exercise
 node tests/sessions.test.js         # custom sessions + typed-answer checking in the real exercise
+node tests/session-vocab.test.js    # session-based vocabulary: order, isolation (no leakage), per-session resume/restart
 node tests/lessons.test.js          # ...and lesson-engine / exercises / bulk-parser / bulk / language / upgrade / storage-fallback
 ```
 

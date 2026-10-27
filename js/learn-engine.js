@@ -73,7 +73,7 @@ VL.learn = (function () {
 
   /* ---------- exercise generation ---------- */
   // Four answer options for "choose the translation": the right one plus three different, plausible wrong ones.
-  function choices(word, allWords) {
+  function choices(word, allWords, need) {
     const correct = primary(word.uz);
     const correctKey = VL.quiz.normalize(correct, true);
     const sameSet = allWords.filter((w) => w.id !== word.id && w.collectionId === word.collectionId);
@@ -87,7 +87,7 @@ VL.learn = (function () {
       used.add(k); wrong.push(text);
       if (wrong.length === 3) break;
     }
-    if (wrong.length < 3) return null; // not enough different words for a 4-option question
+    if (wrong.length < (need || 3)) return null; // not enough different words for a 4-option question (need=1: a smaller pool may give 2-3 options)
     return VL.util.shuffle([correct].concat(wrong)).map((text) => ({ text, correct: VL.quiz.normalize(text, true) === correctKey }));
   }
 
