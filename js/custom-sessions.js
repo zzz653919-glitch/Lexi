@@ -99,11 +99,7 @@ VL.custom = (function () {
       '<div class="field" id="cs-p-typed" hidden><label for="cs-typed">' + esc(t('cs.typedLabel')) + '</label><textarea id="cs-typed" rows="5" spellcheck="false" placeholder="' + esc(t('cs.typedPh')) + '"></textarea><p class="hint">' + esc(t('cs.typedHint')) + '</p></div>' +
       '<div class="field" id="cs-p-collection" hidden><label for="cs-col">' + esc(t('cs.collection')) + '</label><select id="cs-col">' + store.state.collections.map((c) => '<option value="' + c.id + '">' + esc(c.name + ' (' + store.wordsIn(c.id).length + ')') + '</option>').join('') + '</select></div>' +
       '<p class="hint" id="cs-info"></p>' +
-      '<div class="field"><label for="cs-count">' + esc(t('cs.count')) + '</label><select id="cs-count">' + COUNTS.map((c) => '<option value="' + c + '"' + (String(p.count || '10') === c ? ' selected' : '') + '>' + esc(c === 'all' ? t('cs.countAll') : n('n.exercise', Number(c))) + '</option>').join('') + '</select></div>' +
-      '<fieldset class="field"><legend>' + esc(t('cs.types')) + '</legend><div class="cs-types">' + E.CUSTOM_TYPES.map((k) => {
-        const off = k === 'listen' && !speech;
-        return '<label class="check' + (off ? ' is-off' : '') + '"><input type="checkbox" name="cs-type" value="' + k + '"' + (off ? ' disabled' : '') + ((p.types || []).includes(k) ? ' checked' : '') + '><span>' + esc(typeLabel(k)) + (off ? ' — ' + esc(t('cs.noSpeech')) : '') + '</span></label>';
-      }).join('') + '</div><p class="hint">' + esc(t('cs.typesHint')) + '</p></fieldset>' +
+      '<p class="hint">' + esc(t('ss.createNote')) + '</p>' +
       '<p class="form-error" id="cs-error" role="alert"></p>';
     const $ = (s) => body.querySelector(s);
     const $$ = (s) => Array.from(body.querySelectorAll(s));
@@ -158,10 +154,9 @@ VL.custom = (function () {
         const seen = new Set();
         const words = r.words.filter((w) => w && !seen.has(w.id) && seen.add(w.id));
         if (!words.length) return err(t('cs.errPickWords'));
-        const types = $$('input[name="cs-type"]:checked').map((x) => x.value);
         created = await store.addCustom({
           name, topicId, topic: topicId === 'custom' ? topicText : VL.topicName(topicById(topicId)), source: form.source,
-          wordIds: words.map((w) => w.id), count: $('#cs-count').value, types: types.length ? types : E.CUSTOM_DEFAULT.slice(),
+          wordIds: words.map((w) => w.id),
         });
         return true;
       },
@@ -174,16 +169,17 @@ VL.custom = (function () {
   }
 
   /* ---------- playing ---------- */
+  /* Every session keeps its own progress: starting it again continues where it stopped; opts.restart begins the
+     exercises again (the words and the history of runs are kept). Other sessions and the global paused lesson
+     are never touched. */
   async function start(root, id, hooks, opts) {
     const c = store.customSession(id);
     if (!c) return false;
     const words = sessionWords(c);
     if (!words.length) { VL.ui.toast(t('cs.errGone'), 'error'); return false; }
-    if (store.state.lesson && !(opts && opts.replace)) {
-      const ok = await VL.ui.confirm({ title: t('cs.replaceTitle'), message: t('cs.replaceMsg'), confirmLabel: t('cs.replaceYes'), danger: true });
-      if (!ok) return false;
-    }
-    await VL.player.start(root, { type: 'session', words, count: c.count, types: c.types, custom: { id: c.id, name: c.name, topic: c.topic } }, hooks);
+    if (c.progress && !(opts && opts.restart)) { if (VL.player.resumeSession(root, id, hooks)) return true; }
+    if (c.progress) await store.saveSessionProgress(id, null);
+    await VL.player.start(root, { type: 'session', words, custom: { id: c.id, name: c.name, topic: c.topic } }, hooks);
     return true;
   }
 
@@ -206,9 +202,10 @@ VL.custom = (function () {
       const open = openHistory.has(c.id);
       const words = sessionWords(c).length;
       html += '<article class="card cs-card" data-cs="' + c.id + '"><div class="cs-head"><h3>' + esc(c.name) + '</h3><span class="chip">' + esc(c.topic) + '</span></div>' +
-        '<p class="muted small">' + esc(n('n.word', words)) + ' · ' + esc(c.count === 'all' ? t('cs.countAll') : n('n.exercise', Number(c.count))) + ' · ' + esc(c.types.map(typeLabel).join(', ')) + '</p>' +
+        '<p class="muted small">' + esc(n('n.word', words)) + (c.progress ? ' · ' + esc(t('ss.inProgress', { i: Math.min(c.progress.index, c.progress.items.length), n: c.progress.items.length })) : '') + '</p>' +
         (lr ? '<p class="cs-last">' + esc(t('cs.last')) + ': <b>' + lr.pct + '%</b> (' + lr.correct + ' / ' + lr.total + ') · ' + esc(n('n.run', c.runs.length)) + '</p><div class="bar"><span style="width:' + lr.pct + '%"></span></div>' : '<p class="muted small">' + esc(t('cs.notPlayed')) + '</p>') +
-        '<div class="btn-row"><button class="btn btn-primary btn-sm" data-action="cs-start">' + icon('play') + esc(t(lr ? 'cs.restart' : 'cs.start')) + '</button>' +
+        '<div class="btn-row"><button class="btn btn-primary btn-sm" data-action="cs-start">' + icon('play') + esc(t(c.progress ? 'ss.continue' : lr ? 'cs.restart' : 'cs.start')) + '</button>' +
+        (c.progress ? '<button class="btn btn-sm" data-action="cs-reset">' + esc(t('ss.restart')) + '</button>' : '') +
         (lr && lr.missedIds && lr.missedIds.length ? '<button class="btn btn-sm" data-action="cs-mistakes">' + esc(t('cs.onlyMistakes')) + '</button>' : '') +
         '<button class="btn btn-sm btn-ghost" data-action="cs-history" aria-expanded="' + open + '">' + esc(t('cs.history')) + '</button>' +
         '<button class="btn btn-sm btn-ghost" data-action="cs-rename">' + esc(t('btn.rename')) + '</button>' +
@@ -225,6 +222,11 @@ VL.custom = (function () {
     switch (action) {
       case 'cs-new': await create(root, hooks); redraw(); return true;
       case 'cs-start': await start(root, id, hooks); return true;
+      case 'cs-reset': {
+        const c = store.customSession(id);
+        if (c && await VL.ui.confirm({ title: t('ss.restart'), message: t('ss.restartMsg'), confirmLabel: t('ss.restart'), danger: true })) await start(root, id, hooks, { restart: true });
+        return true;
+      }
       case 'cs-mistakes': await startMistakes(root, id, hooks); return true;
       case 'cs-history': if (openHistory.has(id)) openHistory.delete(id); else openHistory.add(id); redraw(); return true;
       case 'cs-rename': await renameDialog(id); redraw(); return true;
@@ -265,7 +267,7 @@ VL.custom = (function () {
       const ok = await VL.ui.confirm({ title: t('cs.replaceTitle'), message: t('cs.replaceMsg'), confirmLabel: t('cs.replaceYes'), danger: true });
       if (!ok) return false;
     }
-    await VL.player.start(root, { type: 'session', mode: 'mistakes', words, count: Math.max(5, words.length * 2), types: c.types, custom: { id: c.id, name: c.name, topic: c.topic } }, hooks);
+    await VL.player.start(root, { type: 'session', mode: 'mistakes', words, custom: { id: c.id, name: c.name, topic: c.topic } }, hooks);
     return true;
   }
 

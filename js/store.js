@@ -308,6 +308,14 @@ VL.store = (function () {
     await saveCustom(); notify();
     return c;
   }
+  // Saved progress of one session (its own record, independent of every other session and of the global paused lesson).
+  // null clears the exercise progress only: the session's words and its history of runs stay.
+  async function saveSessionProgress(id, progress) {
+    const c = customSession(id);
+    if (!c) return;
+    if (progress) { c.progress = progress; c.progressAt = Date.now(); } else { delete c.progress; delete c.progressAt; }
+    await saveCustom(); notify();
+  }
   async function renameCustom(id, name) {
     const c = customSession(id), nm = clean(name);
     if (!c) return { ok: false, error: VL.t('err.noSession') };
@@ -456,6 +464,6 @@ VL.store = (function () {
     state, DEFAULTS, MASTERED_STREAK, load, onChange,
     collection, word, wordsIn, status, difficultWords, summarize, findDuplicate,
     addWord, updateWord, deleteWords, addCollection, renameCollection, deleteCollection, ensureCollection,
-    recordAnswer, markLearned, addSession, PASS_PCT, completeLesson, setHard, markKnown, wordByEn, customSession, addCustom, renameCustom, removeCustom, recordCustomRun, mistakeWords, dayRecord, logLearn, recordLearn, saveLesson, ensureDeckCollection, resetProgress, clearAll, setSetting, importWords, backup, restore,
+    recordAnswer, markLearned, addSession, PASS_PCT, completeLesson, setHard, markKnown, wordByEn, customSession, addCustom, saveSessionProgress, renameCustom, removeCustom, recordCustomRun, mistakeWords, dayRecord, logLearn, recordLearn, saveLesson, ensureDeckCollection, resetProgress, clearAll, setSetting, importWords, backup, restore,
   };
 })();
