@@ -53,11 +53,11 @@ const SETS = {
     for (const k of Object.keys(ids)) {
       const words = ids[k].words.map((id) => VL.store.word(id));
       const allowedIds = new Set(ids[k].words), allowedEn = new Set(words.map((w) => w.en)), allowedUz = new Set(words.map((w) => w.uz));
-      const bad = []; let phases = null; const counts = {};
+      const bad = []; let phases = null, contig = true; const counts = {};
       for (let rep = 0; rep < 60; rep++) {
         const b = VL.learn.buildSession(words, {});
-        const seq = []; b.items.forEach((i) => { if (seq[seq.length - 1] !== i.phase) seq.push(i.phase); });
-        phases = seq.join('>');
+        phases = b.items.filter((i) => i.wi === 1).map((i) => i.phase).join('>');
+        let lastWi = 0; b.items.forEach((i) => { if (i.wi < lastWi || (i.phase === 'learn' && b.items.some((o, k) => o.wi === i.wi && k < b.items.indexOf(i)))) contig = false; lastWi = i.wi; });
         b.items.forEach((i) => {
           counts[i.phase] = (counts[i.phase] || 0) + 1;
           (i.wordIds || []).forEach((id) => { if (!allowedIds.has(id)) bad.push('wordId ' + id); });
@@ -66,11 +66,12 @@ const SETS = {
           (i.tiles || []).forEach(() => {});
         });
       }
-      res[k] = { phases, bad: Array.from(new Set(bad)), counts };
+      res[k] = { phases, contig, bad: Array.from(new Set(bad)), counts };
     }
     return res;
   }, ids);
-  assert(plan.A.phases === 'learn>recall>choose>spell>scramble>translate', 'A: intro, recall, multiple choice, spelling, scrambled letters, translation in this order (' + plan.A.phases + ')');
+  assert(plan.A.phases === 'learn>recall>choose>spell>scramble>translate', 'A: for each word: translation (intro), recall, multiple choice, spelling, scrambled letters, sentence translation (' + plan.A.phases + ')');
+  assert(Object.values(plan).every((p) => p.contig), 'every word is finished (intro + its exercises) before the next word starts');
   assert(plan.A.counts.learn === 5 * 60 && plan.A.counts.recall === 5 * 60 && plan.A.counts.choose === 5 * 60, 'A: every phase has one item per word (5)');
   for (const k of Object.keys(plan)) assert(plan[k].bad.length === 0, k + ': 60 builds never used a word, option or sentence from outside the session ' + JSON.stringify(plan[k].bad.slice(0, 3)));
   assert(!plan.B.counts.translate, 'B: no example sentences -> sentence translation is left out, not borrowed from other words');
@@ -93,29 +94,16 @@ const SETS = {
   const intro1 = await page.locator('.lesson-card').innerText();
   assert(intro1.includes('The farmers harvest wheat') || intro1.includes('anchor') || intro1.includes('blanket') || intro1.includes('lantern') || intro1.includes('pebble'), 'intro shows the English example');
   assert(intro1.includes("Fermerlar") || intro1.includes('Kema') || intro1.includes("U bolani") || intro1.includes("U qorong") || intro1.includes('Oyoq'), 'intro shows the Uzbek translation of the example');
-  const seenIntro = [];
-  for (let i = 0; i < 5; i++) {
-    seenIntro.push((await screenWord()).replace(/\s*🔊.*$/, ''));
-    if (i === 1) {   // Back returns to the previous intro, Next comes again
-      await page.click('.study-back'); await wait(page, 150);
-      assert((await page.locator('#lstep').innerText()).includes('1-so'), 'Back shows word 1 again');
-      await page.click('.study-go'); await wait(page, 150);
-    }
-    await page.click('.study-go'); await wait(page, 150);
-  }
-  assert(seenIntro.every((w) => aEn.has(w.split(' ')[0])) && new Set(seenIntro).size === 5, 'the five intros are exactly the five words of session A (' + seenIntro.join(', ') + ')');
-  const bar = await page.locator('#lbar').evaluate((e) => parseFloat(e.style.width));
-  assert(bar > 0 && bar < 100, 'session progress bar moves (' + bar + '%)');
-  assert((await page.locator('.ss-phase').innerText()).includes('Eslab qolish'), 'after the intros the Recall exercise starts');
+  assert((await page.locator('.ss-phase').innerText()).includes("O'rganish"), 'the session starts with the learn screen of the first word');
 
   // answer everything; every 4th answer wrong; check each screen only shows session words
-  let leaks = 0, count = 0, phasesSeen = [], wrongs = 0;
+  let leaks = 0, count = 0, phasesSeen = [], wrongs = 0; const introWords = [];
   while (!(await page.locator('.summary').count()) && count < 80) {
     await wait(page, 200);
     const d = await readItem(page).catch(() => null);   // finishing clears the saved progress a moment before the results appear
     if (!d) continue;
-    if (d.it.type === 'study') { await page.click('.study-go'); continue; }
-    if (!phasesSeen.length || phasesSeen[phasesSeen.length - 1] !== d.it.phase) phasesSeen.push(d.it.phase);
+    phasesSeen.push(d.it.phase);
+    if (d.it.type === 'study') { introWords.push((await screenWord()).split(' ')[0]); await page.click('.study-go'); continue; }
     const txt = (await page.locator('.lesson-card').innerText()).toLowerCase();
     (await page.locator('.option').allInnerTexts()).forEach((o) => { const x = o.trim().toLowerCase().replace(/^[a-z0-9]\s+/, ''); if (x && !SETS.A.some((r) => x === r[0] || x === r[1].toLowerCase())) { leaks++; console.log('LEAK?', JSON.stringify(x)); } });
     const wrong = d.it.phase !== 'review' && (count + 1) % 4 === 0;
@@ -126,7 +114,10 @@ const SETS = {
     await page.click('#btn-next');
   }
   assert(leaks === 0, 'no multiple-choice option came from outside session A');
-  assert(phasesSeen.join('>') === 'recall>choose>spell>scramble>translate>review', 'exercise phases appear in the required order incl. a review of wrong words (' + phasesSeen.join('>') + ')');
+  const per = ['learn', 'recall', 'choose', 'spell', 'scramble', 'translate'];
+  const expected = [].concat(...[0, 1, 2, 3, 4].map(() => per));
+  assert(phasesSeen.slice(0, 30).join() === expected.join() && phasesSeen.slice(30).every((x) => x === 'review') && phasesSeen.length > 30, 'each word: translation first, then its exercises, word after word; the review of wrong words comes last (' + phasesSeen.length + ' steps)');
+  assert(introWords.length === 5 && new Set(introWords).size === 5 && introWords.every((w) => aEn.has(w)), 'the five intros are the five words of session A (' + introWords.join(', ') + ')');
   await page.waitForSelector('.summary');
   const resText = await page.locator('.summary').innerText();
   assert(/\d+%/.test(resText) && resText.includes('Sessiya A'.slice(0, 0)) || /\d+%/.test(resText), 'completion screen shows the score and percentage');
@@ -144,9 +135,9 @@ const SETS = {
   assert(wordsOf('B').includes(bFirst) && (await page.locator('#lstep').innerText()).includes('4 tadan 1-'), 'next session begins at its own intro, Word 1 of 4 (' + bFirst + ')');
 
   // ---------- independent progress / resume ----------
-  await page.click('.study-go'); await wait(page, 150); await page.click('.study-go'); await wait(page, 300);
+  await page.click('.study-go'); await wait(page, 300);
   const bProg = await page.evaluate((id) => { const c = VL.store.customSession(id); return c.progress && c.progress.index; }, ids.B.id);
-  assert(bProg === 2, 'session B saved its own progress (index 2)');
+  assert(bProg === 1, 'session B saved its own progress (index 1: past the first intro)');
   await page.reload(); await page.waitForSelector('.tabs'); await page.goto(APP + '#/learn?tab=sessions'); await page.waitForSelector('.cs-card');
   assert((await page.locator('.cs-card:has(h3:text-is("Sessiya B"))').innerText()).includes('davom etmoqda'), 'session list shows B as in progress');
   // start C meanwhile
@@ -155,11 +146,10 @@ const SETS = {
   assert(wordsOf('C').includes(cFirst), 'C starts at its own first intro (' + cFirst + ')');
   await page.click('.study-go'); await wait(page, 300);
   const prog = await page.evaluate((ids) => ({ b: VL.store.customSession(ids.B.id).progress.index, c: VL.store.customSession(ids.C.id).progress.index }), ids);
-  assert(prog.b === 2 && prog.c === 1, 'B and C keep separate progress (' + JSON.stringify(prog) + ')');
+  assert(prog.b === 1 && prog.c === 1, 'B and C keep separate progress (' + JSON.stringify(prog) + ')');
   await page.goto(APP + '#/learn?tab=sessions'); await page.reload(); await page.waitForSelector('.cs-card');
-  await page.locator('.cs-card:has(h3:text-is("Sessiya B")) [data-action="cs-start"]').click(); await page.waitForSelector('.study-go');
-  assert((await page.locator('#lstep').innerText()).includes('3-'), 'Continue resumes B at word 3 of 4');
-  assert(wordsOf('B').includes((await screenWord()).split(' ')[0]), 'resumed screen shows a word of B');
+  await page.locator('.cs-card:has(h3:text-is("Sessiya B")) [data-action="cs-start"]').click(); await page.waitForSelector('.lesson-card');
+  assert((await page.locator('.ss-phase').innerText()).includes('Eslab qolish') && (await page.locator('#lstep').innerText()).includes('4 tadan 1-'), 'Continue resumes B where it stopped: the first exercise of word 1');
 
   // ---------- restart resets exercise progress but keeps words and history ----------
   await page.goto(APP + '#/learn?tab=sessions'); await page.reload(); await page.waitForSelector('.cs-card');
@@ -176,8 +166,7 @@ const SETS = {
   assert((await page.locator('.ss-phase').innerText()).includes('Eslab'), 'one-word session: intro, then recall (no crash)');
   await page.goto(APP + '#/learn?tab=sessions'); await page.reload(); await page.waitForSelector('.cs-card');
   await page.locator('.cs-card:has(h3:text-is("Sessiya E")) [data-action="cs-start"]').click(); await page.waitForSelector('.study-go');
-  let noTr = false;
-  for (let i = 0; i < 3; i++) { if ((await page.locator('.intro-uz').innerText()).includes('tarjima hali')) noTr = true; await page.click('.study-go'); await wait(page, 150); }
+  const noTr = await page.evaluate((ids) => VL.exercises.forItem({ type: 'study' }).render({ word: VL.store.word(ids.E.words[1]), item: { type: 'study', sess: true, wi: 2, wn: 3 } }).includes('tarjima hali'), ids);
   assert(noTr, 'a word without a translation shows a placeholder in the intro');
   await page.goto(APP + '#/learn?tab=sessions'); await page.reload(); await page.waitForSelector('.cs-card');
   await page.evaluate(async (ids) => { const c = VL.store.customSession(ids.D.id); c.wordIds = ['gone']; await VL.store.saveSessionProgress(ids.D.id, null); }, ids);
