@@ -475,29 +475,28 @@
   const SESSION_PHASES = ['learn', 'recall', 'choose', 'spell', 'scramble', 'translate', 'review'];
 
   /* Builds a strictly session-scoped lesson. `words` are the ONLY words that may appear anywhere in it: as the
-     studied word, as a wrong option, in a sentence or in the review. Order: 1 learn (intro screen for every word),
-     2 recall (Uzbek -> type English), 3 multiple choice (English options), 4 spelling (missing letters),
-     5 scrambled letters, 6 sentence translation (the word's own example), 7 review (added by the player at the end
-     for the words answered wrongly). A phase that cannot be built for a word (too short, no example, too few other
+     studied word, as a wrong option, in a sentence or in the review. One word after another: 1 learn (intro screen:
+     the word and its translation), 2 recall (Uzbek -> type English), 3 multiple choice (English options),
+     4 spelling (missing letters), 5 scrambled letters, 6 sentence translation (the word's own example); when all
+     words are done, 7 review (added by the player at the end for the words answered wrongly). A phase that cannot be built for a word (too short, no example, too few other
      words in the session for wrong options) is left out for that word instead of borrowing other vocabulary.
      opts.intro === false leaves the learn phase out (used when re-practising words already seen). */
   function buildSession(words, opts) {
     opts = opts || {};
     const list = [];
     words.filter(Boolean).forEach((w) => { if (!list.some((x) => x.id === w.id)) list.push(w); });
-    const phases = {};
-    if (opts.intro !== false) phases.learn = list.map((w) => base('study', { wordIds: [w.id], sess: true }));
-    const ex = list.filter((w) => w.uz && String(w.uz).trim() && w.en && String(w.en).trim());
-    const chunk = (fn) => shuffle(ex.slice()).map(fn).filter(Boolean);
-    phases.recall = chunk((w) => Object.assign(mk.wordType('reverse', w), { dir: 'uz-en' }));
-    phases.choose = chunk((w) => mk.chooseRev(w, list, 3));
-    phases.spell = chunk((w) => mk.fill(w));
-    phases.scramble = chunk((w) => mk.scramble(w));
-    phases.translate = chunk((w) => mk.orderW(w));
     const items = [];
-    SESSION_PHASES.forEach((ph) => {
-      const arr = phases[ph] || [];
-      arr.forEach((it, i) => { it.phase = ph; it.wi = i + 1; it.wn = arr.length; items.push(it); });
+    list.forEach((w, i) => {
+      const steps = [];
+      if (opts.intro !== false) steps.push(['learn', base('study', { wordIds: [w.id], sess: true })]);
+      if (w.uz && String(w.uz).trim() && w.en && String(w.en).trim()) {
+        steps.push(['recall', Object.assign(mk.wordType('reverse', w), { dir: 'uz-en' })]);
+        steps.push(['choose', mk.chooseRev(w, list, 3)]);
+        steps.push(['spell', mk.fill(w)]);
+        steps.push(['scramble', mk.scramble(w)]);
+        steps.push(['translate', mk.orderW(w)]);
+      }
+      steps.forEach(([ph, it]) => { if (it) { it.phase = ph; it.wi = i + 1; it.wn = list.length; items.push(it); } });
     });
     return { items, wordIds: list.map((w) => w.id), newCount: list.filter((w) => !w.reps).length, sentenceIds: [] };
   }

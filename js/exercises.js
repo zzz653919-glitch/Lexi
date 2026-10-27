@@ -298,7 +298,6 @@ VL.exercises = (function () {
         (w.example ? '<p class="lesson-example"><b>' + esc(t('les.example')) + ':</b> <span lang="en">' + esc(w.example) + '</span>' + sayBtn(w.example) + (w.exUz ? '<br><span class="muted" lang="uz">' + esc(w.exUz) + '</span>' : '') + '</p>' : '') +
         (w.sense ? '<p class="muted small">' + esc(w.sense) + '</p>' : '') +
         '<p class="muted small study-hint">' + esc(t(item.sess ? 'ss.introHint' : 'mx.studyHint')) + '</p>' +
-        (item.sess && item.wi > 1 ? '<button type="button" class="btn btn-lg study-back" data-action="back">' + esc(t('ss.back')) + '</button> ' : '') +
         '<button type="button" class="btn btn-primary btn-lg study-go" data-study-go>' + esc(t(item.sess ? 'ss.next' : 'mx.begin')) + icon('arrow') + '</button>';
     },
     mount(root, ctx, api) { const b = root.querySelector('[data-study-go]'); b.addEventListener('click', () => api.finish({ neutral: true, skipped: true, lines: [] })); b.focus(); },

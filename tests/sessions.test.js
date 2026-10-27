@@ -52,7 +52,7 @@ const store = (page, fn, arg) => page.evaluate(fn, arg);
   await page.locator('.cs-card:has(h3:text-is("Kichik")) [data-action="cs-start"]').click(); await page.waitForSelector('.lesson');
   await wait(page, 300);
   const planned = await store(page, () => VL.store.state.custom.find((c) => c.name === 'Kichik').progress.items.map((i) => i.type));
-  assert(planned.slice(0, 4).every((t) => t === 'study') && planned.slice(4).every((t) => t !== 'study'), 'four intro screens first, then the exercises (' + planned.join(',') + ')');
+  assert(planned[0] === 'study' && planned.filter((t) => t === 'study').length === 4 && planned[1] !== 'study', 'each word starts with its intro screen, followed by its exercises (' + planned.join(',') + ')');
   const r1 = await playLesson(page, { wrongEvery: 2 });
   await page.waitForSelector('.summary');
   const resText = await page.locator('main, #view, body').first().innerText();
