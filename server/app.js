@@ -38,7 +38,7 @@ function createApp(options = {}) {
 
   /* One-time start-up work, done lazily on the first request that needs the database (so a serverless cold start or a database that is
      briefly unreachable does not crash the process): schema migrations, optional sample content, first read of settings and texts. */
-  let ready = null, seeded = null;
+  let ready = null, seeded = null, lastInitError = null;
   const init = () => {
     if (!ready) ready = (async () => {
       await dbLib.migrate(db);
@@ -46,7 +46,7 @@ function createApp(options = {}) {
       // built-in test content is optional: if it cannot be written right now the site still opens (it is retried on the next start)
       try { await seed.ensureAssessmentContent(db); } catch (e) { if (!opts.quiet) console.error('[seed] placement content:', e.message); }
       await Promise.all([settings.refresh(true), i18n.refresh(true)]);
-    })().catch((e) => { ready = null; throw e; });
+    })().then(() => { lastInitError = null; }, (e) => { ready = null; lastInitError = e; throw e; });
     return ready;
   };
   const dbReady = async (req, res, next) => { await init(); await Promise.all([settings.refresh(), i18n.refresh()]); next(); };
@@ -65,7 +65,17 @@ function createApp(options = {}) {
   });
 
   /* health check for hosting platforms and uptime monitors (no authentication, no data) */
-  app.get('/healthz', async (req, res) => { try { await db.get('SELECT 1 x'); res.setHeader('Cache-Control', 'no-store'); res.json({ ok: true }); } catch (e) { res.status(503).json({ ok: false }); } });
+  app.get('/healthz', async (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
+    try { await db.get('SELECT 1 x'); } catch (e) { return res.status(503).json({ ok: false }); }
+    if (req.query.full === '1') {   // diagnostics for the site owner: does the schema and start-up work? (never prints secrets)
+      const started = Date.now();
+      try { await init(); res.json({ ok: true, ready: true, ms: Date.now() - started }); }
+      catch (e) { res.status(503).json({ ok: false, ready: false, ms: Date.now() - started, error: String(e && e.message || e).replace(/libsql:\/\/\S+/g, '[database]').slice(0, 300) }); }
+      return;
+    }
+    res.json({ ok: true });
+  });
   app.use(['/api', '/admin', '/uploads'], dbReady);
 
   /* ---------- uploaded audio (public, fixed content type from the database) ---------- */

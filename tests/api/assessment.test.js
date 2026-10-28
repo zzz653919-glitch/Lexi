@@ -284,3 +284,12 @@ test('admin: question CRUD with validation before publishing, coverage, anonymis
     assert.strictEqual((await e.put('/api/admin/settings', { placement_min_questions: 22 })).status, 403);
   } finally { await s.stop(); }
 });
+
+test('health check: plain, and the full diagnostic reports that start-up works', async () => {
+  const s = await startServer();
+  try {
+    assert.deepStrictEqual((await new Client(s.base).get('/healthz')).json, { ok: true });
+    const f = (await new Client(s.base).get('/healthz?full=1')).json;
+    assert.strictEqual(f.ok, true); assert.strictEqual(f.ready, true);
+  } finally { await s.stop(); }
+});

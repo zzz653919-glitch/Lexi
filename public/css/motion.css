@@ -34,7 +34,7 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 @media (max-width: 520px) { .sp-f.word { display: none; } .sp-f.hide-sm { display: none; } }
 
 /* ---------- loading animations ---------- */
-.ld { display: grid; justify-items: center; gap: 12px; padding: 34px 16px; text-align: center; width: min(420px, 100%); margin: 0 auto; }
+.ld { display: grid; grid-template-columns: minmax(0, 1fr); justify-items: center; gap: 12px; padding: 34px 16px; text-align: center; width: min(420px, 100%); margin: 0 auto; }
 .ld.compact { padding: 18px 12px; }
 .ld-text { margin: 0; font-weight: 800; color: var(--ink-2); animation: ld-fade .4s ease both; }
 .ld-art { position: relative; width: min(260px, 70vw); height: 130px; display: grid; place-items: center; }
