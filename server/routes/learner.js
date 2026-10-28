@@ -4,7 +4,7 @@ const { publicUser, validateProfile, AVATARS } = require('./auth');
 const L10N = require('../lib/localize');
 const { now, clean, int, clamp, HttpError, bad, escapeLike, weekStart, addDays } = require('../lib/util');
 
-module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n, learning, daily }) {
+module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n, learning, daily: dailySummary }) {
   const r = express.Router();
   r.use(auth.requireUser);
 
@@ -59,22 +59,18 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     const rec = path && path.recommended;
     let unit = null;
     if (path && rec) { for (const lv of path.levels) for (const u of lv.units) if (u.id === rec.unitId) unit = { id: u.id, title: u.title, total: u.total, done: u.done, level: lv.code }; }
+    const [today, streak, week, achievements, reviewCounts, mistakes, daily, learningInfo] = await Promise.all([core.dayInfo(user), core.streakInfo(user), core.weekDays(user), core.achievementList(user.id), review.counts(user), mistakesAvailable(user.id), dailySummary.summary(user), learning.brief(user)]);
     res.json({
       user: publicUser(user), course: course ? { id: course.id, title: L10N.text(course, 'title', req.lang) } : null, recommended: rec || null, unit,
       lessons: path ? path.totals : { lessons: 0, done: 0 },
       level: rec ? path.levels.find((l) => l.code === rec.level) && { code: rec.level, pct: path.levels.find((l) => l.code === rec.level).pct } : null,
-      today: await core.dayInfo(user), streak: await core.streakInfo(user), hearts: core.heartState(user), week: await core.weekDays(user),
-      achievements: (await core.achievementList(user.id)).filter((a) => a.earnedAt).sort((a, b) => (a.earnedAt < b.earnedAt ? 1 : -1)).slice(0, 3),
-      review: await review.counts(user), mistakesAvailable: await mistakesAvailable(user.id),
+      today, streak, hearts: core.heartState(user), week,
+      achievements: achievements.filter((a) => a.earnedAt).sort((a, b) => (a.earnedAt < b.earnedAt ? 1 : -1)).slice(0, 3),
+      review: reviewCounts, mistakesAvailable: mistakes,
       leaderboardEnabled: s.leaderboard_enabled,
-      daily: await daily.summary(user), learning: await learningBrief(user),
+      daily, learning: learningInfo,
     });
   });
-  /* the level card on the dashboard: level, weakest skill, reassessment recommendation */
-  async function learningBrief(user) {
-    const st = await learning.status(user);
-    return { level: st.level, source: st.source, onboarded: st.onboarded, skills: st.skills, weaknesses: st.weaknesses, strengths: st.strengths, recommendation: st.recommendation, progress: st.progress, plan: st.plan, assessmentLevel: st.assessment ? st.assessment.level : null, lastChange: st.history[0] || null };
-  }
   const mistakesAvailable = async (userId) => (await attempts.mistakeIds(userId, 50)).length;
 
   /* ---------- lessons ---------- */
