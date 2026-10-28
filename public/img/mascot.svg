@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Sprig, the Lexi Learn mascot">
+  <ellipse cx="100" cy="182" rx="56" ry="8" fill="#000" opacity=".1"/>
+  <path d="M100 58V38" stroke="#157a52" stroke-width="7" stroke-linecap="round"/>
+  <path d="M100 42C100 22 84 12 64 14c0 20 14 32 36 28z" fill="#5fd38e"/>
+  <path d="M100 38c0-18 12-28 32-26 0 18-12 28-32 26z" fill="#2fb872"/>
+  <rect x="38" y="56" width="124" height="116" rx="58" fill="#1f9d6b"/>
+  <rect x="38" y="56" width="124" height="116" rx="58" fill="none" stroke="#157a52" stroke-width="5"/>
+  <ellipse cx="100" cy="132" rx="40" ry="32" fill="#b9efd2"/>
+  <circle cx="76" cy="98" r="17" fill="#fff"/><circle cx="124" cy="98" r="17" fill="#fff"/>
+  <circle cx="79" cy="100" r="8.5" fill="#173326"/><circle cx="121" cy="100" r="8.5" fill="#173326"/>
+  <circle cx="82" cy="96" r="3" fill="#fff"/><circle cx="124" cy="96" r="3" fill="#fff"/>
+  <path d="M84 128c8 12 24 12 32 0" stroke="#173326" stroke-width="6" stroke-linecap="round" fill="none"/>
+  <circle cx="58" cy="122" r="8" fill="#ff9aa2" opacity=".7"/><circle cx="142" cy="122" r="8" fill="#ff9aa2" opacity=".7"/>
+</svg>
