@@ -14,6 +14,7 @@ route('/admin/courses', view('courses'));
 route('/admin/courses/:id', view('course'));
 route('/admin/lessons/:id', view('lesson'));
 route('/admin/vocabulary', view('vocabulary'));
+route('/admin/assessment', view('assessment'));
 route('/admin/users', view('users'), ['admin']);
 route('/admin/users/:id', view('user'), ['admin']);
 route('/admin/settings', view('settings'), ['admin']);
@@ -38,6 +39,7 @@ const NAV = [
   { key: 'dashboard', href: '/admin', labelKey: 'adm.nav.dashboard', icon: 'chart', roles: ['admin'] },
   { key: 'courses', href: '/admin/courses', labelKey: 'adm.nav.courses', icon: 'path' },
   { key: 'vocabulary', href: '/admin/vocabulary', labelKey: 'adm.nav.vocabulary', icon: 'book' },
+  { key: 'assessment', href: '/admin/assessment', labelKey: 'adm.nav.assessment', icon: 'target' },
   { key: 'users', href: '/admin/users', labelKey: 'adm.nav.users', icon: 'users', roles: ['admin'] },
   { key: 'settings', href: '/admin/settings', labelKey: 'adm.nav.settings', icon: 'gear', roles: ['admin'] },
   { key: 'i18n', href: '/admin/translations', labelKey: 'adm.nav.translations', icon: 'globe', roles: ['admin'] },
