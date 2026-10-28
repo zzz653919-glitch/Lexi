@@ -35,7 +35,7 @@ const { check, withBrowser, openPage, summary, loginUI, startServer, Client } = 
     const stat = async (label) => Number(await page.locator('.stat-card', { hasText: label }).first().locator('b').innerText());
     check((await stat('Registered users')) === 3 && (await stat('Exercises')) === 144 && (await stat('Lessons')) === 12, 'dashboard numbers equal the database');
     check((await page.locator('svg.chart').count()) === 4, 'four charts are drawn from real records');
-    check((await page.locator('.adm-side nav a[data-nav]').count()) === 6, 'administrator sees all 6 sections');
+    check((await page.locator('.adm-side nav a[data-nav]').count()) === 7, 'administrator sees all 7 sections');
 
     /* ---------- course -> level -> unit -> lesson -> exercise ---------- */
     await page.click('.adm-side a:has-text("Courses")'); await page.waitForSelector('.tbl');
@@ -46,7 +46,7 @@ const { check, withBrowser, openPage, summary, loginUI, startServer, Client } = 
     await page.waitForSelector('dialog .form-error:not([hidden])'); check(true, 'course title is validated');
     await page.fill('dialog input[name=title]', 'Business English'); await page.fill('dialog textarea[name=description]', 'Emails and meetings'); await page.click('dialog button[type=submit]');
     await page.waitForURL('**/admin/courses/*'); await page.waitForSelector('h1:has-text("Business English")');
-    check((await page.locator('.badge.tag-draft').first().innerText()) === 'draft', 'a new course starts as a draft');
+    check((await page.locator('.badge.tag-draft').first().innerText()) === 'Draft', 'a new course starts as a draft');
     await page.click('button:has-text("Publish")'); await page.waitForSelector('.toast.error'); check((await page.locator('.toast.error').innerText()).includes('Publish at least one lesson'), 'an empty course cannot be published');
     await page.click('button:has-text("Add level")'); await page.selectOption('dialog select[name=code]', 'B1'); await page.fill('dialog input[name=title]', 'Intermediate work English'); await page.click('dialog button[type=submit]');
     await page.waitForSelector('.tree-level');
@@ -69,7 +69,7 @@ const { check, withBrowser, openPage, summary, loginUI, startServer, Client } = 
     await page.click('dialog button:has-text("Check for problems")'); await page.waitForSelector('dialog .ok-box');
     check(true, 'the editor confirms a valid exercise'); await save(); await page.waitForSelector('.tbl tbody tr');
     check((await page.locator('.tbl tbody tr').count()) === 1, 'exercise saved and listed');
-    const addVia = async (type, fill) => { await openNew(); await page.selectOption('dialog select[name=type]', type); await fill(); await save(); await page.waitForFunction((n) => document.querySelectorAll('.tbl tbody tr').length === n, (await page.locator('.tbl tbody tr').count()) + 1); };
+    const addVia = async (type, fill) => { const rows0 = await page.locator('.tbl tbody tr').count(); await openNew(); await page.selectOption('dialog select[name=type]', type); await fill(); await save(); await page.waitForFunction((n) => document.querySelectorAll('.tbl tbody tr').length === n, rows0 + 1); };
     await addVia('fill_blank', async () => { await page.fill('dialog input[name=sentence]', 'I ____ with you.'); await page.fill('dialog textarea[name=answer]', 'agree'); });
     await addVia('scramble_letters', async () => { await page.fill('dialog input[name=sentence]', 'rozi bo‘lmoq'); await page.fill('dialog textarea[name=answer]', 'agree'); });
     await addVia('order_words', async () => { await page.fill('dialog input[name=prompt]', 'Men siz bilan roziman.'); await page.fill('dialog input[name=sentence]', 'I agree with you.'); });

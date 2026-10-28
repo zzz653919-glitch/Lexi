@@ -1,4 +1,6 @@
 /* DOM helpers. Text is always inserted with textContent, never as HTML, so user-supplied content cannot inject markup. */
+import { t } from './i18n.js';
+export { fmt } from './i18n.js';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 
 export function h(tag, props, ...children) {
@@ -40,6 +42,7 @@ const ICONS = {
   play: 'M8 5l11 7-11 7z',
   star: 'M12 3l2.7 5.6 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1L3.2 9.5l6.1-.9z',
   flag: 'M5 21V4M5 4h11l-2 4 2 4H5',
+  globe: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18',
   target: 'M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8z',
   volume: 'M4 9h4l5-4v14l-5-4H4zM16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11',
   slow: 'M4 9h4l5-4v14l-5-4H4zM16 10l4 4M20 10l-4 4',
@@ -99,22 +102,22 @@ export function modal({ title, content, actions, dismissValue = null }) {
     const dlg = h('dialog', { 'aria-labelledby': 'dlg-title' });
     const body = h('div', { class: 'dialog-body' }, title ? h('h2', { id: 'dlg-title' }, title) : null, content);
     const bar = h('div', { class: 'dialog-actions' });
-    (actions || [{ label: 'OK', value: true }]).forEach((a) => bar.append(h('button', { type: 'button', class: 'btn ' + (a.kind || ''), onclick: () => { dlg.close(); resolve(a.value); } }, a.label)));
+    (actions || [{ label: t('common.ok'), value: true }]).forEach((a) => bar.append(h('button', { type: 'button', class: 'btn ' + (a.kind || ''), onclick: () => { dlg.close(); resolve(a.value); } }, a.label)));
     body.append(bar); dlg.append(body);
     dlg.addEventListener('close', () => { dlg.remove(); resolve(dismissValue); });
     document.body.append(dlg); dlg.showModal();
     const first = dlg.querySelector('[autofocus], input, select, textarea') || bar.lastChild; if (first) first.focus();
   });
 }
-export const confirmDialog = (title, message, label = 'Confirm', danger = false) =>
-  modal({ title, content: h('p', {}, message), actions: [{ label: 'Cancel', value: false, kind: 'secondary' }, { label, value: true, kind: danger ? 'danger' : '' }], dismissValue: false });
+export const confirmDialog = (title, message, label, danger = false) =>
+  modal({ title, content: h('p', {}, message), actions: [{ label: t('common.cancel'), value: false, kind: 'secondary' }, { label: label || t('common.confirm'), value: true, kind: danger ? 'danger' : '' }], dismissValue: false });
 
 /* ---------- speech (browser text-to-speech; uploaded audio is preferred when an exercise has it) ---------- */
 export const canSpeak = () => 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined';
 let current = null;
 export function speak(audio, slow = false) {
   if (current) { try { current.pause(); } catch (_) { /* ignore */ } current = null; }
-  if (audio && audio.url) { const a = new Audio(audio.url); current = a; a.playbackRate = slow ? 0.75 : 1; a.play().catch(() => toast('Audio could not be played.', 'error')); return; }
+  if (audio && audio.url) { const a = new Audio(audio.url); current = a; a.playbackRate = slow ? 0.75 : 1; a.play().catch(() => toast(t('err.audio_play'), 'error')); return; }
   const text = audio && (audio.text || audio);
   if (!text || !canSpeak()) return;
   window.speechSynthesis.cancel();
@@ -122,9 +125,4 @@ export function speak(audio, slow = false) {
   window.speechSynthesis.speak(u);
 }
 
-export const fmt = {
-  date: (iso) => (iso ? new Date(iso).toLocaleDateString(undefined, { day: 'numeric', month: 'short', year: 'numeric' }) : '—'),
-  dateTime: (iso) => (iso ? new Date(iso).toLocaleString(undefined, { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '—'),
-  time: (iso) => (iso ? new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }) : ''),
-};
-export const spinner = () => h('div', { class: 'spinner', role: 'status', 'aria-label': 'Loading' });
+export const spinner = () => h('div', { class: 'spinner', role: 'status', 'aria-label': t('app.loading') });

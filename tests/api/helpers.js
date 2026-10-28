@@ -22,7 +22,7 @@ async function startServer(opts = {}) {
 class Client {
   constructor(base) { this.base = base; this.cookie = ''; this.csrf = null; }
   async req(method, url, body, extra = {}) {
-    const headers = { ...(extra.headers || {}) };
+    const headers = { 'X-Lang': 'en', ...(extra.headers || {}) };
     if (body !== undefined && !extra.raw) headers['Content-Type'] = 'application/json';
     if (this.cookie) headers.Cookie = this.cookie;
     if (this.csrf && method !== 'GET') headers['X-CSRF-Token'] = this.csrf;

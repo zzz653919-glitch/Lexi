@@ -17,7 +17,7 @@ test('the path locks later lessons and levels', async () => {
     assert.deepStrictEqual(p.levels.map((l) => l.code), ['A1', 'A2', 'B1', 'B2', 'C1']);
     const lessons = flat(p);
     assert.strictEqual(lessons[0].state, 'available');
-    assert.strictEqual(lessons[1].state, 'locked'); assert.ok(lessons[1].lockReason.includes('Greetings'));
+    assert.strictEqual(lessons[1].state, 'locked'); assert.strictEqual(lessons[1].lockReason.key, 'path.lock_lesson'); assert.ok(lessons[1].lockReason.params.title.includes('Greetings'));
     assert.strictEqual(p.levels[1].unlocked, false);
     assert.strictEqual(p.recommended.title, 'Greetings');
     const locked = await c.post(`/api/lessons/${lessons[1].id}/start`);

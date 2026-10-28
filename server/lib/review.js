@@ -1,6 +1,7 @@
 /* Vocabulary review with a simple spaced-repetition schedule (Leitner boxes). */
 const { now, HttpError, bad, shuffled, clamp, escapeLike } = require('./util');
 const X = require('./exercises');
+const L10N = require('./localize');
 
 const BOX_DAYS = [0, 1, 2, 4, 8, 16, 32];          // days until the next review after a correct answer, by box
 const MODES = ['flashcards', 'choice', 'typed', 'spelling'];
@@ -25,9 +26,12 @@ function make(db, settings, core) {
       ...(onlyDifficult ? [user.id, limit] : [user.id, now(), limit]));
   }
 
-  function distractors(v, field, n, seed) {
-    const pool = db.all(`SELECT ${field} AS t FROM vocabulary WHERE status = 'published' AND id != ? AND LOWER(${field}) != LOWER(?) ${v.course_id ? 'AND course_id = ?' : ''} LIMIT 60`, ...[v.id, v[field]].concat(v.course_id ? [v.course_id] : []));
-    const seen = new Set([X.norm(v[field])]);
+  /* wrong options for a vocabulary card: other published words of the same course, as English words or as translations */
+  function distractors(v, kind, tl, n, seed) {
+    const expr = kind === 'en' ? 'en' : L10N.vocabWordSql(tl, 'vocabulary');
+    const own = kind === 'en' ? v.en : L10N.vocab(v, tl).word;
+    const pool = db.all(`SELECT ${expr} AS t FROM vocabulary WHERE status = 'published' AND id != ? AND LOWER(${expr}) != LOWER(?) ${v.course_id ? 'AND course_id = ?' : ''} LIMIT 60`, ...[v.id, own].concat(v.course_id ? [v.course_id] : []));
+    const seen = new Set([X.norm(own)]);
     const out = [];
     for (const r of shuffled(pool, seed)) { const k = X.norm(r.t); if (!seen.has(k)) { seen.add(k); out.push(r.t); if (out.length === n) break; } }
     return out;
@@ -36,21 +40,24 @@ function make(db, settings, core) {
   function session(user, body) {
     const mode = MODES.includes(body.mode) ? body.mode : 'choice';
     const size = clamp(Number.parseInt(body.size, 10) || 10, 1, 30);
+    const tl = core.userById(user.id).translation_language;      // cards show translations in the learner's translation language
     const items = dueItems(user, size, !!body.difficultOnly);
     const seed = Math.floor(Math.random() * 1e6);
     const cards = items.map((v, i) => {
-      const reverse = mode === 'typed' || mode === 'choice' ? (v.id + seed) % 2 === 0 : false;   // sometimes Uzbek -> English
+      const tr = L10N.vocab(v, tl);
+      const reverse = mode === 'typed' || mode === 'choice' ? (v.id + seed) % 2 === 0 : false;   // sometimes translation -> English
       const c = { vocabularyId: v.id, mode, box: v.box, difficult: !!v.is_difficult, pos: v.pos };
-      if (mode === 'flashcards') { c.front = v.en; c.back = v.uz; c.example = v.example; c.exampleUz = v.example_uz; c.audio = v.audio_url ? { url: v.audio_url } : { text: v.en }; }
+      if (mode === 'flashcards') { c.front = v.en; c.back = tr.word; c.example = v.example; c.exampleTranslation = tr.example; c.audio = v.audio_url ? { url: v.audio_url } : { text: v.en }; }
       else if (mode === 'choice') {
-        const field = reverse ? 'en' : 'uz';
-        const wrong = distractors(v, field, 3, seed + i);
-        c.direction = reverse ? 'uz-en' : 'en-uz'; c.prompt = reverse ? v.uz : v.en;
-        c.options = shuffled([v[field]].concat(wrong), seed + v.id);
+        const kind = reverse ? 'en' : 'tr';
+        const wrong = distractors(v, kind, tl, 3, seed + i);
+        c.direction = reverse ? 'tr-en' : 'en-tr'; c.prompt = reverse ? tr.word : v.en;
+        c.options = shuffled([reverse ? v.en : tr.word].concat(wrong), seed + v.id);
         if (c.options.length < 2) { c.mode = 'typed'; delete c.options; }
-      } else if (mode === 'typed') { c.direction = reverse ? 'uz-en' : 'en-uz'; c.prompt = reverse ? v.uz : v.en; }
-      if (mode === 'spelling') { c.prompt = v.uz; c.audio = v.audio_url ? { url: v.audio_url } : { text: v.en }; c.length = v.en.length; }
-      if (c.mode === 'typed' && !c.direction) { c.direction = 'en-uz'; c.prompt = v.en; }
+      } else if (mode === 'typed') { c.direction = reverse ? 'tr-en' : 'en-tr'; c.prompt = reverse ? tr.word : v.en; }
+      if (mode === 'spelling') { c.prompt = tr.word; c.audio = v.audio_url ? { url: v.audio_url } : { text: v.en }; c.length = v.en.length; }
+      if (c.mode === 'typed' && !c.direction) { c.direction = 'en-tr'; c.prompt = v.en; }
+      c.translationLanguage = tl;
       return c;
     });
     return { mode, cards, counts: counts(user) };
@@ -69,18 +76,18 @@ function make(db, settings, core) {
   function answer(user, body) {
     const vid = Number(body.vocabularyId);
     const mode = MODES.includes(body.mode) ? body.mode : null;
-    if (!Number.isInteger(vid) || !mode) throw bad('Invalid review answer.');
+    if (!Number.isInteger(vid) || !mode) throw bad('err.invalid_review_answer');
     return db.tx(() => {
       const v = db.get("SELECT * FROM vocabulary WHERE id = ? AND status = 'published'", vid);
-      if (!v) throw new HttpError(404, 'Word not found.');
+      if (!v) throw new HttpError(404, 'err.word_not_found');
       const item = db.get('SELECT * FROM review_items WHERE user_id = ? AND vocabulary_id = ?', user.id, vid);
       const wasDue = !item || item.due_at <= now();
       let ok, shown;
-      if (mode === 'flashcards') { ok = body.answer === true || body.answer === 'known'; shown = `${v.en} — ${v.uz}`; }
+      if (mode === 'flashcards') { ok = body.answer === true || body.answer === 'known'; shown = `${v.en} — ${L10N.vocab(v, core.userById(user.id).translation_language).word}`; }
       else {
-        const reverse = body.direction === 'uz-en' && mode !== 'spelling';
-        const target = mode === 'spelling' ? v.en : reverse ? v.en : v.uz;
-        if (typeof body.answer !== 'string' || !body.answer.trim()) throw bad('Write an answer.');
+        const reverse = body.direction === 'tr-en' && mode !== 'spelling';
+        const target = mode === 'spelling' ? v.en : reverse ? v.en : L10N.vocab(v, core.userById(user.id).translation_language).word;
+        if (typeof body.answer !== 'string' || !body.answer.trim()) throw bad('err.write_answer');
         const accepted = target.split(/[;,\/]/).map((x) => x.trim()).filter(Boolean).concat([target]);
         const u = X.norm(body.answer);
         ok = accepted.some((a) => X.norm(a) === u) || (mode !== 'spelling' && accepted.some((a) => { const n = X.norm(a); return n.length >= 6 && X.editDistance(u, n) === 1; }));
@@ -105,7 +112,7 @@ function make(db, settings, core) {
 
   function setDifficult(user, vocabId, flag) {
     const v = db.get("SELECT id FROM vocabulary WHERE id = ? AND status = 'published'", vocabId);
-    if (!v) throw new HttpError(404, 'Word not found.');
+    if (!v) throw new HttpError(404, 'err.word_not_found');
     db.run(`INSERT INTO review_items (user_id, vocabulary_id, box, due_at, is_difficult) VALUES (?,?,0,?,?)
       ON CONFLICT(user_id, vocabulary_id) DO UPDATE SET is_difficult = excluded.is_difficult`, user.id, vocabId, now(), flag ? 1 : 0);
     return counts(user);

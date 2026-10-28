@@ -1,36 +1,37 @@
 const express = require('express');
 const A = require('../lib/auth');
 const { publicUser, validateProfile, AVATARS } = require('./auth');
+const L10N = require('../lib/localize');
 const { now, clean, int, clamp, HttpError, bad, escapeLike, weekStart, addDays } = require('../lib/util');
 
-module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review }) {
+module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n }) {
   const r = express.Router();
   r.use(auth.requireUser);
 
   /* ---------- profile ---------- */
-  r.get('/me/profile', (req, res) => res.json(profile(req.user)));
-  function profile(u) {
+  r.get('/me/profile', (req, res) => res.json(profile(req.user, req.lang)));
+  function profile(u, lang) {
     const user = core.userById(u.id);
     const done = db.get('SELECT COUNT(*) n FROM user_progress WHERE user_id = ?', u.id).n;
     const course = core.courseFor(user);
     return { user: publicUser(user), stats: { lessonsCompleted: done, streak: core.streakInfo(user), hearts: core.heartState(user), achievements: db.get('SELECT COUNT(*) n FROM user_achievements WHERE user_id = ?', u.id).n }, avatars: AVATARS,
-      course: course ? { id: course.id, title: course.title } : null, courses: db.all("SELECT id, title, track FROM courses WHERE status = 'published' ORDER BY position, id") };
+      course: course ? { id: course.id, title: L10N.text(course, 'title', lang) } : null, courses: db.all("SELECT id, title, track, translations FROM courses WHERE status = 'published' ORDER BY position, id").map((c) => ({ id: c.id, title: L10N.text(c, 'title', lang), track: c.track })) };
   }
   r.patch('/me', (req, res) => {
     const b = req.body || {};
     const { errors, values } = validateProfile(b, settings, { partial: true });
     if (b.courseId !== undefined) {
       const c = db.get("SELECT id FROM courses WHERE id = ? AND status = 'published'", Number(b.courseId));
-      if (!c) errors.courseId = 'Course not found.'; else values.course_id = c.id;
+      if (!c) errors.courseId = 'err.course_not_found'; else values.course_id = c.id;
     }
-    if (Object.keys(errors).length) throw bad('Please fix the highlighted fields.', errors);
+    if (Object.keys(errors).length) throw bad('err.fix_fields', errors);
     const keys = Object.keys(values);
     if (keys.length) db.run(`UPDATE users SET ${keys.map((k) => k + ' = ?').join(', ')} WHERE id = ?`, ...keys.map((k) => values[k]), req.user.id);
-    res.json(profile(req.user));
+    res.json(profile(req.user, req.lang));
   });
   r.post('/me/password', (req, res) => {
     const b = req.body || {};
-    if (!A.verifyPassword(String(b.currentPassword || ''), req.user.password_hash)) throw bad('Your current password is not correct.', { currentPassword: 'Not correct.' });
+    if (!A.verifyPassword(String(b.currentPassword || ''), req.user.password_hash)) throw bad('err.current_password', { currentPassword: 'val.not_correct' });
     const pe = A.passwordProblem(b.newPassword);
     if (pe) throw bad(pe, { newPassword: pe });
     db.tx(() => { db.run('UPDATE users SET password_hash = ? WHERE id = ?', A.hashPassword(b.newPassword), req.user.id); db.run('DELETE FROM sessions WHERE user_id = ? AND token_hash != ?', req.user.id, req.session.token_hash); });
@@ -47,18 +48,18 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     const user = core.userById(req.user.id);
     const course = core.courseFor(user, Number(req.query.courseId) || null);
     if (!course) return res.json({ course: null, levels: [], recommended: null, totals: { lessons: 0, done: 0 } });
-    res.json(core.buildPath(user, course));
+    res.json(core.buildPath(user, course, req.lang));
   });
   r.get('/dashboard', (req, res) => {
     const user = core.userById(req.user.id);
     const s = settings.all();
     const course = core.courseFor(user);
-    const path = course ? core.buildPath(user, course) : null;
+    const path = course ? core.buildPath(user, course, req.lang) : null;
     const rec = path && path.recommended;
     let unit = null;
     if (path && rec) { for (const lv of path.levels) for (const u of lv.units) if (u.id === rec.unitId) unit = { id: u.id, title: u.title, total: u.total, done: u.done, level: lv.code }; }
     res.json({
-      user: publicUser(user), course: course ? { id: course.id, title: course.title } : null, recommended: rec || null, unit,
+      user: publicUser(user), course: course ? { id: course.id, title: L10N.text(course, 'title', req.lang) } : null, recommended: rec || null, unit,
       lessons: path ? path.totals : { lessons: 0, done: 0 },
       level: rec ? path.levels.find((l) => l.code === rec.level) && { code: rec.level, pct: path.levels.find((l) => l.code === rec.level).pct } : null,
       today: core.dayInfo(user), streak: core.streakInfo(user), hearts: core.heartState(user), week: core.weekDays(user),
@@ -71,12 +72,12 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
 
   /* ---------- lessons ---------- */
   r.post('/lessons/:id/start', (req, res) => {
-    try { res.json(attempts.start(req.user, int(req.params.id))); }
-    catch (e) { if (e.extra) return res.status(e.status).json({ error: e.message, ...e.extra }); throw e; }
+    try { res.json(attempts.start(req.user, int(req.params.id), req.lang)); }
+    catch (e) { if (e.extra) return res.status(e.status).json({ error: req.t(e.message, e.params), code: e.message, ...e.extra }); throw e; }
   });
-  r.post('/practice/mistakes', (req, res) => res.json(attempts.startMistakes(req.user)));
-  r.get('/attempts/:id', (req, res) => res.json(attempts.getAttempt(req.user, int(req.params.id))));
-  r.post('/attempts/:id/answer', (req, res) => res.json(attempts.answer(req.user, int(req.params.id), req.body || {})));
+  r.post('/practice/mistakes', (req, res) => res.json(attempts.startMistakes(req.user, req.lang)));
+  r.get('/attempts/:id', (req, res) => res.json(attempts.getAttempt(req.user, int(req.params.id), req.lang)));
+  r.post('/attempts/:id/answer', (req, res) => res.json(attempts.answer(req.user, int(req.params.id), req.body || {}, req.lang)));
   r.post('/attempts/:id/abandon', (req, res) => res.json(attempts.abandon(req.user, int(req.params.id))));
 
   /* ---------- vocabulary & review ---------- */
@@ -87,7 +88,8 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     const course = core.courseFor(user);
     const where = ["v.status = 'published'"], args = [];
     if (course) { where.push('(v.course_id = ? OR v.course_id IS NULL)'); args.push(course.id); }
-    if (q) { where.push("(v.en LIKE ? ESCAPE '\\' OR v.uz LIKE ? ESCAPE '\\')"); args.push('%' + escapeLike(q) + '%', '%' + escapeLike(q) + '%'); }
+    const tl = user.translation_language;
+    if (q) { where.push(`(v.en LIKE ? ESCAPE '\\' OR ${L10N.vocabWordSql(tl)} LIKE ? ESCAPE '\\')`); args.push('%' + escapeLike(q) + '%', '%' + escapeLike(q) + '%'); }
     if (req.query.level) { where.push('(v.cefr = ? OR lv.code = ?)'); args.push(String(req.query.level), String(req.query.level)); }
     if (req.query.unitId) { where.push('v.unit_id = ?'); args.push(int(req.query.unitId)); }
     if (filter === 'due') { where.push('ri.vocabulary_id IS NOT NULL AND ri.due_at <= ?'); args.push(now()); }
@@ -98,13 +100,13 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     const total = db.get(`SELECT COUNT(*) n ${from} WHERE ${where.join(' AND ')}`, user.id, ...args).n;
     const rows = db.all(`SELECT v.id, v.en, v.uz, v.translations, v.pos, v.example, v.example_uz, v.audio_url, COALESCE(NULLIF(v.cefr,''), lv.code, '') level, un.title unit, ri.box, ri.due_at, ri.is_difficult, ri.correct, ri.wrong
       ${from} WHERE ${where.join(' AND ')} ORDER BY lv.position, un.position, v.id LIMIT ? OFFSET ?`, user.id, ...args, size, (page - 1) * size);
-    res.json({ total, page, pageSize: size, items: rows.map((v) => ({ ...v, translations: safeJson(v.translations), status: v.box === null ? 'new' : v.due_at <= now() ? 'due' : 'learning', difficult: !!v.is_difficult, is_difficult: undefined })) });
+    res.json({ total, page, pageSize: size, items: rows.map((v) => { const t = L10N.vocab(v, tl); return { id: v.id, en: v.en, translation: t.word, translationLanguage: t.language, pos: v.pos, example: v.example, example_translation: t.example, audio_url: v.audio_url, level: v.level, unit: v.unit, box: v.box, due_at: v.due_at, correct: v.correct, wrong: v.wrong, status: v.box === null ? 'new' : v.due_at <= now() ? 'due' : 'learning', difficult: !!v.is_difficult }; }) });
   });
   const safeJson = (s) => { try { return JSON.parse(s); } catch (_) { return {}; } };
   r.post('/vocabulary/:id/difficult', (req, res) => res.json(review.setDifficult(req.user, int(req.params.id), !!(req.body || {}).difficult)));
   r.post('/vocabulary/add-to-review', (req, res) => {
     const ids = Array.isArray((req.body || {}).ids) ? req.body.ids.map(Number).filter(Number.isInteger).slice(0, 200) : [];
-    if (!ids.length) throw bad('Choose at least one word.');
+    if (!ids.length) throw bad('err.choose_words');
     res.json(review.addToReview(req.user, ids));
   });
   r.get('/review/summary', (req, res) => res.json(review.counts(req.user)));

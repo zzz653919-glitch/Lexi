@@ -60,3 +60,15 @@ dialog.wide { width: min(96vw, 760px); }
 .preview-box .lesson-foot { position: static; border: 2px solid var(--line); border-radius: 14px; margin-top: 12px; }
 .tag-draft { background: var(--gold-soft); color: var(--gold-ink); } .tag-published { background: var(--ok-soft); color: var(--ok); } .tag-archived { background: var(--surface-2); color: var(--ink-2); } .tag-suspended, .tag-danger { background: var(--danger-soft); color: var(--danger); }
 .file-drop { border: 2px dashed var(--line); border-radius: 14px; padding: 14px; background: var(--surface-2); }
+
+/* ---------- language selector and translation tools (admin) ---------- */
+.adm-side .lang-switcher { margin: 6px 4px 8px; }
+.lang-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 230px), 1fr)); gap: 12px; margin: 12px 0; }
+.lang-card { text-align: left; cursor: pointer; display: grid; gap: 8px; margin: 0; }
+.lang-card[aria-pressed="true"] { border-color: var(--info); box-shadow: 0 0 0 2px var(--info); }
+.card.tight { padding: 10px 12px; margin: 0 0 10px; }
+fieldset.plain { border: 0; margin: 0 0 10px; padding: 0; display: grid; gap: 4px; }
+fieldset.plain legend { font-weight: 800; font-size: .88rem; padding: 0; margin-bottom: 6px; }
+.variant-box { margin: 10px 0; border: 2px dashed var(--line); border-radius: 12px; padding: 8px 12px; }
+.variant-box summary { font-weight: 800; cursor: pointer; min-height: 32px; }
+.tbl td code { overflow-wrap: anywhere; }

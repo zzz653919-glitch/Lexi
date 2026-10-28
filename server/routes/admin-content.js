@@ -4,15 +4,30 @@ const X = require('../lib/exercises');
 const csv = require('../lib/csv');
 const { now, clean, cleanMultiline, int, HttpError, bad } = require('../lib/util');
 
+const parseJson = (j) => { try { const v = JSON.parse(j || '{}'); return v && typeof v === 'object' ? v : {}; } catch (_) { return {}; } };
 const slugify = (s) => String(s).toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g, '').trim().replace(/[\s_-]+/g, '-').slice(0, 60) || 'course';
 const STATUS = ['draft', 'published', 'archived'];
+
+const I18N = require('../../shared/i18n-core');
+/* translated titles / descriptions: { uz: { title, description }, ru: {...} } -> JSON text (only known languages and fields) */
+function cleanNavTranslations(raw, limits) {
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) throw bad('err.fix_fields', { translations: 'val.translations_object' });
+  const out = {};
+  for (const lang of I18N.CODES) {
+    const v = raw[lang]; if (!v || typeof v !== 'object') continue;
+    const o = {};
+    for (const [f, max] of Object.entries(limits)) { const t = clean(v[f], max); if (t) o[f] = t; }
+    if (Object.keys(o).length) out[lang] = o;
+  }
+  return JSON.stringify(out);
+}
 
 module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   const r = express.Router();
   const ok = auth.requireRole('editor', 'admin');
   r.use(ok);
-  const need = (row, what) => { if (!row) throw new HttpError(404, `${what} not found.`); return row; };
-  const confirmed = (req) => { if (!(req.body && req.body.confirm === true)) throw bad('This action must be confirmed.'); };
+  const need = (row, what) => { if (!row) throw new HttpError(404, 'err.' + what.toLowerCase() + '_not_found'); return row; };
+  const confirmed = (req) => { if (!(req.body && req.body.confirm === true)) throw bad('err.confirm_required'); };
   const nextPos = (table, col, id) => (db.get(`SELECT COALESCE(MAX(position), -1) + 1 p FROM ${table} WHERE ${col} = ?`, id).p);
 
   /* ---------- courses ---------- */
@@ -24,11 +39,12 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   });
   const courseInput = (b, partial) => {
     const e = {}, v = {};
-    if (!partial || b.title !== undefined) { const t = clean(b.title, 80); if (t.length < 2) e.title = 'Enter a title (at least 2 characters).'; else v.title = t; }
+    if (!partial || b.title !== undefined) { const t = clean(b.title, 80); if (t.length < 2) e.title = 'val.course_title'; else v.title = t; }
     if (b.description !== undefined) v.description = clean(b.description, 500);
-    if (b.track !== undefined) { if (!['general', 'ielts'].includes(b.track)) e.track = 'Track must be general or ielts.'; else v.track = b.track; }
-    if (b.slug !== undefined) { const s = slugify(b.slug); if (!/^[a-z0-9-]{2,60}$/.test(s)) e.slug = 'Use letters, digits and dashes.'; else v.slug = s; }
-    if (Object.keys(e).length) throw bad('Please fix the highlighted fields.', e);
+    if (b.track !== undefined) { if (!['general', 'ielts'].includes(b.track)) e.track = 'val.track'; else v.track = b.track; }
+    if (b.translations !== undefined) v.translations = cleanNavTranslations(b.translations, { title: 80, description: 500 });
+    if (b.slug !== undefined) { const s = slugify(b.slug); if (!/^[a-z0-9-]{2,60}$/.test(s)) e.slug = 'val.slug'; else v.slug = s; }
+    if (Object.keys(e).length) throw bad('err.fix_fields', e);
     return v;
   };
   r.post('/courses', (req, res) => {
@@ -37,6 +53,7 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
     while (db.get('SELECT 1 x FROM courses WHERE slug = ?', slug)) slug = slugify(v.title) + '-' + (++n);
     const t = now();
     const id = db.run('INSERT INTO courses (slug, title, description, track, status, position, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?)', slug, v.title, v.description || '', v.track || 'general', 'draft', db.get('SELECT COALESCE(MAX(position),-1)+1 p FROM courses').p, t, t).id;
+    if (v.translations) db.run('UPDATE courses SET translations = ? WHERE id = ?', v.translations, id);
     audit(req, 'course.create', 'course', id, { title: v.title });
     res.status(201).json(db.get('SELECT * FROM courses WHERE id = ?', id));
   });
@@ -50,7 +67,7 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   r.patch('/courses/:id', (req, res) => {
     const c = need(db.get('SELECT * FROM courses WHERE id = ?', int(req.params.id)), 'Course');
     const v = courseInput(req.body || {}, true);
-    if (v.slug && db.get('SELECT 1 x FROM courses WHERE slug = ? AND id != ?', v.slug, c.id)) throw bad('Please fix the highlighted fields.', { slug: 'This address is already used.' });
+    if (v.slug && db.get('SELECT 1 x FROM courses WHERE slug = ? AND id != ?', v.slug, c.id)) throw bad('err.fix_fields', { slug: 'val.slug_taken' });
     const keys = Object.keys(v);
     if (keys.length) db.run(`UPDATE courses SET ${keys.map((k) => k + ' = ?').join(', ')}, updated_at = ? WHERE id = ?`, ...keys.map((k) => v[k]), now(), c.id);
     audit(req, 'course.update', 'course', c.id, v);
@@ -59,10 +76,10 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   r.post('/courses/:id/status', (req, res) => {
     const c = need(db.get('SELECT * FROM courses WHERE id = ?', int(req.params.id)), 'Course');
     const status = (req.body || {}).status;
-    if (!STATUS.includes(status)) throw bad('Unknown status.');
+    if (!STATUS.includes(status)) throw bad('val.unknown_status');
     if (status === 'published') {
       const n = db.get("SELECT COUNT(*) n FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE lv.course_id = ? AND l.status = 'published'", c.id).n;
-      if (!n) throw bad('Publish at least one lesson before publishing the course.');
+      if (!n) throw bad('err.course_needs_lesson');
     }
     db.run('UPDATE courses SET status = ?, updated_at = ? WHERE id = ?', status, now(), c.id);
     audit(req, 'course.' + status, 'course', c.id, { from: c.status });
@@ -71,8 +88,8 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   r.delete('/courses/:id', auth.requireRole('admin'), (req, res) => {
     confirmed(req);
     const c = need(db.get('SELECT * FROM courses WHERE id = ?', int(req.params.id)), 'Course');
-    if (c.status === 'published') throw bad('Unpublish or archive the course before deleting it.');
-    if (req.body.title !== c.title) throw bad('Type the course title to confirm.');
+    if (c.status === 'published') throw bad('err.course_delete_published');
+    if (req.body.title !== c.title) throw bad('err.course_delete_confirm');
     db.run('DELETE FROM courses WHERE id = ?', c.id);
     audit(req, 'course.delete', 'course', c.id, { title: c.title });
     res.json({ ok: true });
@@ -81,26 +98,28 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   /* ---------- levels ---------- */
   const levelInput = (b, partial) => {
     const e = {}, v = {};
-    if (!partial || b.code !== undefined) { const code = clean(b.code, 20).toUpperCase(); if (!/^[A-Z0-9 _-]{1,20}$/.test(code) || !settings.all().available_levels.map((x) => x.toUpperCase()).includes(code)) e.code = 'Choose a level from the configured list (Settings → available levels).'; else v.code = code; }
-    if (!partial || b.title !== undefined) { const t = clean(b.title, 80); if (t.length < 2) e.title = 'Enter a title.'; else v.title = t; }
+    if (!partial || b.code !== undefined) { const code = clean(b.code, 20).toUpperCase(); if (!/^[A-Z0-9 _-]{1,20}$/.test(code) || !settings.all().available_levels.map((x) => x.toUpperCase()).includes(code)) e.code = 'val.level_code'; else v.code = code; }
+    if (!partial || b.title !== undefined) { const t = clean(b.title, 80); if (t.length < 2) e.title = 'val.title_required'; else v.title = t; }
     if (b.description !== undefined) v.description = clean(b.description, 300);
-    if (b.unlock_rule !== undefined) { if (!['sequential', 'open'].includes(b.unlock_rule)) e.unlock_rule = 'Must be sequential or open.'; else v.unlock_rule = b.unlock_rule; }
-    if (b.unlock_threshold_pct !== undefined) { const n = Number(b.unlock_threshold_pct); if (!Number.isInteger(n) || n < 0 || n > 100) e.unlock_threshold_pct = 'Use 0-100.'; else v.unlock_threshold_pct = n; }
-    if (Object.keys(e).length) throw bad('Please fix the highlighted fields.', e);
+    if (b.unlock_rule !== undefined) { if (!['sequential', 'open'].includes(b.unlock_rule)) e.unlock_rule = 'val.unlock_rule_level'; else v.unlock_rule = b.unlock_rule; }
+    if (b.translations !== undefined) v.translations = cleanNavTranslations(b.translations, { title: 80, description: 300 });
+    if (b.unlock_threshold_pct !== undefined) { const n = Number(b.unlock_threshold_pct); if (!Number.isInteger(n) || n < 0 || n > 100) e.unlock_threshold_pct = 'val.percent_range'; else v.unlock_threshold_pct = n; }
+    if (Object.keys(e).length) throw bad('err.fix_fields', e);
     return v;
   };
   r.post('/courses/:id/levels', (req, res) => {
     const c = need(db.get('SELECT id FROM courses WHERE id = ?', int(req.params.id)), 'Course');
     const v = levelInput(req.body || {}, false);
-    if (db.get('SELECT 1 x FROM levels WHERE course_id = ? AND code = ?', c.id, v.code)) throw bad('Please fix the highlighted fields.', { code: 'This course already has that level.' });
+    if (db.get('SELECT 1 x FROM levels WHERE course_id = ? AND code = ?', c.id, v.code)) throw bad('err.fix_fields', { code: 'val.level_exists' });
     const id = db.run('INSERT INTO levels (course_id, code, title, description, position, unlock_rule, unlock_threshold_pct) VALUES (?,?,?,?,?,?,?)', c.id, v.code, v.title, v.description || '', nextPos('levels', 'course_id', c.id), v.unlock_rule || 'sequential', v.unlock_threshold_pct ?? 60).id;
+    if (v.translations) db.run('UPDATE levels SET translations = ? WHERE id = ?', v.translations, id);
     audit(req, 'level.create', 'level', id, v);
     res.status(201).json(db.get('SELECT * FROM levels WHERE id = ?', id));
   });
   r.patch('/levels/:id', (req, res) => {
     const l = need(db.get('SELECT * FROM levels WHERE id = ?', int(req.params.id)), 'Level');
     const v = levelInput(req.body || {}, true);
-    if (v.code && db.get('SELECT 1 x FROM levels WHERE course_id = ? AND code = ? AND id != ?', l.course_id, v.code, l.id)) throw bad('Please fix the highlighted fields.', { code: 'This course already has that level.' });
+    if (v.code && db.get('SELECT 1 x FROM levels WHERE course_id = ? AND code = ? AND id != ?', l.course_id, v.code, l.id)) throw bad('err.fix_fields', { code: 'val.level_exists' });
     const keys = Object.keys(v);
     if (keys.length) db.run(`UPDATE levels SET ${keys.map((k) => k + ' = ?').join(', ')} WHERE id = ?`, ...keys.map((k) => v[k]), l.id);
     audit(req, 'level.update', 'level', l.id, v);
@@ -115,7 +134,7 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   });
   const reorder = (table, scopeCol, scopeVal, ids) => {
     const rows = db.all(`SELECT id FROM ${table} WHERE ${scopeCol} = ?`, scopeVal).map((x) => x.id);
-    if (!Array.isArray(ids) || ids.length !== rows.length || !ids.every((i) => rows.includes(Number(i))) || new Set(ids).size !== ids.length) throw bad('The new order must list every item exactly once.');
+    if (!Array.isArray(ids) || ids.length !== rows.length || !ids.every((i) => rows.includes(Number(i))) || new Set(ids).size !== ids.length) throw bad('err.reorder_incomplete');
     db.tx(() => ids.forEach((id, i) => db.run(`UPDATE ${table} SET position = ? WHERE id = ?`, i, Number(id))));
   };
   r.post('/courses/:id/levels/reorder', (req, res) => { reorder('levels', 'course_id', int(req.params.id), (req.body || {}).ids); audit(req, 'level.reorder', 'course', req.params.id, {}); res.json({ ok: true }); });
@@ -123,15 +142,17 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   /* ---------- units ---------- */
   const unitInput = (b, partial) => {
     const e = {}, v = {};
-    if (!partial || b.title !== undefined) { const t = clean(b.title, 80); if (t.length < 2) e.title = 'Enter a title.'; else v.title = t; }
+    if (!partial || b.title !== undefined) { const t = clean(b.title, 80); if (t.length < 2) e.title = 'val.title_required'; else v.title = t; }
     if (b.description !== undefined) v.description = clean(b.description, 300);
-    if (Object.keys(e).length) throw bad('Please fix the highlighted fields.', e);
+    if (b.translations !== undefined) v.translations = cleanNavTranslations(b.translations, { title: 80, description: 300 });
+    if (Object.keys(e).length) throw bad('err.fix_fields', e);
     return v;
   };
   r.post('/levels/:id/units', (req, res) => {
     const l = need(db.get('SELECT id FROM levels WHERE id = ?', int(req.params.id)), 'Level');
     const v = unitInput(req.body || {}, false);
     const id = db.run('INSERT INTO units (level_id, title, description, position) VALUES (?,?,?,?)', l.id, v.title, v.description || '', nextPos('units', 'level_id', l.id)).id;
+    if (v.translations) db.run('UPDATE units SET translations = ? WHERE id = ?', v.translations, id);
     audit(req, 'unit.create', 'unit', id, v);
     res.status(201).json(db.get('SELECT * FROM units WHERE id = ?', id));
   });
@@ -151,23 +172,24 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   const courseOfLesson = (lessonId) => db.get('SELECT lv.course_id FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE l.id = ?', lessonId);
   function lessonInput(b, partial, lessonId, courseId) {
     const e = {}, v = {};
-    if (!partial || b.title !== undefined) { const t = clean(b.title, 100); if (t.length < 2) e.title = 'Enter a title.'; else v.title = t; }
+    if (!partial || b.title !== undefined) { const t = clean(b.title, 100); if (t.length < 2) e.title = 'val.title_required'; else v.title = t; }
     if (b.description !== undefined) v.description = clean(b.description, 300);
-    if (b.xp_reward !== undefined) { const n = Number(b.xp_reward); if (!Number.isInteger(n) || n < 0 || n > 500) e.xp_reward = 'Use 0-500.'; else v.xp_reward = n; }
-    if (b.unlock_rule !== undefined) { if (!['sequential', 'open', 'prerequisite'].includes(b.unlock_rule)) e.unlock_rule = 'Unknown rule.'; else v.unlock_rule = b.unlock_rule; }
+    if (b.translations !== undefined) v.translations = cleanNavTranslations(b.translations, { title: 100, description: 300 });
+    if (b.xp_reward !== undefined) { const n = Number(b.xp_reward); if (!Number.isInteger(n) || n < 0 || n > 500) e.xp_reward = 'val.xp_range'; else v.xp_reward = n; }
+    if (b.unlock_rule !== undefined) { if (!['sequential', 'open', 'prerequisite'].includes(b.unlock_rule)) e.unlock_rule = 'val.unlock_rule'; else v.unlock_rule = b.unlock_rule; }
     if (b.prerequisite_lesson_id !== undefined) {
       const pid = b.prerequisite_lesson_id === null || b.prerequisite_lesson_id === '' ? null : Number(b.prerequisite_lesson_id);
       if (pid !== null) {
         const pc = courseOfLesson(pid);
-        if (!Number.isInteger(pid) || !pc || pc.course_id !== courseId) e.prerequisite_lesson_id = 'The required lesson must be in the same course.';
-        else if (lessonId && wouldCycle(lessonId, pid)) e.prerequisite_lesson_id = 'That would create a loop of prerequisites.';
+        if (!Number.isInteger(pid) || !pc || pc.course_id !== courseId) e.prerequisite_lesson_id = 'val.prerequisite_course';
+        else if (lessonId && wouldCycle(lessonId, pid)) e.prerequisite_lesson_id = 'val.prerequisite_loop';
         else v.prerequisite_lesson_id = pid;
       } else v.prerequisite_lesson_id = null;
     }
     const rule = v.unlock_rule || (partial && lessonId ? db.get('SELECT unlock_rule FROM lessons WHERE id = ?', lessonId).unlock_rule : 'sequential');
     const pre = v.prerequisite_lesson_id !== undefined ? v.prerequisite_lesson_id : (lessonId ? db.get('SELECT prerequisite_lesson_id p FROM lessons WHERE id = ?', lessonId).p : null);
-    if (rule === 'prerequisite' && !pre && !e.prerequisite_lesson_id) e.prerequisite_lesson_id = 'Choose the lesson that must be finished first.';
-    if (Object.keys(e).length) throw bad('Please fix the highlighted fields.', e);
+    if (rule === 'prerequisite' && !pre && !e.prerequisite_lesson_id) e.prerequisite_lesson_id = 'val.prerequisite_required';
+    if (Object.keys(e).length) throw bad('err.fix_fields', e);
     return v;
   }
   function wouldCycle(lessonId, pid) {
@@ -181,6 +203,7 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
     const t = now();
     const id = db.run('INSERT INTO lessons (unit_id, title, description, position, status, unlock_rule, prerequisite_lesson_id, xp_reward, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
       u.id, v.title, v.description || '', nextPos('lessons', 'unit_id', u.id), 'draft', v.unlock_rule || 'sequential', v.prerequisite_lesson_id || null, v.xp_reward ?? settings.all().xp_lesson_bonus, t, t).id;
+    if (v.translations) db.run('UPDATE lessons SET translations = ? WHERE id = ?', v.translations, id);
     audit(req, 'lesson.create', 'lesson', id, v);
     res.status(201).json(db.get('SELECT * FROM lessons WHERE id = ?', id));
   });
@@ -202,13 +225,13 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   r.post('/lessons/:id/status', (req, res) => {
     const l = need(db.get('SELECT * FROM lessons WHERE id = ?', int(req.params.id)), 'Lesson');
     const status = (req.body || {}).status;
-    if (!STATUS.includes(status)) throw bad('Unknown status.');
+    if (!STATUS.includes(status)) throw bad('val.unknown_status');
     if (status === 'published') {
       const exs = db.all("SELECT * FROM exercises WHERE lesson_id = ? AND status = 'published'", l.id);
-      if (!exs.length) throw bad('Add and publish at least one exercise before publishing the lesson.');
+      if (!exs.length) throw bad('err.lesson_needs_exercise');
       const problems = [];
-      for (const e of exs) { const errs = X.validate(loadExercise(e)); if (errs.length) problems.push(`Exercise #${e.position + 1} (${X.TYPES[e.type] ? X.TYPES[e.type].label : e.type}): ${errs[0].message}`); }
-      if (problems.length) throw bad('Fix these exercises before publishing: ' + problems.join(' | '));
+      for (const e of exs) { const errs = X.validate(loadExercise(e)); if (errs.length) problems.push(req.t('err.exercise_problem', { n: e.position + 1, type: req.t('ex.type.' + e.type), reason: req.t(errs[0].message, errs[0].params) })); }
+      if (problems.length) throw bad('err.lesson_fix_exercises', null, { list: problems.join(' | ') });
     }
     db.run('UPDATE lessons SET status = ?, updated_at = ? WHERE id = ?', status, now(), l.id);
     audit(req, 'lesson.' + status, 'lesson', l.id, { from: l.status });
@@ -218,8 +241,8 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
     const l = need(db.get('SELECT * FROM lessons WHERE id = ?', int(req.params.id)), 'Lesson');
     const id = db.tx(() => {
       const t = now();
-      const nid = db.run('INSERT INTO lessons (unit_id, title, description, position, status, unlock_rule, prerequisite_lesson_id, xp_reward, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
-        l.unit_id, (l.title + ' (copy)').slice(0, 100), l.description, nextPos('lessons', 'unit_id', l.unit_id), 'draft', l.unlock_rule === 'prerequisite' ? 'sequential' : l.unlock_rule, null, l.xp_reward, t, t).id;
+      const nid = db.run('INSERT INTO lessons (unit_id, title, description, position, status, unlock_rule, prerequisite_lesson_id, xp_reward, created_at, updated_at, translations) VALUES (?,?,?,?,?,?,?,?,?,?,?)',
+        l.unit_id, (l.title + ' (copy)').slice(0, 100), l.description, nextPos('lessons', 'unit_id', l.unit_id), 'draft', l.unlock_rule === 'prerequisite' ? 'sequential' : l.unlock_rule, null, l.xp_reward, t, t, l.translations).id;
       for (const e of db.all('SELECT * FROM exercises WHERE lesson_id = ? ORDER BY position, id', l.id)) copyExercise(e, nid, e.position);
       return nid;
     });
@@ -236,15 +259,15 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   r.post('/units/:id/lessons/reorder', (req, res) => { reorder('lessons', 'unit_id', int(req.params.id), (req.body || {}).ids); audit(req, 'lesson.reorder', 'unit', req.params.id, {}); res.json({ ok: true }); });
 
   /* ---------- exercises ---------- */
-  const loadExercise = (row) => ({ ...row, options: db.all('SELECT text, match_text, is_correct FROM exercise_options WHERE exercise_id = ? ORDER BY position, id', row.id).map((o) => ({ text: o.text, match_text: o.match_text, is_correct: !!o.is_correct })) });
+  const loadExercise = (row) => ({ ...row, translations: parseJson(row.translations), options: db.all('SELECT text, match_text, is_correct FROM exercise_options WHERE exercise_id = ? ORDER BY position, id', row.id).map((o) => ({ text: o.text, match_text: o.match_text, is_correct: !!o.is_correct })) });
   function saveOptions(exId, options) {
     db.run('DELETE FROM exercise_options WHERE exercise_id = ?', exId);
     options.filter((o) => o.text).forEach((o, i) => db.run('INSERT INTO exercise_options (exercise_id, text, match_text, is_correct, position) VALUES (?,?,?,?,?)', exId, o.text, o.match_text || '', o.is_correct ? 1 : 0, i));
   }
   function insertExercise(lessonId, ex, position) {
     const t = now();
-    const id = db.run(`INSERT INTO exercises (lesson_id, type, position, difficulty, prompt, answer, sentence, passage, audio_text, audio_url, translation, explanation, hint, direction, status, vocabulary_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      lessonId, ex.type, position, ex.difficulty, ex.prompt, ex.answer, ex.sentence, ex.passage, ex.audio_text, ex.audio_url, ex.translation, ex.explanation, ex.hint, ex.direction, ex.status, ex.vocabulary_id, t, t).id;
+    const id = db.run(`INSERT INTO exercises (lesson_id, type, position, difficulty, prompt, answer, sentence, passage, audio_text, audio_url, translation, explanation, hint, direction, status, vocabulary_id, translations, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      lessonId, ex.type, position, ex.difficulty, ex.prompt, ex.answer, ex.sentence, ex.passage, ex.audio_text, ex.audio_url, ex.translation, ex.explanation, ex.hint, ex.direction, ex.status, ex.vocabulary_id, JSON.stringify(ex.translations || {}), t, t).id;
     saveOptions(id, ex.options);
     return id;
   }
@@ -252,14 +275,14 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   function checkVocabId(ex) { if (ex.vocabulary_id && !db.get('SELECT 1 x FROM vocabulary WHERE id = ?', ex.vocabulary_id)) ex.vocabulary_id = null; }
 
   r.post('/exercises/validate', (req, res) => { const ex = X.normalizeInput(req.body || {}); res.json({ errors: X.validate(ex) }); });
-  r.get('/exercise-types', (req, res) => res.json({ types: X.TYPE_IDS.map((id) => ({ id, ...X.TYPES[id] })) }));
+  r.get('/exercise-types', (req, res) => res.json({ types: X.TYPE_IDS.map((id) => ({ id })) }));
   r.get('/exercises/:id', (req, res) => { const e = need(db.get('SELECT * FROM exercises WHERE id = ?', int(req.params.id)), 'Exercise'); res.json(loadExercise(e)); });
   r.post('/lessons/:id/exercises', (req, res) => {
     const l = need(db.get('SELECT id FROM lessons WHERE id = ?', int(req.params.id)), 'Lesson');
     const ex = X.normalizeInput(req.body || {}); checkVocabId(ex);
     const errs = X.validate(ex);
-    if (errs.length && ex.status === 'published') throw bad('This exercise cannot be published yet: ' + errs[0].message, Object.fromEntries(errs.map((e) => [e.field, e.message])));
-    if (!X.TYPES[ex.type]) throw bad('Choose an exercise type.', { type: 'Required.' });
+    if (errs.length && ex.status === 'published') throw bad('err.exercise_cannot_publish', Object.fromEntries(errs.map((e) => [e.field, { key: e.message, params: e.params }])), { reason: req.t(errs[0].message, errs[0].params) });
+    if (!X.TYPES[ex.type]) throw bad('val.type_required', { type: 'val.required' });
     const id = db.tx(() => insertExercise(l.id, ex, nextPos('exercises', 'lesson_id', l.id)));
     audit(req, 'exercise.create', 'exercise', id, { type: ex.type, lesson: l.id });
     res.status(201).json(loadExercise(db.get('SELECT * FROM exercises WHERE id = ?', id)));
@@ -268,10 +291,10 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
     const old = need(db.get('SELECT * FROM exercises WHERE id = ?', int(req.params.id)), 'Exercise');
     const ex = X.normalizeInput(req.body || {}); checkVocabId(ex);
     const errs = X.validate(ex);
-    if (errs.length && ex.status === 'published') throw bad('This exercise cannot be published yet: ' + errs[0].message, Object.fromEntries(errs.map((e) => [e.field, e.message])));
+    if (errs.length && ex.status === 'published') throw bad('err.exercise_cannot_publish', Object.fromEntries(errs.map((e) => [e.field, { key: e.message, params: e.params }])), { reason: req.t(errs[0].message, errs[0].params) });
     db.tx(() => {
-      db.run(`UPDATE exercises SET type=?, difficulty=?, prompt=?, answer=?, sentence=?, passage=?, audio_text=?, audio_url=?, translation=?, explanation=?, hint=?, direction=?, status=?, vocabulary_id=?, updated_at=? WHERE id=?`,
-        ex.type, ex.difficulty, ex.prompt, ex.answer, ex.sentence, ex.passage, ex.audio_text, ex.audio_url, ex.translation, ex.explanation, ex.hint, ex.direction, ex.status, ex.vocabulary_id, now(), old.id);
+      db.run(`UPDATE exercises SET type=?, difficulty=?, prompt=?, answer=?, sentence=?, passage=?, audio_text=?, audio_url=?, translation=?, explanation=?, hint=?, direction=?, status=?, vocabulary_id=?, translations=?, updated_at=? WHERE id=?`,
+        ex.type, ex.difficulty, ex.prompt, ex.answer, ex.sentence, ex.passage, ex.audio_text, ex.audio_url, ex.translation, ex.explanation, ex.hint, ex.direction, ex.status, ex.vocabulary_id, JSON.stringify(ex.translations || {}), now(), old.id);
       saveOptions(old.id, ex.options);
     });
     audit(req, 'exercise.update', 'exercise', old.id, { type: ex.type });
@@ -290,7 +313,7 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   r.post('/exercises/:id/preview-check', (req, res) => {
     const e = need(db.get('SELECT * FROM exercises WHERE id = ?', int(req.params.id)), 'Exercise');
     const g = X.grade(e, db.all('SELECT * FROM exercise_options WHERE exercise_id = ? ORDER BY position, id', e.id), (req.body || {}).answer, 7);
-    if (g.invalid) throw bad('That answer is not valid for this exercise.');
+    if (g.invalid) throw bad('err.invalid_answer');
     res.json({ correct: g.correct, typo: !!g.typo, correctAnswer: g.correctAnswer, explanation: e.explanation, translation: e.translation });
   });
 
@@ -310,19 +333,19 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
       return res.send(csv.stringify(CSV_HEAD, rows.map((e) => ({ ...e, options: optionsToCell(e.options) }))));
     }
     res.setHeader('Content-Disposition', `attachment; filename="lesson-${l.id}-exercises.json"`);
-    res.json({ format: 'lexi-exercises', version: 1, lesson: l.title, exercises: rows.map((e) => Object.fromEntries(CSV_HEAD.filter((k) => k !== 'options').map((k) => [k, e[k]]).concat([['options', e.options]]))) });
+    res.json({ format: 'lexi-exercises', version: 1, lesson: l.title, exercises: rows.map((e) => Object.fromEntries(CSV_HEAD.filter((k) => k !== 'options').map((k) => [k, e[k]]).concat([['options', e.options], ['translations', e.translations]]))) });
   });
   r.post('/lessons/:id/import', (req, res) => {
     const l = need(db.get('SELECT id FROM lessons WHERE id = ?', int(req.params.id)), 'Lesson');
     const { format, content } = req.body || {};
-    if (typeof content !== 'string' || content.length > 1000000) throw bad('Paste or upload the content to import (up to 1 MB).');
+    if (typeof content !== 'string' || content.length > 1000000) throw bad('err.import_content_exercises');
     let items;
     try {
       if (format === 'csv') items = csv.objects(content).map((o) => ({ ...o, options: cellToOptions(o.options) }));
       else { const j = JSON.parse(content); items = Array.isArray(j) ? j : j.exercises; if (!Array.isArray(items)) throw new Error('missing exercises array'); }
-    } catch (e) { throw bad('The file could not be read: ' + e.message); }
-    if (!items.length) throw bad('The file contains no exercises.');
-    if (items.length > 200) throw bad('Import at most 200 exercises at a time.');
+    } catch (e) { throw bad('err.import_unreadable', null, { reason: e.message }); }
+    if (!items.length) throw bad('err.import_no_exercises');
+    if (items.length > 200) throw bad('err.import_max_exercises');
     const prepared = [], problems = [];
     items.forEach((raw, i) => {
       const ex = X.normalizeInput({ ...raw, options: (raw.options || []).map((o) => ({ text: o.text, match_text: o.match_text, is_correct: o.is_correct === true || o.correct === true })) });

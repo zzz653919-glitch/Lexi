@@ -1,5 +1,6 @@
 import { h } from './ui.js';
 import { ApiError } from './api.js';
+import { t } from './i18n.js';
 
 let uid = 0;
 /* a labelled input with an inline error line (aria-describedby) */
@@ -42,7 +43,7 @@ export function wireForm(form, fields, formError, fn) {
         for (const [k, m] of Object.entries(err.fields || {})) if (fields[k]) { fields[k].error(m); first = first || fields[k]; }
         formError.textContent = err.message; formError.hidden = false;
         if (first && first.input) first.input.focus();
-      } else { formError.textContent = 'Something went wrong. Please try again.'; formError.hidden = false; console.error(err); }
+      } else { formError.textContent = t('err.generic'); formError.hidden = false; console.error(err); }
     } finally { delete form.dataset.busy; if (btn) btn.disabled = false; }
   });
 }
