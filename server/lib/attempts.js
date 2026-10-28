@@ -2,8 +2,9 @@
 const { now, HttpError, bad, randomToken, rng } = require('./util');
 const X = require('./exercises');
 const L10N = require('./localize');
+const LV = require('./levels');
 
-function make(db, settings, core) {
+function make(db, settings, core, learning) {
   const S = () => settings.all();
   const exerciseRow = async (id) => await db.get('SELECT * FROM exercises WHERE id = ?', id);
   const optionsOf = async (id) => await db.all('SELECT * FROM exercise_options WHERE exercise_id = ? ORDER BY position, id', id);
@@ -78,7 +79,7 @@ function make(db, settings, core) {
     const exerciseId = Number(body && body.exerciseId);
     if (!Number.isInteger(exerciseId)) throw bad('err.missing_exercise');
     return await db.tx(async () => {
-      const a = await db.get('SELECT * FROM lesson_attempts WHERE id = ? AND user_id = ?', attemptId, user.id);
+      const a = await db.get('SELECT * FROM lesson_attempts WHERE id = ? AND user_id = ? AND variant IS NULL', attemptId, user.id);
       if (!a) throw new HttpError(404, 'err.attempt_not_found');
       const queue = JSON.parse(a.queue);
       // a repeated submit of an exercise that was already graded returns the stored feedback and awards nothing
@@ -103,6 +104,7 @@ function make(db, settings, core) {
         xp = await core.awardXp(full, per, a.kind === 'mistakes' ? 'mistakes' : 'exercise', 'response', ins.id);
       }
       await core.bumpDay(full, { answers: 1, correct: g.correct ? 1 : 0 });
+      if (!isRetry) await noteEvidence(user.id, ex, a.id, g.correct);
       fb.xp = xp;
       await db.run('UPDATE exercise_responses SET feedback = ?, xp = ? WHERE id = ?', JSON.stringify(fb), xp, ins.id);
       let newQueue = queue, status = 'in_progress';
@@ -126,6 +128,12 @@ function make(db, settings, core) {
     });
   }
 
+  /* every first-try answer is evidence about one skill at the level of the lesson it belongs to */
+  async function noteEvidence(userId, ex, attemptId, correct) {
+    const skill = ex.skill || LV.SKILL_OF_TYPE[ex.type];
+    const lv = await db.get('SELECT lv.code FROM exercises e JOIN lessons l ON l.id = e.lesson_id JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE e.id = ?', ex.id);
+    if (skill && lv && LV.valid(lv.code)) await learning.recordEvidence(userId, skill, lv.code, correct, 'lesson', attemptId);
+  }
   async function noteVocabMiss(userId, vocabId) {
     const t = now();
     await db.run(`INSERT INTO review_items (user_id, vocabulary_id, box, due_at, reps, lapses, correct, wrong, is_difficult, last_result, last_reviewed_at)
@@ -157,8 +165,9 @@ function make(db, settings, core) {
     await core.markStreakDay(full);
     await db.run("UPDATE lesson_attempts SET status = 'completed', completed_at = ?, xp_awarded = xp_awarded + ? WHERE id = ?", now(), bonus + perfect, a.id);
     const earned = await core.checkAchievements(user.id);
+    const levelUp = await learning.maybeLevelUp(user.id);
     await db.run('UPDATE users SET last_active_at = ? WHERE id = ?', now(), user.id);
-    return { earned };
+    return { earned, levelUp };
   }
 
   async function result(a, user, tl) {
@@ -181,7 +190,7 @@ function make(db, settings, core) {
   }
 
   async function getAttempt(user, id, lang) {
-    const a = await db.get('SELECT * FROM lesson_attempts WHERE id = ? AND user_id = ?', id, user.id);
+    const a = await db.get('SELECT * FROM lesson_attempts WHERE id = ? AND user_id = ? AND variant IS NULL', id, user.id);
     if (!a) throw new HttpError(404, 'err.attempt_not_found');
     return await view(a.id, user, lang);
   }

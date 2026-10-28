@@ -8,9 +8,10 @@ import { achievementIcon } from './achievements.js';
 
 const PRAISE = ['lesson.praise_1', 'lesson.praise_2', 'lesson.praise_3', 'lesson.praise_4'];
 
-export default async function lesson({ params }) {
+export default async function lesson({ params, daily = false }) {
   const id = Number(params.id);
-  let state = await get('/attempts/' + id);
+  const base = daily ? '/daily/attempts/' : '/attempts/', home = daily ? '/' : '/learn';
+  let state = await get(base + id);
   const root = h('main', { class: 'lesson' });
   let current = null, answered = false, busy = false, cleaned = false;
   let celebrate = null;
@@ -35,8 +36,8 @@ export default async function lesson({ params }) {
   }
   function setProgress() { bar.style.width = state.progress + '%'; progress.setAttribute('aria-valuenow', String(state.progress)); }
   async function leave() {
-    if (state.status !== 'in_progress') return navigate('/learn');
-    if (await confirmDialog(t('lesson.leave_title'), t('lesson.leave_text'), t('lesson.leave_button'))) navigate('/learn');
+    if (state.status !== 'in_progress') return navigate(home);
+    if (await confirmDialog(t('lesson.leave_title'), t('lesson.leave_text'), t('lesson.leave_button'))) navigate(home);
   }
 
   function showExercise() {
@@ -47,7 +48,7 @@ export default async function lesson({ params }) {
     setHearts(); setProgress();
     current = r(ex, { changed: (ok) => { action.disabled = !ok; }, submit: check });
     body.replaceChildren(current.el);
-    action.textContent = t('lesson.check'); action.className = 'btn'; action.disabled = true; action.onclick = check;
+    action.textContent = ex.type === 'card' ? t('lesson.continue') : t('lesson.check'); action.className = 'btn'; action.disabled = ex.type !== 'card'; action.onclick = check;
     foot.hidden = false;
     setTimeout(() => current.focus && current.focus(), 50);
     if ((ex.type === 'listen_choice' || ex.type === 'listen_type') && ex.audio) setTimeout(() => speak(ex.audio), 350);
@@ -59,10 +60,12 @@ export default async function lesson({ params }) {
     if (value === null || value === undefined) return;
     busy = true; action.disabled = true;
     try {
-      const res = await post(`/attempts/${id}/answer`, { exerciseId: state.exercise.id, answer: value });
+      const isCard = state.exercise.type === 'card';
+      const res = await post(`${base}${id}/answer`, { exerciseId: state.exercise.id, answer: value });
       answered = true; current.lock(); current.reveal && current.reveal(res.feedback);
       state = res.state; celebrate = res.celebrate || celebrate;
       setHearts(); setProgress();
+      if (isCard) { busy = false; return next(); }       // a teaching card has no right or wrong: straight on
       const fb = res.feedback;
       foot.className = 'lesson-foot ' + (fb.correct ? 'good' : 'bad');
       if (fb.correct) { burst(feedback, { kind: 'stars' }); play(foot, 'good-glow', 750); }
@@ -75,7 +78,7 @@ export default async function lesson({ params }) {
     } catch (e) {
       busy = false; action.disabled = false;
       toast(e instanceof ApiError ? e.message : t('lesson.check_failed'), 'error', 5000);
-      if (e instanceof ApiError && e.status === 409) { state = await get('/attempts/' + id); render(); }
+      if (e instanceof ApiError && e.status === 409) { state = await get(base + id); render(); }
     }
   }
   /* a gentle visual hint after a mistake: the right answer pulses */
@@ -93,13 +96,14 @@ export default async function lesson({ params }) {
     if (r.outcome === 'out_of_hearts') {
       body.replaceChildren(h('div', { class: 'result' }, h('img', { src: '/img/mascot.svg', alt: '' }), h('h1', {}, t('lesson.out_of_hearts')),
         h('p', { class: 'muted' }, t('lesson.out_of_hearts_text')),
-        h('div', { class: 'stack' }, h('a', { class: 'btn block', href: '/review' }, t('dashboard.review_words')), h('a', { class: 'btn secondary block', href: '/learn' }, t('practice.back_to_path')))));
+        h('div', { class: 'stack' }, h('a', { class: 'btn block', href: '/review' }, t('dashboard.review_words')), h('a', { class: 'btn secondary block', href: home }, t('practice.back_to_path')))));
       return;
     }
     const earned = celebrate && celebrate.earned ? celebrate.earned : [];
     const xpNum = h('b', {}, '+' + r.xp), accNum = h('b', {}, r.accuracy + '%'), streakSlot = h('div', { class: 'streak-slot', style: { margin: '0 0 12px' } });
     body.replaceChildren(h('div', { class: 'result celebrate' }, h('img', { src: '/img/mascot.svg', alt: '' }),
-      h('h1', {}, state.kind === 'mistakes' ? t('lesson.mistakes_reviewed') : r.accuracy === 100 ? t('lesson.perfect') : t('lesson.complete')),
+      h('h1', {}, state.kind === 'mistakes' ? t('lesson.mistakes_reviewed') : daily ? t('daily.complete') : r.accuracy === 100 ? t('lesson.perfect') : t('lesson.complete')),
+      celebrate && celebrate.levelUp ? h('div', { class: 'notice level-up', role: 'status' }, icon('star'), t('daily.level_up', { level: t('level.' + celebrate.levelUp.to + '.short') })) : null,
       h('div', { class: 'result-stats' },
         h('div', { class: 'card xp' }, xpNum, h('span', { class: 'muted small' }, t('lesson.xp_earned'))),
         h('div', { class: 'card acc' }, accNum, h('span', { class: 'muted small' }, t('lesson.accuracy'))),
@@ -109,7 +113,7 @@ export default async function lesson({ params }) {
       earned.length ? h('div', { class: 'card', style: { textAlign: 'left' } }, h('h2', {}, n('lesson.new_achievements', earned.length)), earned.map((a, i) => h('div', { class: 'ach-card badge-reveal', style: { '--i': i, marginTop: '8px' } }, h('div', { class: 'ico' }, icon(achievementIcon(a.icon))), h('div', {}, h('b', {}, t('ach.' + a.code + '.title')), h('div', { class: 'muted small' }, t('ach.' + a.code + '.desc')))))) : null,
       r.words.length ? h('div', { class: 'card', style: { textAlign: 'left' } }, h('h2', {}, t('lesson.words_to_review')), h('ul', { class: 'review-list' }, r.words.map((w) => h('li', {}, h('b', {}, w.en), ' — ', w.translation, w.example ? h('div', { class: 'muted small' }, w.example) : null)))) : null,
       r.mistakes.length ? h('div', { class: 'card', style: { textAlign: 'left' } }, h('h2', {}, t('lesson.your_mistakes')), h('ul', { class: 'review-list' }, r.mistakes.map((m) => h('li', {}, h('span', { class: 'muted' }, m.prompt || t('ex.type.' + m.type)), m.answer ? h('div', {}, t('lesson.answer_label') + ' ', h('b', {}, m.answer)) : null)))) : null,
-      h('div', { class: 'stack', style: { marginTop: '18px' } }, h('a', { class: 'btn block', href: '/learn' }, t('common.continue')), r.mistakes.length ? h('a', { class: 'btn secondary block', href: '/practice' }, t('lesson.review_mistakes')) : null)));
+      h('div', { class: 'stack', style: { marginTop: '18px' } }, h('a', { class: 'btn block', href: home }, t('common.continue')), r.mistakes.length && !daily ? h('a', { class: 'btn secondary block', href: '/practice' }, t('lesson.review_mistakes')) : null)));
     document.querySelector('.result a.btn') && document.querySelector('.result a.btn').focus();
     // celebration: confetti and stars, numbers that count up to the REAL results, a streak flame only when the streak really grew
     setTimeout(() => { burst(null, { kind: 'confetti' }); burst(xpNum, { kind: 'stars' }); }, 200);
@@ -133,5 +137,5 @@ export default async function lesson({ params }) {
 
   setHearts(); setProgress();
   if (state.status !== 'in_progress') showResult(); else render();
-  return { el: root, title: state.lesson ? state.lesson.title : t('practice.title'), nav: '', cleanup() { cleaned = true; document.removeEventListener('keydown', onKey); } };
+  return { el: root, title: state.lesson && state.lesson.title ? state.lesson.title : daily ? t('daily.title') : t('practice.title'), nav: '', cleanup() { cleaned = true; document.removeEventListener('keydown', onKey); } };
 }

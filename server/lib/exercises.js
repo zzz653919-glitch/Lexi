@@ -59,6 +59,7 @@ function normalizeInput(raw) {
     explanation: clean(raw.explanation, 600),
     hint: clean(raw.hint, 200),
     direction: raw.direction === 'uz-en' ? 'uz-en' : 'en-uz',
+    skill: ['vocabulary', 'grammar', 'reading', 'listening'].includes(raw.skill) ? raw.skill : null,
     difficulty: Math.min(5, Math.max(1, Number.parseInt(raw.difficulty, 10) || 1)),
     status: raw.status === 'draft' ? 'draft' : 'published',
     vocabulary_id: Number.parseInt(raw.vocabulary_id, 10) || null,

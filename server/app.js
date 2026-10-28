@@ -8,6 +8,9 @@ const authLib = require('./lib/auth');
 const coreLib = require('./lib/core');
 const attemptsLib = require('./lib/attempts');
 const reviewLib = require('./lib/review');
+const learningLib = require('./lib/learning');
+const assessmentLib = require('./lib/assessment');
+const dailyLib = require('./lib/daily');
 const i18nLib = require('./lib/i18n');
 const coreI18n = require('../shared/i18n-core');
 const seed = require('./seed');
@@ -25,10 +28,13 @@ function createApp(options = {}) {
   const auth = authLib.make(db, { secureCookies: opts.secureCookies });
   const i18n = i18nLib.make(db, settings, { ttl: opts.settingsTtl });
   const core = coreLib.make(db, settings);
-  const attempts = attemptsLib.make(db, settings, core);
-  const review = reviewLib.make(db, settings, core);
+  const learning = learningLib.make(db, settings);
+  const attempts = attemptsLib.make(db, settings, core, learning);
+  const review = reviewLib.make(db, settings, core, learning);
+  const assessment = assessmentLib.make(db, settings, learning);
+  const daily = dailyLib.make(db, settings, core, review, learning);
   const audit = async (req, action, entity, entityId, details) => db.run('INSERT INTO audit_log (admin_id, admin_email, action, entity, entity_id, details, created_at) VALUES (?,?,?,?,?,?,?)', req.user.id, req.user.email, action, entity, String(entityId == null ? '' : entityId), JSON.stringify(details || {}).slice(0, 2000), now());
-  const ctx = { db, settings, auth, core, attempts, review, audit, opts, i18n };
+  const ctx = { db, settings, auth, core, attempts, review, audit, opts, i18n, learning, assessment, daily };
 
   /* One-time start-up work, done lazily on the first request that needs the database (so a serverless cold start or a database that is
      briefly unreachable does not crash the process): schema migrations, optional sample content, first read of settings and texts. */
@@ -37,6 +43,7 @@ function createApp(options = {}) {
     if (!ready) ready = (async () => {
       await dbLib.migrate(db);
       if (opts.seedSample) seeded = await seed.ensureSample(db);
+      await seed.ensureAssessmentContent(db);
       await Promise.all([settings.refresh(true), i18n.refresh(true)]);
     })().catch((e) => { ready = null; throw e; });
     return ready;
@@ -104,8 +111,10 @@ function createApp(options = {}) {
   });
   api.use('/auth', require('./routes/auth')(ctx));
   api.use('/admin', require('./routes/admin-content')(ctx));
+  api.use('/admin', require('./routes/admin-assessment')(ctx));
   api.use('/admin', require('./routes/admin-manage')(ctx));
   api.use('/admin', require('./routes/admin-i18n')(ctx));
+  api.use('/', require('./routes/learning')(ctx));
   api.use('/', require('./routes/learner')(ctx));
   api.use((req, res, next) => next(new HttpError(404, 'err.not_found')));
   app.use('/api', api);
@@ -138,7 +147,7 @@ function createApp(options = {}) {
   app.use(express.static(PUBLIC, { index: false, redirect: false, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
   /* client-side routes of the single-page app: opening one directly (or reloading it) serves the app shell;
      any other path still gets the shell (so the app can show its own "page not found" screen) but with a real 404 status */
-  const CLIENT_ROUTES = /^\/(?:login|register|forgot|reset|learn|attempt\/[^/]+|practice|vocabulary|review|leaderboard|achievements|profile)?\/?$/;
+  const CLIENT_ROUTES = /^\/(?:login|register|forgot|reset|learn|welcome|placement|results|daily\/[^/]+|attempt\/[^/]+|practice|vocabulary|review|leaderboard|achievements|profile)?\/?$/;
   app.get(/^\/(?!api\/|uploads\/).*/, (req, res, next) => {
     if (path.extname(req.path)) return next();
     res.setHeader('Cache-Control', 'no-store');
@@ -158,7 +167,7 @@ function createApp(options = {}) {
     res.status(500).json({ error: T('err.server_error', { ref: id }), code: 'err.server_error' });
   });
 
-  return { app, db, settings, core, i18n, init, seeded: () => seeded, close: () => db.close(), opts };
+  return { app, db, settings, core, i18n, learning, assessment, daily, init, seeded: () => seeded, close: () => db.close(), opts };
 }
 
 module.exports = { createApp };

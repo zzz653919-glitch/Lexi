@@ -4,7 +4,7 @@ const { publicUser, validateProfile, AVATARS } = require('./auth');
 const L10N = require('../lib/localize');
 const { now, clean, int, clamp, HttpError, bad, escapeLike, weekStart, addDays } = require('../lib/util');
 
-module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n }) {
+module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n, learning, daily }) {
   const r = express.Router();
   r.use(auth.requireUser);
 
@@ -25,6 +25,7 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
       if (!c) errors.courseId = 'err.course_not_found'; else values.course_id = c.id;
     }
     if (Object.keys(errors).length) throw bad('err.fix_fields', errors);
+    if (values.start_level !== undefined) { await learning.setLevel(req.user.id, b.startLevel, 'manual', { note: 'chosen in the profile' }); delete values.start_level; }
     const keys = Object.keys(values);
     if (keys.length) await db.run(`UPDATE users SET ${keys.map((k) => k + ' = ?').join(', ')} WHERE id = ?`, ...keys.map((k) => values[k]), req.user.id);
     res.json(await profile(req.user, req.lang));
@@ -66,8 +67,14 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
       achievements: (await core.achievementList(user.id)).filter((a) => a.earnedAt).sort((a, b) => (a.earnedAt < b.earnedAt ? 1 : -1)).slice(0, 3),
       review: await review.counts(user), mistakesAvailable: await mistakesAvailable(user.id),
       leaderboardEnabled: s.leaderboard_enabled,
+      daily: await daily.summary(user), learning: await learningBrief(user),
     });
   });
+  /* the level card on the dashboard: level, weakest skill, reassessment recommendation */
+  async function learningBrief(user) {
+    const st = await learning.status(user);
+    return { level: st.level, source: st.source, onboarded: st.onboarded, skills: st.skills, weaknesses: st.weaknesses, strengths: st.strengths, recommendation: st.recommendation, progress: st.progress, plan: st.plan, assessmentLevel: st.assessment ? st.assessment.level : null, lastChange: st.history[0] || null };
+  }
   const mistakesAvailable = async (userId) => (await attempts.mistakeIds(userId, 50)).length;
 
   /* ---------- lessons ---------- */

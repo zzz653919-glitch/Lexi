@@ -6,13 +6,15 @@ const { now, clean, HttpError, bad, randomToken, sha256, validTimezone } = requi
 
 const AVATARS = ['sprout', 'sun', 'moon', 'wave', 'leaf', 'star', 'bolt', 'cloud'];
 const NAME_RE = /^[\p{L}\p{N} .'_-]{2,30}$/u;
-const LEVELS = ['A1', 'A2', 'B1', 'B2', 'C1'];
+const LV = require('../lib/levels');
+const { pathLevel } = require('../lib/learning');
+const LENGTHS = ['short', 'normal', 'long'];
 const TRANSLATION_LANGUAGES = ['uz', 'ru'];
 const LEARNING_LANGUAGES = ['en'];
 
 const publicUser = (u) => ({
   id: u.id, email: u.email, displayName: u.display_name, role: u.role, avatar: u.avatar, timezone: u.timezone, uiLanguage: u.ui_language, translationLanguage: u.translation_language, learningLanguage: u.learning_language,
-  courseId: u.course_id, startLevel: u.start_level, dailyGoalXp: u.daily_goal_xp, xpTotal: u.xp_total, leaderboardOptIn: !!u.leaderboard_opt_in, createdAt: u.created_at,
+  courseId: u.course_id, startLevel: u.start_level, cefrLevel: u.cefr_level || null, levelSource: u.level_source, onboarded: !!u.onboarded, lessonLength: u.lesson_length || 'normal', dailyGoalXp: u.daily_goal_xp, xpTotal: u.xp_total, leaderboardOptIn: !!u.leaderboard_opt_in, createdAt: u.created_at,
 });
 
 function validateProfile(input, settings, { partial }) {
@@ -26,7 +28,8 @@ function validateProfile(input, settings, { partial }) {
   // the language translations are shown in (Uzbek or Russian) and the language being learned are independent of the interface language
   if (has('translationLanguage')) { if (!TRANSLATION_LANGUAGES.includes(input.translationLanguage)) errors.translationLanguage = 'val.translation_language'; else v.translation_language = input.translationLanguage; }
   if (has('learningLanguage')) { if (!LEARNING_LANGUAGES.includes(input.learningLanguage)) errors.learningLanguage = 'val.learning_language'; else v.learning_language = input.learningLanguage; }
-  if (has('startLevel')) { if (!LEVELS.includes(input.startLevel)) errors.startLevel = 'val.start_level'; else v.start_level = input.startLevel; }
+  if (has('startLevel')) { if (!LV.valid(input.startLevel)) errors.startLevel = 'val.start_level'; else v.start_level = input.startLevel; }
+  if (has('lessonLength')) { if (!LENGTHS.includes(input.lessonLength)) errors.lessonLength = 'val.lesson_length'; else v.lesson_length = input.lessonLength; }
   if (has('leaderboardOptIn')) { if (typeof input.leaderboardOptIn !== 'boolean') errors.leaderboardOptIn = 'val.boolean'; else v.leaderboard_opt_in = input.leaderboardOptIn ? 1 : 0; }
   return { errors, values: v };
 }
@@ -57,11 +60,12 @@ module.exports = function authRoutes({ db, settings, auth, core, opts }) {
     if (Object.keys(errors).length) throw bad('err.fix_fields', errors);
     if (await db.get('SELECT 1 x FROM users WHERE email = ?', email)) throw bad('err.fix_fields', { email: 'val.email_taken' });
     const v = p.values;
+    const chosenLevel = b.startLevel !== undefined && b.startLevel !== null && b.startLevel !== '';   // an explicit level skips the welcome screen
     const course = await core.courseFor({ course_id: null });
     const t = now();
     // new accounts are always plain learners; roles can only be changed by an administrator
-    const id = (await db.run('INSERT INTO users (email, display_name, password_hash, role, avatar, timezone, ui_language, translation_language, course_id, start_level, daily_goal_xp, hearts, hearts_updated_at, created_at, last_active_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-      email, v.display_name, A.hashPassword(b.password), 'learner', v.avatar, v.timezone || 'UTC', v.ui_language, v.translation_language, course ? course.id : null, v.start_level, v.daily_goal_xp, s.max_hearts, t, t, t)).id;
+    const id = (await db.run('INSERT INTO users (email, display_name, password_hash, role, avatar, timezone, ui_language, translation_language, course_id, start_level, daily_goal_xp, hearts, hearts_updated_at, created_at, last_active_at, cefr_level, level_source, level_changed_at, onboarded) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      email, v.display_name, A.hashPassword(b.password), 'learner', v.avatar, v.timezone || 'UTC', v.ui_language, v.translation_language, course ? course.id : null, pathLevel(v.start_level), v.daily_goal_xp, s.max_hearts, t, t, t, chosenLevel ? v.start_level : null, chosenLevel ? 'manual' : 'default', chosenLevel ? t : null, chosenLevel ? 1 : 0)).id;
     const sess = await auth.createSession(id, req);
     auth.setCookie(res, sess.token);
     req.user = await core.userById(id); req.session = { csrf_token: sess.csrf };
