@@ -21,7 +21,7 @@ const PUBLIC = path.join(__dirname, '..', 'public');
 function createApp(options = {}) {
   const opts = {
     dbPath: path.join(__dirname, '..', 'data', 'lexi.sqlite'), dataDir: path.join(__dirname, '..', 'data'),
-    rateLimit: true, quiet: false, secureCookies: false, publicUrl: '', trustProxy: false, seedSample: false, settingsTtl: 2000, ...options,
+    rateLimit: true, quiet: false, secureCookies: false, publicUrl: '', trustProxy: false, seedSample: false, settingsTtl: 15000, ...options,
   };
   const db = dbLib.open(opts.databaseUrl || opts.dbPath, { authToken: opts.databaseAuthToken });
   const settings = settingsLib.make(db, { ttl: opts.settingsTtl });

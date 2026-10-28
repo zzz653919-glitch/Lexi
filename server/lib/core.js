@@ -142,12 +142,16 @@ function make(db, settings) {
      finished, an "open" lesson is always open, a "prerequisite" lesson opens when its chosen lesson is finished. */
   async function buildPath(user, course, lang) {
     const T = (row, f) => L10N.text(row, f, lang);
-    const levels = await db.all('SELECT * FROM levels WHERE course_id = ? ORDER BY position, id', course.id);
-    const units = await db.all('SELECT u.* FROM units u JOIN levels l ON l.id = u.level_id WHERE l.course_id = ? ORDER BY u.position, u.id', course.id);
-    const lessons = await db.all("SELECT l.*, u.level_id FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE lv.course_id = ? AND l.status = 'published' ORDER BY l.position, l.id", course.id);
-    const prog = Object.fromEntries((await db.all('SELECT * FROM user_progress WHERE user_id = ?', user.id)).map((p) => [p.lesson_id, p]));
-    const counts = Object.fromEntries((await db.all("SELECT lesson_id, COUNT(*) n FROM exercises WHERE status = 'published' GROUP BY lesson_id")).map((r) => [r.lesson_id, r.n]));
-    const open = (await db.all("SELECT lesson_id FROM lesson_attempts WHERE user_id = ? AND status = 'in_progress' AND lesson_id IS NOT NULL", user.id)).map((r) => r.lesson_id);
+    const [levels, units, lessons, progRows, countRows, openRows] = await Promise.all([
+      db.all('SELECT * FROM levels WHERE course_id = ? ORDER BY position, id', course.id),
+      db.all('SELECT u.* FROM units u JOIN levels l ON l.id = u.level_id WHERE l.course_id = ? ORDER BY u.position, u.id', course.id),
+      db.all("SELECT l.*, u.level_id FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE lv.course_id = ? AND l.status = 'published' ORDER BY l.position, l.id", course.id),
+      db.all('SELECT * FROM user_progress WHERE user_id = ?', user.id),
+      db.all("SELECT lesson_id, COUNT(*) n FROM exercises WHERE status = 'published' GROUP BY lesson_id"),
+      db.all("SELECT lesson_id FROM lesson_attempts WHERE user_id = ? AND status = 'in_progress' AND lesson_id IS NOT NULL", user.id)]);
+    const prog = Object.fromEntries(progRows.map((p) => [p.lesson_id, p]));
+    const counts = Object.fromEntries(countRows.map((r) => [r.lesson_id, r.n]));
+    const open = openRows.map((r) => r.lesson_id);
     const startPos = (levels.find((l) => l.code === user.start_level) || levels[0] || { position: 0 }).position;
     const out = { course: { id: course.id, slug: course.slug, title: T(course, 'title'), description: T(course, 'description'), track: course.track }, levels: [] };
     let prevLevel = null, order = [];

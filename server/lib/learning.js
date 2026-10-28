@@ -82,10 +82,9 @@ function make(db, settings) {
     return { from: user.cefr_level, to: next };
   }
 
-  async function recommendation(user) {
+  async function recommendation(user, known) {
     const s = S();
-    const last = await db.get("SELECT completed_at FROM assessments WHERE user_id = ? AND status = 'completed' ORDER BY id DESC LIMIT 1", user.id);
-    const r = await recent(user.id, user);
+    const [last, r] = await Promise.all([db.get("SELECT completed_at FROM assessments WHERE user_id = ? AND status = 'completed' ORDER BY id DESC LIMIT 1", user.id), known || recent(user.id, user)]);
     if (!last && user.level_source !== 'legacy') return { reassess: true, reason: 'never' };
     if (r.answers >= Math.min(20, s.adapt_min_answers) && r.accuracy !== null && r.accuracy < s.adapt_low_accuracy) return { reassess: true, reason: 'struggling', accuracy: r.accuracy };
     if (last && Date.now() - Date.parse(last.completed_at) > s.placement_valid_days * 86400000) return { reassess: true, reason: 'old', days: s.placement_valid_days };
@@ -126,6 +125,17 @@ function make(db, settings) {
       .map((h) => ({ id: h.id, level: h.level, previous: h.previous, source: h.source, assessmentId: h.assessment_id, at: h.created_at }));
   }
 
+  /* the small version for the dashboard: a handful of queries, run in parallel */
+  async function brief(user) {
+    const u = await db.get('SELECT * FROM users WHERE id = ?', user.id);
+    const [sk, progress, last, change, pl] = await Promise.all([skills(u.id, u.cefr_level), recent(u.id, u), db.get("SELECT result_level FROM assessments WHERE user_id = ? AND status = 'completed' ORDER BY id DESC LIMIT 1", u.id),
+      db.get('SELECT level, previous, source, created_at FROM user_level_history WHERE user_id = ? ORDER BY id DESC LIMIT 1', u.id), plan(u)]);
+    const overall = LV.index(u.cefr_level || 'A1');
+    return { level: u.cefr_level, source: u.level_source, onboarded: !!u.onboarded, skills: sk, progress, plan: pl, assessmentLevel: last ? last.result_level : null,
+      weaknesses: sk.filter((x) => x.samples > 0 && overall - x.score >= 0.7).map((x) => x.skill), strengths: sk.filter((x) => x.samples > 0 && x.score - overall >= 0.7).map((x) => x.skill),
+      recommendation: await recommendation(u, progress), lastChange: change ? { level: change.level, previous: change.previous, source: change.source, at: change.created_at } : null };
+  }
+
   /* everything the dashboard / profile need to know about the learner's level */
   async function status(user) {
     const full = await db.get('SELECT * FROM users WHERE id = ?', user.id);
@@ -142,7 +152,7 @@ function make(db, settings) {
     };
   }
 
-  return { setLevel, applyAssessment, recordEvidence, maybeLevelUp, recommendation, buildPlan, plan, status, skills, history, pathLevel };
+  return { brief, setLevel, applyAssessment, recordEvidence, maybeLevelUp, recommendation, buildPlan, plan, status, skills, history, pathLevel };
 }
 
 module.exports = { make, pathLevel };
