@@ -3,6 +3,6 @@
   "installCommand": "npm ci --omit=dev",
   "buildCommand": "node scripts/vercel-build.js",
   "outputDirectory": "vercel-static",
-  "functions": { "api/index.js": { "includeFiles": "{server,shared,locales,public}/**", "maxDuration": 30 } },
+  "functions": { "api/index.js": { "includeFiles": "{server/**,shared/**,locales/**,public/index.html}", "maxDuration": 30 } },
   "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
 }

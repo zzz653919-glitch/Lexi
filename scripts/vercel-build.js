@@ -28,4 +28,15 @@ const root = path.join(__dirname, '..');
   const skip = new Set(['admin', 'admin-login.html', 'index.html'].map((n) => path.join(root, 'public', n)));
   fs.cpSync(path.join(root, 'public'), out, { recursive: true, filter: (src) => !skip.has(src) });
   console.log('Static files copied to vercel-static/');
+
+  // the admin panel is packed into a JSON file that the function serves to signed-in staff (see server/app.js)
+  const types = { '.js': 'application/javascript', '.css': 'text/css', '.html': 'text/html', '.json': 'application/json', '.svg': 'image/svg+xml' };
+  const bundle = {};
+  const add = (abs, rel) => { bundle[rel] = { type: types[path.extname(abs)] || 'application/octet-stream', data: fs.readFileSync(abs).toString('base64') }; };
+  const walkDir = (dir, rel) => { for (const e of fs.readdirSync(dir, { withFileTypes: true })) { const abs = path.join(dir, e.name), r = rel + '/' + e.name; if (e.isDirectory()) walkDir(abs, r); else add(abs, r); } };
+  walkDir(path.join(root, 'public', 'admin'), 'admin');
+  add(path.join(root, 'public', 'admin-login.html'), 'admin-login.html');
+  fs.mkdirSync(path.join(root, 'server', 'generated'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'server', 'generated', 'admin-bundle.json'), JSON.stringify(bundle));
+  console.log(`Admin panel packed (${Object.keys(bundle).length} files).`);
 })().catch((e) => { console.error('Build failed:', e.message); process.exit(1); });

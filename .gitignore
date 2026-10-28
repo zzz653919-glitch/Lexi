@@ -5,3 +5,4 @@ backups/*.sqlite
 .env
 *.log
 vercel-static/
+server/generated/
