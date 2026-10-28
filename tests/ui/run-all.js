@@ -2,7 +2,7 @@
 const { spawnSync } = require('node:child_process');
 const path = require('node:path');
 let failed = 0;
-for (const f of ['learner.ui.js', 'admin.ui.js', 'responsive.ui.js', 'i18n.ui.js']) {
+for (const f of ['learner.ui.js', 'admin.ui.js', 'responsive.ui.js', 'i18n.ui.js', 'motion.ui.js']) {
   console.log(`\n=== ${f} ===`);
   const r = spawnSync(process.execPath, ['--disable-warning=ExperimentalWarning', path.join(__dirname, f)], { stdio: 'inherit' });
   if (r.status !== 0) failed++;

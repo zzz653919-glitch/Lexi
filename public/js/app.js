@@ -3,6 +3,9 @@ import { api, get, session, ApiError } from './api.js';
 import { applyBrand } from './brand.js';
 import { t, n, init as initI18n, onChange, lang } from './i18n.js';
 import { languageSwitcher } from './lang-switcher.js';
+import * as splash from './splash.js';
+import { countUp, play } from './motion.js';
+import { showLoader } from './loaders.js';
 
 const routes = [];
 const route = (pattern, loader, opts = {}) => routes.push({ re: new RegExp('^' + pattern.replace(/:(\w+)/g, '(?<$1>[^/]+)') + '/?$'), loader, ...opts });
@@ -34,7 +37,10 @@ const NAV = [
   { key: 'achievements', href: '/achievements', label: 'nav.achievements', icon: 'star' },
   { key: 'profile', href: '/profile', label: 'nav.profile', icon: 'user', mobile: true },
 ];
-const stats = { data: null };
+const stats = { data: null, prev: null };
+const LOADER_KIND = [[/^\/learn/, 'progress'], [/^\/achievements/, 'progress'], [/^\/vocabulary/, 'vocab'], [/^\/attempt\//, 'lesson'], [/^\/(review|practice)/, 'quiz']];
+const loaderKind = (path) => (LOADER_KIND.find(([re]) => re.test(path)) || [null, 'generic'])[1];
+let firstPaint = true;
 const siteName = () => (session.config ? session.config.siteName : 'Lexi Learn');
 
 export function navigate(path, replace = false) {
@@ -77,14 +83,21 @@ function statChips(into) {
   clear(into);
   const s = stats.data;
   if (!s) return;
+  const prev = stats.prev;
+  const xpNum = h('span', { class: 'num' }, String(s.xpTotal)), streakNum = h('span', { class: 'num' }, String(s.streak.current));
+  const flame = h('span', { class: 'chip flame' + (s.streak.current > 0 ? ' lit' : ''), title: t('stats.streak') }, icon('flame'), streakNum, h('span', { class: 'sr-only' }, ' ' + t('stats.streak')));
+  const bolt = h('span', { class: 'chip bolt', title: t('stats.total_xp') }, icon('bolt'), xpNum, h('span', { class: 'sr-only' }, ' ' + t('stats.xp')));
+  // real changes only: the XP counter counts up from the old total, the streak chip pops when the streak grew
+  if (prev && s.xpTotal > prev.xpTotal) { countUp(xpNum, prev.xpTotal, s.xpTotal); play(bolt, 'stat-pop'); }
+  if (prev && s.streak.current > prev.streak.current) play(flame, 'stat-pop', 700);
   into.append(
-    h('span', { class: 'chip flame', title: t('stats.streak') }, icon('flame'), String(s.streak.current), h('span', { class: 'sr-only' }, ' ' + t('stats.streak'))),
-    h('span', { class: 'chip bolt', title: t('stats.total_xp') }, icon('bolt'), String(s.xpTotal), h('span', { class: 'sr-only' }, ' ' + t('stats.xp'))),
+    flame,
+    bolt,
     s.hearts.enabled ? h('span', { class: 'chip heart', title: t('stats.hearts') }, icon('heart'), String(s.hearts.hearts), h('span', { class: 'sr-only' }, ' ' + t('stats.hearts'))) : null);
 }
 export async function refreshStats() {
   if (!session.user) return;
-  try { stats.data = await get('/me/stats'); if (shell) { statChips(shell.chipBox); statChips(shell.sideChips); } } catch (_) { /* optional */ }
+  try { stats.prev = stats.data; stats.data = await get('/me/stats'); if (shell) { statChips(shell.chipBox); statChips(shell.sideChips); stats.prev = null; } } catch (_) { /* optional */ }
   return stats.data;
 }
 
@@ -108,12 +121,15 @@ async function render() {
   if (match.auth && !session.user) return navigate('/login?next=' + encodeURIComponent(path + location.search), true);
   if (match.guest && session.user) return navigate('/', true);
   document.body.classList.toggle('focus', !!match.focus);
-  if (shell) shell.content.replaceChildren(spinner());
+  // a loader appears only if the page really takes a moment to load (and is removed as soon as it has loaded)
+  const stopLoader = shell && !firstPaint ? showLoader(shell.content, loaderKind(path), { onRetry: () => render() }) : () => {};
   try {
     const res = await match.loader({ params, query: new URLSearchParams(location.search), navigate, refreshStats });
+    stopLoader();
     if (token !== navToken) return;
     renderOutcome(token, res, match);
   } catch (e) {
+    stopLoader();
     if (token !== navToken) return;
     if (e instanceof ApiError && e.status === 503) return;
     renderOutcome(token, { el: h('div', { class: 'card center' }, h('h1', {}, t('app.error_title')), h('p', { class: 'muted' }, e.message || t('app.error_text')), h('button', { class: 'btn', onclick: () => render() }, t('common.try_again'))), title: t('app.error_title'), nav: '' }, match || {});
@@ -127,6 +143,7 @@ function renderOutcome(token, res, match) {
   if (wantsShell) {
     if (!shell || !root.contains(shell.el)) { shell = buildShell(); root.replaceChildren(shell.el); statChips(shell.chipBox); statChips(shell.sideChips); }
     shell.content.replaceChildren(res.el);
+    transition(res.el, match);
     setActive(res.nav);
     window.scrollTo(0, 0);
     shell.main.focus({ preventScroll: true });
@@ -134,21 +151,37 @@ function renderOutcome(token, res, match) {
   } else {
     shell = null;
     root.replaceChildren(res.el);
+    transition(res.el, match);
     window.scrollTo(0, 0);
   }
+  if (firstPaint) { firstPaint = false; splash.say(t('load.almost')); setTimeout(splash.finish, 320); }
+}
+/* fade / slide / scale the new page in (lessons zoom in); the class is removed afterwards so it can play again */
+function transition(node, match) {
+  if (!node || !node.classList) return;
+  const cls = match && match.focus ? 'page-zoom' : 'page-in';
+  node.classList.add(cls);
+  setTimeout(() => node.classList.remove(cls), 450);
 }
 
 export async function boot() {
   session.onUnauthorized = () => { session.user = null; navigate('/login', true); };
-  session.onMaintenance = showMaintenance;
+  session.onMaintenance = (m) => { splash.dismiss(); showMaintenance(m); };
   try {
+    // real start-up stages: 1 texts of the device language, 2 site settings + account, 3 the account's language, 4 the first page
+    splash.step(0, 4);
+    await initI18n({ user: null, config: null });
+    splash.step(1, 4, t('load.prepare'));
     const [cfg, me] = await Promise.all([get('/public/config'), get('/auth/me')]);
     session.config = cfg; session.user = me.user; session.csrf = me.csrfToken;
     if (cfg.brandColor) applyBrand(cfg.brandColor);
+    splash.step(2, 4);
     await initI18n({ user: me.user, config: cfg });
-    if (cfg.maintenance && !(me.user && ['admin', 'editor'].includes(me.user.role)) && location.pathname !== '/login') return showMaintenance(cfg.maintenance);
+    splash.step(3, 4, t('load.lessons'));
+    if (cfg.maintenance && !(me.user && ['admin', 'editor'].includes(me.user.role)) && location.pathname !== '/login') { splash.dismiss(); return showMaintenance(cfg.maintenance); }
   } catch (e) {
     try { await initI18n({ user: null, config: null }); } catch (_) { /* texts stay as keys */ }
+    splash.dismiss();
     root.replaceChildren(h('main', { class: 'guest' }, h('div', { class: 'card auth-card center' }, h('h1', {}, t('app.cannot_connect')), h('p', { class: 'muted' }, e.message), (e.data && e.data.notApi) || e.status === 0 ? h('p', { class: 'small muted' }, t('app.not_server')) : null, h('button', { class: 'btn', onclick: () => location.reload() }, t('app.retry')))));
     return;
   }

@@ -1,6 +1,7 @@
 import { h, icon, speak, canSpeak, toast, spinner } from '../ui.js';
 import { get, post } from '../api.js';
 import { t, n } from '../i18n.js';
+import { showLoader } from '../loaders.js';
 
 const FILTERS = ['all', 'new', 'learning', 'due', 'difficult'];
 const MODES = [['flashcards', 'cards'], ['choice', 'list'], ['typed', 'edit'], ['spelling', 'volume']];
@@ -14,10 +15,11 @@ export default async function vocabulary({ query }) {
   const chips = h('div', { class: 'filter-chips', role: 'group', 'aria-label': t('vocab.filter') });
 
   async function load() {
-    list.replaceChildren(spinner());
+    const stop = showLoader(list, 'vocab', { compact: true, onRetry: () => load() });
     const params = new URLSearchParams({ filter: st.filter, page: String(st.page), pageSize: '15' });
     if (st.q) params.set('q', st.q); if (st.level) params.set('level', st.level);
-    const data = await get('/vocabulary?' + params);
+    let data;
+    try { data = await get('/vocabulary?' + params); } finally { stop(); }
     chips.replaceChildren(...FILTERS.map((v) => h('button', { type: 'button', class: 'fchip', 'aria-pressed': String(st.filter === v), onclick: () => { st.filter = v; st.page = 1; load(); } }, t('vocab.filter_' + v))));
     if (!data.items.length) list.replaceChildren(h('div', { class: 'card empty' }, h('img', { src: '/img/mascot.svg', alt: '' }), h('p', {}, st.filter === 'all' && !st.q ? t('vocab.empty') : t('vocab.no_match'))));
     else list.replaceChildren(...data.items.map(wordCard));

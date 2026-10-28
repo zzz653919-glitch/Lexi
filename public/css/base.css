@@ -83,7 +83,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .btn.ghost:hover { background: var(--brand-soft); }
 .btn.small { min-height: 38px; padding: 6px 14px; font-size: .8rem; box-shadow: 0 3px 0 var(--bd); }
 .btn.block { display: flex; width: 100%; }
-@media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .001ms !important; scroll-behavior: auto !important; } }
+/* reduced motion is handled in motion.css (system setting or the Profile → Animations choice) */
 
 /* ---------- cards, forms ---------- */
 .card { background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius); padding: 18px; }

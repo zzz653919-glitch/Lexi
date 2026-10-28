@@ -1,4 +1,19 @@
+import { loader } from '/js/loaders.js';
 import { h, icon, get, post, patch, api, table, tag, formDialog, toast, iconBtn, confirmDialog, pager, qs, field, modal, ApiError, t } from '../common.js';
+
+/* the real number of words in the pasted / chosen content (JSON array or CSV rows without the header) */
+function countRows(format, content) {
+  const text = String(content || '');
+  if (format === 'json') { try { const j = JSON.parse(text); const a = Array.isArray(j) ? j : j && j.items; return Array.isArray(a) ? a.length : 0; } catch (_) { return 0; } }
+  let rows = 0, inQ = false, has = false;
+  for (const ch of text) {
+    if (ch === '"') { inQ = !inQ; has = true; }
+    else if (ch === '\n' && !inQ) { if (has) rows++; has = false; }
+    else if (ch !== '\r') has = true;
+  }
+  if (has) rows++;
+  return Math.max(0, rows - 1);
+}
 
 const POS = ['', 'noun', 'verb', 'adjective', 'adverb', 'pronoun', 'preposition', 'conjunction', 'interjection', 'phrase', 'phrasal verb', 'determiner', 'other'];
 const CEFR = ['', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
@@ -56,7 +71,7 @@ export default async function vocabulary({ query }) {
     file.addEventListener('change', async () => { const f = file.files[0]; if (!f) return; if (f.size > 2000000) return toast(t('adm.file_too_large', { mb: 2 }), 'error'); text.value = await f.text(); fmtF.value = /\.json$/i.test(f.name) ? 'json' : 'csv'; });
     const out = h('div', {});
     const r = await formDialog({ title: t('adm.import_vocab'), submitLabel: t('adm.import'), wide: true, fields: [], extra: h('div', {}, fmtF.el, course.el, h('div', { class: 'file-drop' }, file), text.el, out),
-      save: async () => { out.replaceChildren(); try { return await post('/admin/vocabulary/import', { format: fmtF.value, content: text.value, courseId: course.value ? Number(course.value) : null }); } catch (e) { if (e.data && e.data.problems) out.replaceChildren(h('div', { class: 'problems' }, e.message, h('ul', {}, e.data.problems.map((p) => h('li', {}, t('adm.row_problems', { row: p.row, problems: p.problems.join(' ') })))))); throw e; } } });
+      save: async () => { out.replaceChildren(loader('import', { count: countRows(fmtF.value, text.value), slowAfter: 0 })); try { return await post('/admin/vocabulary/import', { format: fmtF.value, content: text.value, courseId: course.value ? Number(course.value) : null }); } catch (e) { out.replaceChildren(); if (e.data && e.data.problems) out.replaceChildren(h('div', { class: 'problems' }, e.message, h('ul', {}, e.data.problems.map((p) => h('li', {}, t('adm.row_problems', { row: p.row, problems: p.problems.join(' ') })))))); throw e; } } });
     if (r) { toast(t('adm.import_result', { added: r.added, skipped: r.skipped }), 'success', 5000); load(); }
   }
   let timer; q.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { st.q = q.value.trim(); st.page = 1; load(); }, 300); });

@@ -3,6 +3,8 @@ import { api, get, session, ApiError } from '/js/api.js';
 import { applyBrand } from '/js/brand.js';
 import { t, init as initI18n, onChange } from '/js/i18n.js';
 import { languageSwitcher } from '/js/lang-switcher.js';
+import '/js/motion.js';
+import { showLoader } from '/js/loaders.js';
 
 const routes = [];
 const route = (pattern, loader, roles) => routes.push({ re: new RegExp('^' + pattern.replace(/:(\w+)/g, '(?<$1>[^/]+)') + '/?$'), loader, roles });
@@ -62,16 +64,19 @@ async function render() {
   if (!shell) { shell = buildShell(); root.replaceChildren(shell.el); }
   const user = session.user;
   if (m && m.roles && !m.roles.includes(user.role)) return navigate('/admin/courses', true);
-  shell.main.replaceChildren(spinner());
+  const stopLoader = showLoader(shell.main, 'generic', { onRetry: () => render() });
   if (!m) { shell.main.replaceChildren(h('div', { class: 'card center' }, h('h1', {}, t('adm.page_not_found')), h('a', { class: 'btn', href: user.role === 'admin' ? '/admin' : '/admin/courses' }, t('common.back')))); return; }
   try {
     const res = await m.loader({ params, query: new URLSearchParams(location.search), navigate });
+    stopLoader();
     if (token !== navToken) return;
     document.title = (res.title ? res.title + ' · ' : '') + t('adm.admin');
     shell.main.replaceChildren(res.el);
+    res.el.classList.add('page-in'); setTimeout(() => res.el.classList.remove('page-in'), 450);
     document.querySelectorAll('[data-nav]').forEach((a) => { if (a.dataset.nav === res.nav) a.setAttribute('aria-current', 'page'); else a.removeAttribute('aria-current'); });
     window.scrollTo(0, 0); shell.main.focus({ preventScroll: true });
   } catch (e) {
+    stopLoader();
     if (token !== navToken) return;
     shell.main.replaceChildren(h('div', { class: 'card center' }, h('h1', {}, e.status === 404 ? t('err.not_found') : t('app.error_title')), h('p', { class: 'muted' }, e.message), h('button', { class: 'btn', onclick: () => render() }, t('app.retry'))));
   }
