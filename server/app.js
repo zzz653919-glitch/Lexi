@@ -43,7 +43,8 @@ function createApp(options = {}) {
     if (!ready) ready = (async () => {
       await dbLib.migrate(db);
       if (opts.seedSample) seeded = await seed.ensureSample(db);
-      await seed.ensureAssessmentContent(db);
+      // built-in test content is optional: if it cannot be written right now the site still opens (it is retried on the next start)
+      try { await seed.ensureAssessmentContent(db); } catch (e) { if (!opts.quiet) console.error('[seed] placement content:', e.message); }
       await Promise.all([settings.refresh(true), i18n.refresh(true)]);
     })().catch((e) => { ready = null; throw e; });
     return ready;

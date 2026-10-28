@@ -18,6 +18,8 @@ const root = path.join(__dirname, '..');
         const r = await require('../server/seed').ensureSample(db);
         console.log(r.created ? `Sample content created (${r.exercises} exercises, ${r.vocabulary} words).` : 'Sample content already present.');
       }
+      const c = await require('../server/seed').ensureAssessmentContent(db);   // placement questions, grammar, word pool (once)
+      console.log(c.questions ? `Placement content created (${c.questions} questions, ${c.grammar} grammar lessons, ${c.vocabulary} words).` : 'Placement content already present.');
     } finally { await db.close(); }
   } else {
     console.warn('DATABASE_URL is not set: the database was not prepared. Set it in the Vercel project settings (Production and Preview).');
