@@ -85,7 +85,7 @@ The interface is available in Uzbek (default), Russian and English, switchable f
 
 ## Configuration
 
-Environment variables (all optional): `PORT` (3000), `HOST` (127.0.0.1), `COOKIE_SECURE=1` (set behind HTTPS), `TRUST_PROXY=1` (behind a reverse proxy), `PUBLIC_URL` (used in password-reset links), `LEXI_NO_SEED=1` (do not create the sample course), and for the CLI `LEXI_DB` (database file, default `data/lexi.sqlite`).
+Environment variables (all optional): `PORT` (3000), `HOST` (127.0.0.1 locally, 0.0.0.0 when `NODE_ENV=production` or `PORT` is set), `COOKIE_SECURE=1` (set behind HTTPS), `TRUST_PROXY=1` (behind a reverse proxy), `PUBLIC_URL` (used in password-reset links), `LEXI_NO_SEED=1` (do not create the sample course), and for the CLI `LEXI_DB` (database file) / `LEXI_DATA_DIR` (database and uploads directory, default `data/`). To publish the site see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 Site behaviour (names, XP, hearts, registration, maintenance mode …) is configured in the admin panel, not in files.
 
 Commands: `npm run migrate` · `npm run seed` · `npm run create-admin` · `npm run backup` (consistent copy into `backups/`) · `npm run import-legacy-vocab` (imports the ~4,200 old Lexi v1 words as **draft** entries for review).

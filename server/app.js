@@ -42,6 +42,9 @@ function createApp(options = {}) {
     next();
   });
 
+  /* health check for hosting platforms and uptime monitors (no authentication, no data) */
+  app.get('/healthz', (req, res) => { try { db.get('SELECT 1 x'); res.setHeader('Cache-Control', 'no-store'); res.json({ ok: true }); } catch (e) { res.status(503).json({ ok: false }); } });
+
   /* ---------- uploaded audio (public, fixed content type from the database) ---------- */
   app.get('/shared/i18n-core.js', (req, res) => { res.setHeader('Cache-Control', 'no-cache'); res.type('application/javascript').sendFile(path.join(__dirname, '..', 'shared', 'i18n-core.js')); });
   app.get('/uploads/:id', (req, res) => {
@@ -104,10 +107,13 @@ function createApp(options = {}) {
 
   /* ---------- learner app ---------- */
   app.use(express.static(PUBLIC, { index: false, redirect: false, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
+  /* client-side routes of the single-page app: opening one directly (or reloading it) serves the app shell;
+     any other path still gets the shell (so the app can show its own "page not found" screen) but with a real 404 status */
+  const CLIENT_ROUTES = /^\/(?:login|register|forgot|reset|learn|attempt\/[^/]+|practice|vocabulary|review|leaderboard|achievements|profile)?\/?$/;
   app.get(/^\/(?!api\/|uploads\/).*/, (req, res, next) => {
     if (path.extname(req.path)) return next();
     res.setHeader('Cache-Control', 'no-store');
-    res.sendFile(path.join(PUBLIC, 'index.html'));
+    res.status(CLIENT_ROUTES.test(req.path) ? 200 : 404).sendFile(path.join(PUBLIC, 'index.html'));
   });
 
   app.use((err, req, res, next) => {   // eslint-disable-line no-unused-vars

@@ -1,0 +1,21 @@
+# Render.com blueprint: one web service with a persistent disk for the SQLite database and uploaded audio.
+# (SQLite needs a persistent disk, so this needs a paid instance type; free instances lose their files on restart.)
+services:
+  - type: web
+    name: lexi-learn
+    runtime: node
+    plan: starter
+    buildCommand: npm ci --omit=dev
+    startCommand: npm start
+    healthCheckPath: /healthz
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LEXI_DATA_DIR
+        value: /var/data
+      - key: NODE_VERSION
+        value: 22.12.0
+    disk:
+      name: lexi-data
+      mountPath: /var/data
+      sizeGB: 1

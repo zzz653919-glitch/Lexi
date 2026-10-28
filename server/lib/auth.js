@@ -43,9 +43,10 @@ function make(db, { secureCookies = false } = {}) {
     db.run('INSERT INTO sessions (token_hash, user_id, csrf_token, created_at, expires_at, ip, user_agent) VALUES (?,?,?,?,?,?,?)', sha256(token), userId, csrf, now(), expires, String(req.ip || '').slice(0, 64), String(req.get('user-agent') || '').slice(0, 200));
     return { token, csrf, expires };
   }
-  const cookieFlags = () => `; Path=/; HttpOnly; SameSite=Lax${secureCookies ? '; Secure' : ''}`;
-  function setCookie(res, token) { res.append('Set-Cookie', `${COOKIE}=${encodeURIComponent(token)}${cookieFlags()}; Max-Age=${SESSION_DAYS * 86400}`); }
-  function clearCookie(res) { res.append('Set-Cookie', `${COOKIE}=${cookieFlags()}; Max-Age=0`); }
+  /* Secure when forced by COOKIE_SECURE=1 or when the request itself arrived over HTTPS (behind a proxy this needs trust proxy) */
+  const cookieFlags = (res) => `; Path=/; HttpOnly; SameSite=Lax${secureCookies || (res.req && res.req.secure) ? '; Secure' : ''}`;
+  function setCookie(res, token) { res.append('Set-Cookie', `${COOKIE}=${encodeURIComponent(token)}${cookieFlags(res)}; Max-Age=${SESSION_DAYS * 86400}`); }
+  function clearCookie(res) { res.append('Set-Cookie', `${COOKIE}=${cookieFlags(res)}; Max-Age=0`); }
 
   // attaches req.user / req.session when the cookie holds a valid session of an active account
   function attach(req, res, next) {

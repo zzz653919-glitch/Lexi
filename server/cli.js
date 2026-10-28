@@ -8,7 +8,8 @@ const A = require('./lib/auth');
 const { now } = require('./lib/util');
 const settingsLib = require('./lib/settings');
 
-const dbPath = process.env.LEXI_DB || path.join(__dirname, '..', 'data', 'lexi.sqlite');
+const dataDir = process.env.LEXI_DATA_DIR ? path.resolve(process.env.LEXI_DATA_DIR) : path.join(__dirname, '..', 'data');
+const dbPath = process.env.LEXI_DB ? path.resolve(process.env.LEXI_DB) : path.join(dataDir, 'lexi.sqlite');
 const cmd = process.argv[2];
 
 function openDb() { const db = dbLib.open(dbPath); const applied = dbLib.migrate(db); return { db, applied }; }
