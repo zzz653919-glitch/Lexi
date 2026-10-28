@@ -1,6 +1,7 @@
 /* Lesson attempts: start / resume, grade one answer, finish. All progress and XP is decided here, on the server. */
 const { now, HttpError, bad, randomToken, rng } = require('./util');
 const X = require('./exercises');
+const L10N = require('./localize');
 
 function make(db, settings, core) {
   const S = () => settings.all();
@@ -16,74 +17,78 @@ function make(db, settings, core) {
         AND NOT EXISTS (SELECT 1 FROM exercise_responses r2 JOIN lesson_attempts a2 ON a2.id = r2.attempt_id WHERE r2.user_id = r.user_id AND r2.exercise_id = r.exercise_id AND r2.is_correct = 1 AND r2.id > r.id AND (r2.is_retry = 0 OR a2.kind = 'mistakes')))
       ORDER BY (SELECT MAX(r4.id) FROM exercise_responses r4 WHERE r4.user_id = ? AND r4.exercise_id = e.id AND r4.is_correct = 0) DESC LIMIT ?`, userId, userId, limit).map((r) => r.id);
   }
-  function exercisePayload(attempt, id) {
-    const ex = exerciseRow(id);
-    return X.payload(ex, optionsOf(id), attempt.seed);
+  const translationLanguage = (user) => core.userById(user.id).translation_language;
+  // the exercise as this learner should see (and be graded on) it: variants for their translation language are applied
+  const localized = (id, tl) => L10N.exercise(exerciseRow(id), optionsOf(id), tl);
+  function exercisePayload(attempt, id, tl) {
+    const { row, options } = localized(id, tl);
+    return X.payload(row, options, attempt.seed);
   }
 
   /* the screen the learner should see right now */
-  function view(attemptId, user) {
+  function view(attemptId, user, lang) {
     const a = db.get('SELECT * FROM lesson_attempts WHERE id = ?', attemptId);
     const queue = JSON.parse(a.queue);
     const hearts = core.heartState(core.userById(user.id));
-    const lesson = a.lesson_id ? db.get('SELECT id, title FROM lessons WHERE id = ?', a.lesson_id) : null;
+    const lesson = a.lesson_id ? (() => { const l = db.get('SELECT id, title, translations FROM lessons WHERE id = ?', a.lesson_id); return { id: l.id, title: L10N.text(l, 'title', lang) }; })() : null;
+    const tl = translationLanguage(user);
     const v = {
       attemptId: a.id, kind: a.kind, status: a.status, lesson, position: a.position, queueLength: queue.length, totalPlanned: a.total_planned,
       correct: a.correct, incorrect: a.incorrect, progress: queue.length ? Math.round(100 * Math.min(a.position, queue.length) / queue.length) : 0,
       hearts: hearts.hearts, maxHearts: hearts.max, heartsEnabled: hearts.enabled && a.kind === 'lesson', exercise: null,
     };
-    if (a.status === 'in_progress' && a.position < queue.length) v.exercise = exercisePayload(a, queue[a.position]);
-    if (a.status !== 'in_progress') v.result = result(a, user);
+    if (a.status === 'in_progress' && a.position < queue.length) v.exercise = exercisePayload(a, queue[a.position], tl);
+    if (a.status !== 'in_progress') v.result = result(a, user, tl);
     return v;
   }
 
-  function start(user, lessonId) {
-    const acc = core.lessonAccess(user, lessonId);
-    if (!acc.ok) throw new HttpError(acc.status, acc.message);
+  function start(user, lessonId, lang) {
+    const acc = core.lessonAccess(user, lessonId, lang);
+    if (!acc.ok) throw new HttpError(acc.status, acc.key, null, acc.params);
     return db.tx(() => {
       const st = core.syncHearts(user.id);
       let a = db.get("SELECT * FROM lesson_attempts WHERE user_id = ? AND lesson_id = ? AND kind = 'lesson' AND status = 'in_progress'", user.id, lessonId);
       if (!a) {
-        if (st.enabled && st.hearts <= 0) throw Object.assign(new HttpError(403, 'You are out of hearts. Hearts come back over time, and a vocabulary review earns one.'), { extra: { nextHeartAt: st.nextAt } });
+        if (st.enabled && st.hearts <= 0) throw Object.assign(new HttpError(403, 'err.out_of_hearts'), { extra: { nextHeartAt: st.nextAt } });
         const ids = db.all("SELECT id FROM exercises WHERE lesson_id = ? AND status = 'published' ORDER BY position, id", lessonId).map((r) => r.id);
-        if (!ids.length) throw new HttpError(409, 'This lesson has no exercises yet.');
+        if (!ids.length) throw new HttpError(409, 'err.lesson_empty');
         const r = db.run('INSERT INTO lesson_attempts (user_id, lesson_id, kind, queue, total_planned, started_at, seed) VALUES (?,?,?,?,?,?,?)', user.id, lessonId, 'lesson', JSON.stringify(ids), ids.length, now(), 1 + Math.floor(Math.random() * 1e6));
         a = db.get('SELECT * FROM lesson_attempts WHERE id = ?', r.id);
       }
-      return view(a.id, user);
+      return view(a.id, user, lang);
     });
   }
 
   /* a short run made of exercises the learner answered wrongly (and has not answered correctly since) */
-  function startMistakes(user) {
+  function startMistakes(user, lang) {
     return db.tx(() => {
       let a = db.get("SELECT * FROM lesson_attempts WHERE user_id = ? AND kind = 'mistakes' AND status = 'in_progress'", user.id);
       if (!a) {
         const ids = mistakeIds(user.id, 8);
-        if (!ids.length) throw new HttpError(409, 'No mistakes to review right now. Nice work!');
+        if (!ids.length) throw new HttpError(409, 'err.no_mistakes');
         const r = db.run('INSERT INTO lesson_attempts (user_id, lesson_id, kind, queue, total_planned, started_at, seed) VALUES (?,?,?,?,?,?,?)', user.id, null, 'mistakes', JSON.stringify(ids), ids.length, now(), 1 + Math.floor(Math.random() * 1e6));
         a = db.get('SELECT * FROM lesson_attempts WHERE id = ?', r.id);
       }
-      return view(a.id, user);
+      return view(a.id, user, lang);
     });
   }
 
-  function answer(user, attemptId, body) {
+  function answer(user, attemptId, body, lang) {
     const exerciseId = Number(body && body.exerciseId);
-    if (!Number.isInteger(exerciseId)) throw bad('Missing exercise.');
+    if (!Number.isInteger(exerciseId)) throw bad('err.missing_exercise');
     return db.tx(() => {
       const a = db.get('SELECT * FROM lesson_attempts WHERE id = ? AND user_id = ?', attemptId, user.id);
-      if (!a) throw new HttpError(404, 'Lesson attempt not found.');
+      if (!a) throw new HttpError(404, 'err.attempt_not_found');
       const queue = JSON.parse(a.queue);
       // a repeated submit of an exercise that was already graded returns the stored feedback and awards nothing
       if (a.status !== 'in_progress' || queue[a.position] !== exerciseId) {
         const prev = db.get('SELECT * FROM exercise_responses WHERE attempt_id = ? AND exercise_id = ? ORDER BY slot DESC LIMIT 1', a.id, exerciseId);
-        if (!prev) throw new HttpError(409, 'That exercise is not the current one. Reload the lesson.');
-        return { feedback: { ...JSON.parse(prev.feedback), replayed: true }, state: view(a.id, user) };
+        if (!prev) throw new HttpError(409, 'err.exercise_not_current');
+        return { feedback: { ...JSON.parse(prev.feedback), replayed: true }, state: view(a.id, user, lang) };
       }
-      const ex = exerciseRow(exerciseId), options = optionsOf(exerciseId);
+      const { row: ex, options } = localized(exerciseId, translationLanguage(user));
       const g = X.grade(ex, options, body.answer, a.seed);
-      if (g.invalid) throw bad('That answer is not valid for this exercise.');
+      if (g.invalid) throw bad('err.invalid_answer');
       const slot = a.position;
       const isRetry = !!db.get('SELECT 1 x FROM exercise_responses WHERE attempt_id = ? AND exercise_id = ?', a.id, exerciseId);
       const s = S();
@@ -115,7 +120,7 @@ function make(db, settings, core) {
       let celebrate = null;
       if (status === 'in_progress' && position >= newQueue.length) celebrate = finish(user, a.id);
       else if (status === 'out_of_hearts') db.run('UPDATE lesson_attempts SET completed_at = ? WHERE id = ?', now(), a.id);
-      const state = view(a.id, user);
+      const state = view(a.id, user, lang);
       return { feedback: fb, state, celebrate };
     });
   }
@@ -155,31 +160,31 @@ function make(db, settings, core) {
     return { earned };
   }
 
-  function result(a, user) {
+  function result(a, user, tl) {
     const total = a.total_planned;
     const missed = db.all(`SELECT DISTINCT e.id, e.type, e.prompt, e.sentence, e.answer, e.vocabulary_id FROM exercise_responses r JOIN exercises e ON e.id = r.exercise_id
       WHERE r.attempt_id = ? AND r.is_correct = 0 AND r.is_retry = 0`, a.id);
     const words = [];
     const seen = new Set();
     for (const m of missed) {
-      if (m.vocabulary_id && !seen.has(m.vocabulary_id)) { const v = db.get('SELECT id, en, uz, example FROM vocabulary WHERE id = ?', m.vocabulary_id); if (v) { seen.add(v.id); words.push(v); } }
+      if (m.vocabulary_id && !seen.has(m.vocabulary_id)) { const v = db.get('SELECT id, en, uz, example, example_uz, translations FROM vocabulary WHERE id = ?', m.vocabulary_id); if (v) { seen.add(v.id); const t = L10N.vocab(v, tl); words.push({ id: v.id, en: v.en, translation: t.word, example: v.example }); } }
     }
     const fresh = JSON.parse(db.get('SELECT feedback FROM exercise_responses WHERE attempt_id = ? ORDER BY id DESC LIMIT 1', a.id)?.feedback || '{}');
     return {
       outcome: a.status, correct: a.correct, incorrect: a.incorrect, total, accuracy: total ? Math.round(100 * a.correct / total) : 0, xp: a.xp_awarded,
-      mistakes: missed.map((m) => ({ prompt: m.prompt || m.sentence, answer: (m.answer || '').split('|')[0] })), words,
+      mistakes: missed.map((m) => { const { row } = localized(m.id, tl); return { type: row.type, prompt: row.prompt || row.sentence, answer: (row.answer || '').split('|')[0] }; }), words,
       lastFeedback: fresh,
     };
   }
 
-  function getAttempt(user, id) {
+  function getAttempt(user, id, lang) {
     const a = db.get('SELECT * FROM lesson_attempts WHERE id = ? AND user_id = ?', id, user.id);
-    if (!a) throw new HttpError(404, 'Lesson attempt not found.');
-    return view(a.id, user);
+    if (!a) throw new HttpError(404, 'err.attempt_not_found');
+    return view(a.id, user, lang);
   }
   function abandon(user, id) {
     const a = db.get('SELECT * FROM lesson_attempts WHERE id = ? AND user_id = ?', id, user.id);
-    if (!a) throw new HttpError(404, 'Lesson attempt not found.');
+    if (!a) throw new HttpError(404, 'err.attempt_not_found');
     if (a.status === 'in_progress') db.run("UPDATE lesson_attempts SET status = 'abandoned', completed_at = ? WHERE id = ?", now(), a.id);
     return { ok: true };
   }

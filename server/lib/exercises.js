@@ -1,20 +1,10 @@
 /* Exercise types: validation of authored content, the payload sent to learners (never contains the answer),
    and server-side grading. */
 const { shuffled, clean, cleanMultiline } = require('./util');
+const I18N = require('../../shared/i18n-core');
 
-const TYPES = {
-  multiple_choice:   { label: 'Multiple choice', default: 'Choose the correct answer.' },
-  translation_choice: { label: 'Select the correct translation', default: 'Select the correct translation.' },
-  fill_blank:        { label: 'Type the missing word', default: 'Type the missing word.' },
-  translate_type:    { label: 'Translate a word or sentence', default: 'Translate this.' },
-  scramble_letters:  { label: 'Arrange scrambled letters', default: 'Arrange the letters to make the word.' },
-  order_words:       { label: 'Arrange words into a sentence', default: 'Arrange the words to build the sentence.' },
-  match_pairs:       { label: 'Match words with translations', default: 'Match each word with its translation.' },
-  listen_choice:     { label: 'Listen and select the answer', default: 'Listen and choose what you hear.' },
-  listen_type:       { label: 'Type a word from audio', default: 'Listen and type what you hear.' },
-  reading:           { label: 'Read a passage and answer', default: 'Read the passage and answer the question.' },
-  fix_spelling:      { label: 'Correct a spelling mistake', default: 'Correct the spelling mistake.' },
-};
+// the labels and default instructions of the types are interface texts (locales: ex.type.<id>, ex.instr.<id>)
+const TYPES = Object.fromEntries(['multiple_choice', 'translation_choice', 'fill_blank', 'translate_type', 'scramble_letters', 'order_words', 'match_pairs', 'listen_choice', 'listen_type', 'reading', 'fix_spelling'].map((id) => [id, {}]));
 const TYPE_IDS = Object.keys(TYPES);
 const CHOICE = new Set(['multiple_choice', 'translation_choice', 'listen_choice', 'reading']);
 
@@ -41,8 +31,23 @@ function editDistance(a, b) {
 const tokensOf = (sentence) => String(sentence).replace(/[.!?]+$/, '').split(/\s+/).filter(Boolean);
 
 /* ---------- validation of authored exercises (used by the admin editor, import and publishing) ---------- */
+const VARIANT_TEXT = { prompt: 300, answer: 500, sentence: 400, passage: 3000, translation: 400, explanation: 600, hint: 200, audio_text: 300 };
+/* translated variants of an exercise: { ru: { sentence, answer, ..., options: [{ text, match_text }] } } (only known languages and fields) */
+function cleanVariants(raw) {
+  const out = {};
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw)) return out;
+  for (const lang of I18N.CODES) {
+    const v = raw[lang]; if (!v || typeof v !== 'object') continue;
+    const o = {};
+    for (const [f, max] of Object.entries(VARIANT_TEXT)) { const t = f === 'passage' ? cleanMultiline(v[f], max) : clean(v[f], max); if (t) o[f] = f === 'answer' ? t.replace(/\n+/g, '|') : t; }
+    if (Array.isArray(v.options)) o.options = v.options.slice(0, 12).map((x) => ({ text: clean(x && x.text, 200), match_text: clean(x && x.match_text, 200) }));
+    if (Object.keys(o).length) out[lang] = o;
+  }
+  return out;
+}
 function normalizeInput(raw) {
   return {
+    translations: cleanVariants(raw.translations),
     type: clean(raw.type, 40),
     prompt: clean(raw.prompt, 300),
     answer: cleanMultiline(raw.answer, 500).replace(/\n+/g, '|'),
@@ -63,46 +68,47 @@ function normalizeInput(raw) {
 /* -> array of { field, message } (empty = valid) */
 function validate(ex) {
   const errs = [];
-  const need = (field, msg) => errs.push({ field, message: msg });
-  if (!TYPES[ex.type]) { need('type', 'Choose an exercise type.'); return errs; }
+  const need = (field, msg, params) => errs.push({ field, message: msg, params });
+  if (!TYPES[ex.type]) { need('type', 'val.type_required'); return errs; }
   const opts = ex.options.filter((o) => o.text);
+  for (const [lang, v] of Object.entries(ex.translations || {})) if (v.options && v.options.filter((o) => o.text).length !== opts.length) need('translations', 'val.variant_options', { language: lang });
   const hasAudio = ex.audio_text || ex.audio_url;
-  if (ex.audio_url && !/^\/uploads\/[A-Za-z0-9_-]{6,40}$/.test(ex.audio_url)) need('audio_url', 'Audio must be a file uploaded through the admin panel.');
+  if (ex.audio_url && !/^\/uploads\/[A-Za-z0-9_-]{6,40}$/.test(ex.audio_url)) need('audio_url', 'val.audio_upload_only');
   if (CHOICE.has(ex.type)) {
-    if (opts.length < 2) need('options', 'Add at least two answer options.');
-    if (opts.length > 6) need('options', 'Use at most six answer options.');
-    if (opts.filter((o) => o.is_correct).length !== 1) need('options', 'Mark exactly one option as correct.');
-    if (new Set(opts.map((o) => norm(o.text))).size !== opts.length) need('options', 'Answer options must be different from each other.');
+    if (opts.length < 2) need('options', 'val.options_min');
+    if (opts.length > 6) need('options', 'val.options_max');
+    if (opts.filter((o) => o.is_correct).length !== 1) need('options', 'val.options_one_correct');
+    if (new Set(opts.map((o) => norm(o.text))).size !== opts.length) need('options', 'val.options_unique');
   }
-  if (ex.type === 'multiple_choice' && !ex.prompt) need('prompt', 'Write the question.');
-  if (ex.type === 'translation_choice' && !ex.sentence) need('sentence', 'Write the word or phrase to translate.');
-  if (ex.type === 'reading') { if (!ex.passage || ex.passage.length < 20) need('passage', 'Add a reading passage (at least 20 characters).'); if (!ex.prompt) need('prompt', 'Write the question about the passage.'); }
-  if (ex.type === 'listen_choice' && !hasAudio) need('audio_text', 'Add the text to read aloud or upload audio.');
-  if (ex.type === 'listen_type') { if (!hasAudio) need('audio_text', 'Add the text to read aloud or upload audio.'); if (!alternatives(ex.answer).length) need('answer', 'Write the answer the learner should type.'); }
+  if (ex.type === 'multiple_choice' && !ex.prompt) need('prompt', 'val.question_required');
+  if (ex.type === 'translation_choice' && !ex.sentence) need('sentence', 'val.word_to_translate_required');
+  if (ex.type === 'reading') { if (!ex.passage || ex.passage.length < 20) need('passage', 'val.passage_required'); if (!ex.prompt) need('prompt', 'val.passage_question_required'); }
+  if (ex.type === 'listen_choice' && !hasAudio) need('audio_text', 'val.audio_required');
+  if (ex.type === 'listen_type') { if (!hasAudio) need('audio_text', 'val.audio_required'); if (!alternatives(ex.answer).length) need('answer', 'val.listen_answer_required'); }
   if (ex.type === 'fill_blank') {
-    if ((ex.sentence.match(/_{3,}/g) || []).length !== 1) need('sentence', 'The sentence must contain exactly one blank written as ____.');
-    if (!alternatives(ex.answer).length) need('answer', 'Write the word that fills the blank.');
+    if ((ex.sentence.match(/_{3,}/g) || []).length !== 1) need('sentence', 'val.blank_exactly_one');
+    if (!alternatives(ex.answer).length) need('answer', 'val.blank_answer_required');
   }
-  if (ex.type === 'translate_type') { if (!ex.sentence) need('sentence', 'Write the text to translate.'); if (!alternatives(ex.answer).length) need('answer', 'Write at least one accepted translation.'); }
+  if (ex.type === 'translate_type') { if (!ex.sentence) need('sentence', 'val.text_to_translate_required'); if (!alternatives(ex.answer).length) need('answer', 'val.translation_required'); }
   if (ex.type === 'scramble_letters') {
     const w = alternatives(ex.answer)[0] || '';
-    if (!/^\p{L}{3,14}$/u.test(w)) need('answer', 'Write one word of 3-14 letters (no spaces).');
-    if (!ex.sentence && !ex.prompt) need('sentence', 'Add a clue, such as the translation.');
+    if (!/^\p{L}{3,14}$/u.test(w)) need('answer', 'val.scramble_word');
+    if (!ex.sentence && !ex.prompt) need('sentence', 'val.scramble_clue');
   }
   if (ex.type === 'order_words') {
     const t = tokensOf(ex.sentence);
-    if (t.length < 3 || t.length > 14) need('sentence', 'Write the correct sentence (3-14 words).');
-    if (!ex.prompt) need('prompt', 'Write the translation the learner will build the sentence from.');
+    if (t.length < 3 || t.length > 14) need('sentence', 'val.order_sentence');
+    if (!ex.prompt) need('prompt', 'val.order_prompt_required');
   }
   if (ex.type === 'match_pairs') {
     const pairs = opts.filter((o) => o.match_text);
-    if (pairs.length < 3 || pairs.length > 6 || pairs.length !== opts.length) need('options', 'Add 3-6 complete pairs (word and translation).');
-    if (new Set(pairs.map((o) => norm(o.text))).size !== pairs.length || new Set(pairs.map((o) => norm(o.match_text))).size !== pairs.length) need('options', 'Each word and each translation may appear only once.');
+    if (pairs.length < 3 || pairs.length > 6 || pairs.length !== opts.length) need('options', 'val.pairs_count');
+    if (new Set(pairs.map((o) => norm(o.text))).size !== pairs.length || new Set(pairs.map((o) => norm(o.match_text))).size !== pairs.length) need('options', 'val.pairs_unique');
   }
   if (ex.type === 'fix_spelling') {
-    if (!ex.sentence) need('sentence', 'Write the text that contains the spelling mistake.');
-    if (!alternatives(ex.answer).length) need('answer', 'Write the corrected text.');
-    else if (norm(ex.sentence) === norm(alternatives(ex.answer)[0])) need('answer', 'The corrected text must differ from the mistaken one.');
+    if (!ex.sentence) need('sentence', 'val.spelling_text_required');
+    if (!alternatives(ex.answer).length) need('answer', 'val.spelling_answer_required');
+    else if (norm(ex.sentence) === norm(alternatives(ex.answer)[0])) need('answer', 'val.spelling_must_differ');
   }
   return errs;
 }
@@ -110,7 +116,7 @@ function validate(ex) {
 /* ---------- what a learner receives (no answers) ---------- */
 function payload(ex, options, seed) {
   const s = seed + ex.id;
-  const p = { id: ex.id, type: ex.type, prompt: ex.prompt || TYPES[ex.type].default, hint: ex.hint, difficulty: ex.difficulty, direction: ex.direction };
+  const p = { id: ex.id, type: ex.type, prompt: ex.prompt, hint: ex.hint, difficulty: ex.difficulty, direction: ex.direction };
   if (CHOICE.has(ex.type)) p.options = shuffled(options, s).map((o) => ({ id: o.id, text: o.text }));
   if (ex.type === 'translation_choice') p.sentence = ex.sentence;
   if (ex.type === 'reading') p.passage = ex.passage;

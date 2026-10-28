@@ -111,7 +111,7 @@ test('vocabulary review: schedule, difficult words, server-side XP rules', async
     assert.strictEqual(sess.cards.length, 6);
     const card = sess.cards[0], v = s.db.get('SELECT * FROM vocabulary WHERE id = ?', card.vocabularyId);
     assert.ok(card.options.length >= 2 && !JSON.stringify(card).includes('"correct"'));
-    const want = card.direction === 'uz-en' ? v.en : v.uz;
+    const want = card.direction === 'tr-en' ? v.en : v.uz;
     const xp0 = s.db.get('SELECT xp_total n FROM users').n;
     let r = (await c.post('/api/review/answer', { vocabularyId: v.id, mode: 'choice', direction: card.direction, answer: want })).json;
     assert.ok(r.correct && r.xp === 2); assert.strictEqual(s.db.get('SELECT xp_total n FROM users').n, xp0 + 2);
@@ -123,7 +123,7 @@ test('vocabulary review: schedule, difficult words, server-side XP rules', async
     r = (await c.post('/api/review/answer', { vocabularyId: v2.id, mode: 'flashcards', answer: true })).json; assert.strictEqual(r.xp, 0); assert.ok(r.correct);
     // two wrong answers make a word "difficult" and it is asked first
     const v3 = s.db.get('SELECT * FROM vocabulary WHERE id = ?', sess.cards[2].vocabularyId);
-    for (let i = 0; i < 2; i++) await c.post('/api/review/answer', { vocabularyId: v3.id, mode: 'typed', direction: 'en-uz', answer: 'qqq' });
+    for (let i = 0; i < 2; i++) await c.post('/api/review/answer', { vocabularyId: v3.id, mode: 'typed', direction: 'en-tr', answer: 'qqq' });
     item = s.db.get('SELECT * FROM review_items WHERE vocabulary_id = ?', v3.id); assert.strictEqual(item.is_difficult, 1); assert.strictEqual(item.lapses, 2); assert.strictEqual(item.box, 0);
     s.db.run("UPDATE review_items SET due_at = '2000-01-01T00:00:00.000Z'");
     assert.strictEqual((await c.post('/api/review/session', { mode: 'typed', size: 3 })).json.cards[0].vocabularyId, v3.id, 'difficult words come first');
@@ -143,7 +143,7 @@ test('review XP is capped per day', async () => {
     s.db.run("UPDATE review_items SET due_at = '2000-01-01T00:00:00.000Z'");
     let total = 0;
     for (const w of s.db.all('SELECT v.* FROM vocabulary v JOIN review_items r ON r.vocabulary_id = v.id')) {
-      const r = await c.post('/api/review/answer', { vocabularyId: w.id, mode: 'typed', direction: 'en-uz', answer: w.uz.split(/[;,\/]/)[0] }); total += r.json.xp;
+      const r = await c.post('/api/review/answer', { vocabularyId: w.id, mode: 'typed', direction: 'en-tr', answer: w.uz.split(/[;,\/]/)[0] }); total += r.json.xp;
     }
     assert.strictEqual(total, 4);
   } finally { await s.stop(); }

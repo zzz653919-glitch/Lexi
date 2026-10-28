@@ -17,31 +17,31 @@ const ROLES = ['learner', 'editor', 'admin'];
 module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }) {
   const r = express.Router();
   const staff = auth.requireRole('editor', 'admin'), adminOnly = auth.requireRole('admin');
-  const need = (row, what) => { if (!row) throw new HttpError(404, `${what} not found.`); return row; };
+  const need = (row, what) => { if (!row) throw new HttpError(404, 'err.' + what.toLowerCase() + '_not_found'); return row; };
   const page = (req, def = 20) => { const size = clamp(int(req.query.pageSize, def), 5, 100), p = Math.max(1, int(req.query.page, 1)); return { size, p, off: (p - 1) * size }; };
 
   /* ---------- vocabulary ---------- */
   function vocabInput(b, partial) {
     const e = {}, v = {};
-    if (!partial || b.en !== undefined) { const x = clean(b.en, 120); if (!x) e.en = 'Enter the English word or phrase.'; else v.en = x; }
-    if (!partial || b.uz !== undefined) { const x = clean(b.uz, 200); if (!x) e.uz = 'Enter the Uzbek translation.'; else v.uz = x; }
-    if (b.pos !== undefined) { if (!POS.includes(clean(b.pos, 20))) e.pos = 'Unknown part of speech.'; else v.pos = clean(b.pos, 20); }
+    if (!partial || b.en !== undefined) { const x = clean(b.en, 120); if (!x) e.en = 'val.word_en_required'; else v.en = x; }
+    if (!partial || b.uz !== undefined) { const x = clean(b.uz, 200); if (!x) e.uz = 'val.word_uz_required'; else v.uz = x; }
+    if (b.pos !== undefined) { if (!POS.includes(clean(b.pos, 20))) e.pos = 'val.pos'; else v.pos = clean(b.pos, 20); }
     if (b.example !== undefined) v.example = clean(b.example, 300);
     if (b.example_uz !== undefined) v.example_uz = clean(b.example_uz, 300);
-    if (b.cefr !== undefined) { if (!CEFR.includes(clean(b.cefr, 4).toUpperCase())) e.cefr = 'Use A1-C2 or leave empty.'; else v.cefr = clean(b.cefr, 4).toUpperCase(); }
-    if (b.audio_url !== undefined) { const a = clean(b.audio_url, 200); if (a && !/^\/uploads\/[A-Za-z0-9_-]{6,40}$/.test(a)) e.audio_url = 'Audio must be uploaded through the admin panel.'; else v.audio_url = a; }
+    if (b.cefr !== undefined) { if (!CEFR.includes(clean(b.cefr, 4).toUpperCase())) e.cefr = 'val.cefr'; else v.cefr = clean(b.cefr, 4).toUpperCase(); }
+    if (b.audio_url !== undefined) { const a = clean(b.audio_url, 200); if (a && !/^\/uploads\/[A-Za-z0-9_-]{6,40}$/.test(a)) e.audio_url = 'val.audio_upload_only'; else v.audio_url = a; }
     if (b.translations !== undefined) {
       const t = b.translations && typeof b.translations === 'object' && !Array.isArray(b.translations) ? b.translations : null;
-      if (!t) e.translations = 'Translations must be an object such as {"ru":"..."}.';
-      else { const out = {}; for (const [k, val] of Object.entries(t)) { if (/^[a-z]{2,8}$/.test(k) && clean(val, 200)) out[k] = clean(val, 200); } v.translations = JSON.stringify(out); }
+      if (!t) e.translations = 'val.translations_object';
+      else { const out = {}; for (const [k, val] of Object.entries(t)) { if (/^[a-z]{2,8}(_example)?$/.test(k) && clean(val, 300)) out[k] = clean(val, 200); } v.translations = JSON.stringify(out); }
     }
     for (const k of ['course_id', 'level_id', 'unit_id', 'lesson_id']) if (b[k] !== undefined) {
       const val = b[k] === null || b[k] === '' ? null : Number(b[k]);
       const table = { course_id: 'courses', level_id: 'levels', unit_id: 'units', lesson_id: 'lessons' }[k];
-      if (val !== null && (!Number.isInteger(val) || !db.get(`SELECT 1 x FROM ${table} WHERE id = ?`, val))) e[k] = 'Not found.'; else v[k] = val;
+      if (val !== null && (!Number.isInteger(val) || !db.get(`SELECT 1 x FROM ${table} WHERE id = ?`, val))) e[k] = 'val.not_found'; else v[k] = val;
     }
-    if (b.status !== undefined) { if (!['draft', 'published', 'archived'].includes(b.status)) e.status = 'Unknown status.'; else v.status = b.status; }
-    if (Object.keys(e).length) throw bad('Please fix the highlighted fields.', e);
+    if (b.status !== undefined) { if (!['draft', 'published', 'archived'].includes(b.status)) e.status = 'val.unknown_status'; else v.status = b.status; }
+    if (Object.keys(e).length) throw bad('err.fix_fields', e);
     return v;
   }
   const vocabRow = (v) => ({ ...v, translations: (() => { try { return JSON.parse(v.translations); } catch (_) { return {}; } })() });
@@ -59,7 +59,7 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
   });
   r.post('/vocabulary', staff, (req, res) => {
     const v = vocabInput(req.body || {}, false);
-    if (db.get('SELECT 1 x FROM vocabulary WHERE en = ? COLLATE NOCASE AND uz = ? COLLATE NOCASE', v.en, v.uz)) throw bad('Please fix the highlighted fields.', { en: 'This word with the same translation already exists.' });
+    if (db.get('SELECT 1 x FROM vocabulary WHERE en = ? COLLATE NOCASE AND uz = ? COLLATE NOCASE', v.en, v.uz)) throw bad('err.fix_fields', { en: 'val.word_exists' });
     const t = now();
     const id = db.run(`INSERT INTO vocabulary (course_id, level_id, unit_id, lesson_id, en, uz, translations, pos, example, example_uz, audio_url, cefr, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
       v.course_id ?? null, v.level_id ?? null, v.unit_id ?? null, v.lesson_id ?? null, v.en, v.uz, v.translations || '{}', v.pos || '', v.example || '', v.example_uz || '', v.audio_url || '', v.cefr || '', v.status || 'published', t, t).id;
@@ -70,7 +70,7 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
     const old = need(db.get('SELECT * FROM vocabulary WHERE id = ?', int(req.params.id)), 'Word');
     const v = vocabInput(req.body || {}, true);
     const en = v.en ?? old.en, uz = v.uz ?? old.uz;
-    if (db.get('SELECT 1 x FROM vocabulary WHERE en = ? COLLATE NOCASE AND uz = ? COLLATE NOCASE AND id != ?', en, uz, old.id)) throw bad('Please fix the highlighted fields.', { en: 'This word with the same translation already exists.' });
+    if (db.get('SELECT 1 x FROM vocabulary WHERE en = ? COLLATE NOCASE AND uz = ? COLLATE NOCASE AND id != ?', en, uz, old.id)) throw bad('err.fix_fields', { en: 'val.word_exists' });
     const keys = Object.keys(v);
     if (keys.length) db.run(`UPDATE vocabulary SET ${keys.map((k) => k + ' = ?').join(', ')}, updated_at = ? WHERE id = ?`, ...keys.map((k) => v[k]), now(), old.id);
     audit(req, 'vocabulary.update', 'vocabulary', old.id, { fields: keys });
@@ -79,7 +79,7 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
   r.post('/vocabulary/bulk-status', staff, (req, res) => {
     const ids = Array.isArray(req.body && req.body.ids) ? req.body.ids.map(Number).filter(Number.isInteger).slice(0, 500) : [];
     const status = (req.body || {}).status;
-    if (!ids.length || !['draft', 'published', 'archived'].includes(status)) throw bad('Choose words and a status.');
+    if (!ids.length || !['draft', 'published', 'archived'].includes(status)) throw bad('err.choose_words_status');
     db.tx(() => ids.forEach((id) => db.run('UPDATE vocabulary SET status = ?, updated_at = ? WHERE id = ?', status, now(), id)));
     audit(req, 'vocabulary.bulk_status', 'vocabulary', '', { count: ids.length, status });
     res.json({ updated: ids.length });
@@ -95,12 +95,12 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
   /* bulk import: CSV (header row: en,uz,pos,cefr,example,example_uz,ru,status,course,unit,lesson) or JSON { items: [...] } */
   r.post('/vocabulary/import', staff, (req, res) => {
     const { format, content, courseId, lessonId } = req.body || {};
-    if (typeof content !== 'string' || content.length > 2000000) throw bad('Paste or upload the content to import (up to 2 MB).');
+    if (typeof content !== 'string' || content.length > 2000000) throw bad('err.import_content_vocabulary');
     let items;
     try { if (format === 'json') { const j = JSON.parse(content); items = Array.isArray(j) ? j : j.items; if (!Array.isArray(items)) throw new Error('missing items array'); } else items = csv.objects(content); }
-    catch (e) { throw bad('The file could not be read: ' + e.message); }
-    if (!items.length) throw bad('The file contains no rows.');
-    if (items.length > 5000) throw bad('Import at most 5000 words at a time.');
+    catch (e) { throw bad('err.import_unreadable', null, { reason: e.message }); }
+    if (!items.length) throw bad('err.import_no_rows');
+    if (items.length > 5000) throw bad('err.import_max_words');
     const course = courseId ? need(db.get('SELECT id FROM courses WHERE id = ?', int(courseId)), 'Course') : null;
     const lesson = lessonId ? need(db.get('SELECT l.id, u.id unit_id, lv.id level_id, lv.course_id FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE l.id = ?', int(lessonId)), 'Lesson') : null;
     const problems = [], ready = [];
@@ -128,13 +128,13 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
   /* ---------- audio uploads (raw request body, validated by size and file signature) ---------- */
   r.post('/uploads', staff, express.raw({ type: ['audio/*', 'application/octet-stream'], limit: '2.5mb' }), (req, res) => {
     const buf = req.body;
-    if (!Buffer.isBuffer(buf) || !buf.length) throw bad('No file received.');
-    if (buf.length > 2 * 1024 * 1024) throw bad('Audio files may be at most 2 MB.');
+    if (!Buffer.isBuffer(buf) || !buf.length) throw bad('err.upload_none');
+    if (buf.length > 2 * 1024 * 1024) throw bad('err.upload_too_large');
     const name = clean(req.get('x-filename') || 'audio', 100).replace(/[^\w.\- ]/g, '_');
     const ext = (name.split('.').pop() || '').toLowerCase();
     const kind = AUDIO_TYPES[ext];
-    if (!kind) throw bad('Upload an .mp3, .ogg or .wav file.');
-    if (!kind.ok(buf)) throw bad('This file does not look like a real ' + ext.toUpperCase() + ' audio file.');
+    if (!kind) throw bad('err.upload_type');
+    if (!kind.ok(buf)) throw bad('err.upload_mismatch', null, { type: ext.toUpperCase() });
     const id = randomToken(12);
     const fs = require('node:fs'), path = require('node:path');
     fs.mkdirSync(path.join(opts.dataDir, 'uploads'), { recursive: true });
@@ -165,15 +165,15 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
       attempts: db.get('SELECT COUNT(*) n FROM exercise_responses WHERE user_id = ?', u.id).n,
       accuracy: (() => { const a = db.get('SELECT COUNT(*) n, SUM(is_correct) c FROM exercise_responses WHERE user_id = ?', u.id); return a.n ? Math.round(100 * a.c / a.n) : null; })(),
       reviewWords: db.get('SELECT COUNT(*) n FROM review_items WHERE user_id = ?', u.id).n,
-      achievements: core.achievementList(u.id).filter((a) => a.earnedAt).map((a) => a.title),
+      achievements: core.achievementList(u.id).filter((a) => a.earnedAt).map((a) => a.code),
       week: core.weekDays(u),
       recent: db.all(`SELECT a.id, a.kind, a.status, a.correct, a.incorrect, a.started_at, l.title lesson FROM lesson_attempts a LEFT JOIN lessons l ON l.id = a.lesson_id WHERE a.user_id = ? ORDER BY a.id DESC LIMIT 10`, u.id) });
   });
   const adminCount = () => db.get("SELECT COUNT(*) n FROM users WHERE role = 'admin' AND status = 'active'").n;
   r.post('/users/:id/suspend', adminOnly, (req, res) => {
     const u = need(db.get('SELECT * FROM users WHERE id = ?', int(req.params.id)), 'User');
-    if (u.id === req.user.id) throw bad('You cannot suspend your own account.');
-    if (u.role === 'admin' && adminCount() <= 1) throw bad('You cannot suspend the last active administrator.');
+    if (u.id === req.user.id) throw bad('err.cannot_suspend_self');
+    if (u.role === 'admin' && adminCount() <= 1) throw bad('err.cannot_suspend_last_admin');
     db.tx(() => { db.run("UPDATE users SET status = 'suspended' WHERE id = ?", u.id); db.run('DELETE FROM sessions WHERE user_id = ?', u.id); });
     audit(req, 'user.suspend', 'user', u.id, { email: u.email });
     res.json(userSummary(db.get('SELECT * FROM users WHERE id = ?', u.id)));
@@ -188,17 +188,17 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
   r.post('/users/:id/role', adminOnly, (req, res) => {
     const u = need(db.get('SELECT * FROM users WHERE id = ?', int(req.params.id)), 'User');
     const role = (req.body || {}).role;
-    if (!ROLES.includes(role)) throw bad('Unknown role.');
-    if (u.id === req.user.id) throw bad('You cannot change your own role.');
-    if (u.role === 'admin' && role !== 'admin' && adminCount() <= 1) throw bad('You cannot demote the last administrator.');
-    if (role === 'admin' && u.status !== 'active') throw bad('Reactivate the account before making it an administrator.');
+    if (!ROLES.includes(role)) throw bad('val.unknown_role');
+    if (u.id === req.user.id) throw bad('err.cannot_change_own_role');
+    if (u.role === 'admin' && role !== 'admin' && adminCount() <= 1) throw bad('err.cannot_demote_last_admin');
+    if (role === 'admin' && u.status !== 'active') throw bad('err.reactivate_first');
     db.run('UPDATE users SET role = ? WHERE id = ?', role, u.id);
     audit(req, 'user.role', 'user', u.id, { email: u.email, from: u.role, to: role });
     res.json(userSummary(db.get('SELECT * FROM users WHERE id = ?', u.id)));
   });
   r.post('/users/:id/reset-progress', adminOnly, (req, res) => {
     const u = need(db.get('SELECT * FROM users WHERE id = ?', int(req.params.id)), 'User');
-    if ((req.body || {}).confirmEmail !== u.email) throw bad("Type the learner's e-mail address to confirm.");
+    if ((req.body || {}).confirmEmail !== u.email) throw bad('err.confirm_email');
     db.tx(() => {
       for (const t of ['lesson_attempts', 'user_progress', 'xp_transactions', 'user_streaks', 'user_days', 'user_achievements', 'review_items']) db.run(`DELETE FROM ${t} WHERE user_id = ?`, u.id);
       db.run('UPDATE users SET xp_total = 0, hearts = ?, hearts_updated_at = ? WHERE id = ?', settings.all().max_hearts, now(), u.id);
@@ -243,7 +243,7 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
   r.get('/settings', adminOnly, (req, res) => res.json({ settings: settings.all() }));
   r.put('/settings', adminOnly, (req, res) => {
     const v = settings.validate(req.body || {});
-    if (v.errors) throw bad('Please fix the highlighted fields.', v.errors);
+    if (v.errors) throw bad('err.fix_fields', v.errors);
     settings.update(v.values);
     audit(req, 'settings.update', 'settings', '', v.values);
     res.json({ settings: settings.all() });

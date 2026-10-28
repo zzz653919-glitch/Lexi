@@ -8,10 +8,13 @@ const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 const randomToken = (bytes = 32) => crypto.randomBytes(bytes).toString('base64url');
 const sha256 = (s) => crypto.createHash('sha256').update(s).digest('hex');
 
+/* `message` is a translation key (e.g. "err.not_found"); the error handler translates it into the request's language.
+   fields: { fieldName: key | { key, params } }.  HttpError.raw() carries an already translated text. */
 class HttpError extends Error {
-  constructor(status, message, fields) { super(message); this.status = status; this.fields = fields || null; }
+  constructor(status, message, fields, params) { super(message); this.status = status; this.fields = fields || null; this.params = params || null; this.translated = false; }
+  static raw(status, text, fields) { const e = new HttpError(status, text, fields); e.translated = true; return e; }
 }
-const bad = (message, fields) => new HttpError(400, message, fields);
+const bad = (message, fields, params) => new HttpError(400, message, fields, params);
 
 // deterministic PRNG so a reloaded lesson shows the same shuffled order
 function rng(seed) {

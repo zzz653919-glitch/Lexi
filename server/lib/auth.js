@@ -24,9 +24,9 @@ const DUMMY_HASH = hashPassword('not-a-real-password');   // compared against wh
 
 function validateEmail(email) { return typeof email === 'string' && email.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email); }
 function passwordProblem(pw) {
-  if (typeof pw !== 'string' || pw.length < 8) return 'Use at least 8 characters.';
-  if (pw.length > 200) return 'The password is too long.';
-  if (!/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)) return 'Use letters and at least one digit.';
+  if (typeof pw !== 'string' || pw.length < 8) return 'val.password_short';
+  if (pw.length > 200) return 'val.password_long';
+  if (!/[A-Za-z]/.test(pw) || !/[0-9]/.test(pw)) return 'val.password_mix';
   return '';
 }
 
@@ -67,15 +67,15 @@ function make(db, { secureCookies = false } = {}) {
   function csrf(req, res, next) {
     if (['GET', 'HEAD', 'OPTIONS'].includes(req.method)) return next();
     const origin = req.get('origin');
-    if (origin) { let host = ''; try { host = new URL(origin).host; } catch (_) { /* invalid */ } if (host !== req.get('host')) return next(new HttpError(403, 'Cross-origin request blocked.')); }
-    if (req.session && req.get('x-csrf-token') !== req.session.csrf_token) return next(new HttpError(403, 'Invalid or missing CSRF token. Reload the page and try again.'));
+    if (origin) { let host = ''; try { host = new URL(origin).host; } catch (_) { /* invalid */ } if (host !== req.get('host')) return next(new HttpError(403, 'err.cross_origin')); }
+    if (req.session && req.get('x-csrf-token') !== req.session.csrf_token) return next(new HttpError(403, 'err.csrf'));
     next();
   }
 
-  const requireUser = (req, res, next) => (req.user ? next() : next(new HttpError(401, 'Please sign in.')));
+  const requireUser = (req, res, next) => (req.user ? next() : next(new HttpError(401, 'err.sign_in_required')));
   const requireRole = (...roles) => (req, res, next) => {
-    if (!req.user) return next(new HttpError(401, 'Please sign in.'));
-    if (!roles.includes(req.user.role)) return next(new HttpError(403, 'You do not have permission to do this.'));
+    if (!req.user) return next(new HttpError(401, 'err.sign_in_required'));
+    if (!roles.includes(req.user.role)) return next(new HttpError(403, 'err.forbidden'));
     next();
   };
 

@@ -1,6 +1,7 @@
 /* Learning logic shared by the API routes: hearts, XP, streaks, achievements and the learning path with its unlock rules.
    Everything that changes progress runs on the server inside a transaction. */
 const { now, localDate, addDays, weekStart } = require('./util');
+const L10N = require('./localize');
 
 const ACHIEVEMENTS = [
   { code: 'first_lesson', title: 'First step', description: 'Complete your first lesson.', icon: 'flag' },
@@ -139,7 +140,8 @@ function make(db, settings) {
      Rules: a level opens when the previous level has `unlock_threshold_pct` % of its lessons finished (or its rule is "open", or
      it is at/below the learner's chosen start level); inside a level a "sequential" lesson opens when the previous lesson is
      finished, an "open" lesson is always open, a "prerequisite" lesson opens when its chosen lesson is finished. */
-  function buildPath(user, course) {
+  function buildPath(user, course, lang) {
+    const T = (row, f) => L10N.text(row, f, lang);
     const levels = db.all('SELECT * FROM levels WHERE course_id = ? ORDER BY position, id', course.id);
     const units = db.all('SELECT u.* FROM units u JOIN levels l ON l.id = u.level_id WHERE l.course_id = ? ORDER BY u.position, u.id', course.id);
     const lessons = db.all("SELECT l.*, u.level_id FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE lv.course_id = ? AND l.status = 'published' ORDER BY l.position, l.id", course.id);
@@ -147,7 +149,7 @@ function make(db, settings) {
     const counts = Object.fromEntries(db.all("SELECT lesson_id, COUNT(*) n FROM exercises WHERE status = 'published' GROUP BY lesson_id").map((r) => [r.lesson_id, r.n]));
     const open = db.all("SELECT lesson_id FROM lesson_attempts WHERE user_id = ? AND status = 'in_progress' AND lesson_id IS NOT NULL", user.id).map((r) => r.lesson_id);
     const startPos = (levels.find((l) => l.code === user.start_level) || levels[0] || { position: 0 }).position;
-    const out = { course: { id: course.id, slug: course.slug, title: course.title, description: course.description, track: course.track }, levels: [] };
+    const out = { course: { id: course.id, slug: course.slug, title: T(course, 'title'), description: T(course, 'description'), track: course.track }, levels: [] };
     let prevLevel = null, order = [];
     for (const lv of levels) {
       const lvUnits = units.filter((u) => u.level_id === lv.id).map((u) => ({ ...u, lessons: lessons.filter((l) => l.unit_id === u.id) })).filter((u) => u.lessons.length);
@@ -156,23 +158,23 @@ function make(db, settings) {
       const done = flat.filter((l) => prog[l.id]).length;
       let unlocked = lv.unlock_rule === 'open' || !prevLevel || lv.position <= startPos;
       if (!unlocked) unlocked = prevLevel.total === 0 || Math.round(100 * prevLevel.done / prevLevel.total) >= lv.unlock_threshold_pct;
-      const lvOut = { id: lv.id, code: lv.code, title: lv.title, description: lv.description, unlocked, total: flat.length, done, pct: Math.round(100 * done / flat.length), threshold: lv.unlock_threshold_pct, units: [] };
+      const lvOut = { id: lv.id, code: lv.code, title: T(lv, 'title'), description: T(lv, 'description'), unlocked, total: flat.length, done, pct: Math.round(100 * done / flat.length), threshold: lv.unlock_threshold_pct, units: [] };
       flat.forEach((l, i) => {
-        let state = 'locked', reason = '';
+        let state = 'locked', reason = null;
         if (prog[l.id]) state = 'completed';
-        else if (!unlocked) reason = `Finish ${lv.unlock_threshold_pct}% of the previous level to open ${lv.code}.`;
+        else if (!unlocked) reason = { key: 'path.lock_level', params: { pct: lv.unlock_threshold_pct, level: lv.code } };
         else if (l.unlock_rule === 'open') state = 'available';
         else if (l.unlock_rule === 'prerequisite' && l.prerequisite_lesson_id) {
           if (prog[l.prerequisite_lesson_id]) state = 'available';
-          else { const pre = db.get('SELECT title FROM lessons WHERE id = ?', l.prerequisite_lesson_id); reason = `Finish “${pre ? pre.title : 'the required lesson'}” first.`; }
+          else { const pre = db.get('SELECT title, translations FROM lessons WHERE id = ?', l.prerequisite_lesson_id); reason = pre ? { key: 'path.lock_lesson', params: { title: T(pre, 'title') } } : { key: 'path.lock_required' }; }
         } else if (i === 0 || prog[flat[i - 1].id]) state = 'available';
-        else reason = `Finish “${flat[i - 1].title}” first.`;
+        else reason = { key: 'path.lock_lesson', params: { title: T(flat[i - 1], 'title') } };
         l._state = state; l._reason = reason;
       });
       for (const u of lvUnits) {
         const uDone = u.lessons.filter((l) => prog[l.id]).length;
-        lvOut.units.push({ id: u.id, title: u.title, description: u.description, total: u.lessons.length, done: uDone, lessons: u.lessons.map((l) => ({
-          id: l.id, title: l.title, description: l.description, state: l._state, lockReason: l._reason, xp: l.xp_reward, exercises: counts[l.id] || 0,
+        lvOut.units.push({ id: u.id, title: T(u, 'title'), description: T(u, 'description'), total: u.lessons.length, done: uDone, lessons: u.lessons.map((l) => ({
+          id: l.id, title: T(l, 'title'), description: T(l, 'description'), state: l._state, lockReason: l._reason, xp: l.xp_reward, exercises: counts[l.id] || 0,
           inProgress: open.includes(l.id), accuracy: prog[l.id] ? prog[l.id].best_accuracy : null, completions: prog[l.id] ? prog[l.id].completions : 0,
         })) });
         u.lessons.forEach((l) => order.push({ lesson: l, level: lvOut, unit: u }));
@@ -187,13 +189,13 @@ function make(db, settings) {
     out.totals = { lessons: states.length, done: states.filter((x) => x.l.state === 'completed').length };
     return out;
   }
-  function lessonAccess(user, lessonId) {
+  function lessonAccess(user, lessonId, lang) {
     const row = db.get("SELECT l.*, c.id course_id, c.status course_status FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id JOIN courses c ON c.id = lv.course_id WHERE l.id = ?", lessonId);
-    if (!row || row.status !== 'published' || row.course_status !== 'published') return { ok: false, status: 404, message: 'Lesson not found.' };
-    const path = buildPath(user, db.get('SELECT * FROM courses WHERE id = ?', row.course_id));
+    if (!row || row.status !== 'published' || row.course_status !== 'published') return { ok: false, status: 404, key: 'err.lesson_not_found' };
+    const path = buildPath(user, db.get('SELECT * FROM courses WHERE id = ?', row.course_id), lang);
     const hit = path.levels.flatMap((lv) => lv.units.flatMap((u) => u.lessons)).find((l) => l.id === lessonId);
-    if (!hit) return { ok: false, status: 404, message: 'Lesson not found.' };
-    if (hit.state === 'locked') return { ok: false, status: 403, message: hit.lockReason || 'This lesson is locked.' };
+    if (!hit) return { ok: false, status: 404, key: 'err.lesson_not_found' };
+    if (hit.state === 'locked') return { ok: false, status: 403, key: hit.lockReason ? hit.lockReason.key : 'err.lesson_locked', params: hit.lockReason ? hit.lockReason.params : null };
     return { ok: true, lesson: row };
   }
 

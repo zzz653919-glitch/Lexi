@@ -62,7 +62,7 @@ test('data survives an application restart; migrations are repeatable', async ()
     const dash = (await again.get('/api/dashboard')).json; assert.strictEqual(dash.today.xp, 10); assert.strictEqual(dash.user.xpTotal, 10);
     const resumed = (await again.post(`/api/lessons/${path0.levels[0].units[0].lessons[0].id}/start`)).json; assert.strictEqual(resumed.attemptId, st.attemptId); assert.strictEqual(resumed.position, 1, 'the lesson resumes where it stopped');
     assert.deepStrictEqual(require('../../server/lib/db').migrate(x.inst.db), [], 'no migration runs twice');
-    assert.strictEqual(x.inst.db.get('SELECT COUNT(*) n FROM schema_migrations').n, 1);
+    assert.strictEqual(x.inst.db.get('SELECT COUNT(*) n FROM schema_migrations').n, require('node:fs').readdirSync(require('node:path').join(__dirname, '../../server/migrations')).filter((f) => f.endsWith('.sql')).length);
     await stop(x);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
 });
