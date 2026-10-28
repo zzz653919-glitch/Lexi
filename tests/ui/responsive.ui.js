@@ -103,11 +103,11 @@ const ADMIN_PAGES = [['/admin', 'stat-grid', 'dashboard'], ['/admin/courses', 't
 
     /* ---------- reduced motion ---------- */
     {
-      const page = await openPage(browser, { width: 1280, height: 800 }, { reducedMotion: 'reduce' });
+      const page = await openPage(browser, { width: 1280, height: 800 }, { reducedMotion: 'reduce', motion: 'system' });
       await loginUI(page, s.base, 'u@example.com'); await page.goto(s.base + '/learn'); await page.waitForSelector('.node.current');
       const dur = await page.evaluate(() => getComputedStyle(document.querySelector('.node.current'), '::after').animationDuration);
       check(parseFloat(dur) < 0.01, `animations are effectively disabled with prefers-reduced-motion (${dur})`);
-      const normal = await openPage(browser, { width: 1280, height: 800 }); await loginUI(normal, s.base, 'u@example.com'); await normal.goto(s.base + '/learn'); await normal.waitForSelector('.node.current');
+      const normal = await openPage(browser, { width: 1280, height: 800 }, { motion: 'system' }); await loginUI(normal, s.base, 'u@example.com'); await normal.goto(s.base + '/learn'); await normal.waitForSelector('.node.current');
       check(parseFloat(await normal.evaluate(() => getComputedStyle(document.querySelector('.node.current'), '::after').animationDuration)) > 1, 'and run normally otherwise');
     }
 

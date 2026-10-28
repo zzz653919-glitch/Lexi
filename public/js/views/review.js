@@ -2,6 +2,7 @@ import { h, icon, speak, canSpeak, toast, spinner } from '../ui.js';
 import { get, post, ApiError } from '../api.js';
 import { refreshStats } from '../app.js';
 import { t, n } from '../i18n.js';
+import { showLoader } from '../loaders.js';
 
 const MODES = ['flashcards', 'choice', 'typed', 'spelling'];
 
@@ -23,10 +24,14 @@ export default async function review({ query }) {
   }
   let mode = mode0;
 
+  let starting = false;
   async function start() {
-    box.replaceChildren(spinner());
+    if (starting) return;
+    starting = true;
+    const stop = showLoader(box, 'quiz', { onRetry: () => start() });
     let s;
-    try { s = await post('/review/session', { mode, size: 10, difficultOnly }); } catch (e) { toast(e.message, 'error'); return home(mode); }
+    try { s = await post('/review/session', { mode, size: 10, difficultOnly }); } catch (e) { stop(); starting = false; toast(e.message, 'error'); return home(mode); }
+    stop(); starting = false;
     if (!s.cards.length) { toast(t('review.none_now'), 'info'); summary.due = 0; return home(mode); }
     runCards(s.cards);
   }

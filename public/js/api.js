@@ -12,8 +12,12 @@ export async function api(method, url, body, opts = {}) {
   headers['X-Lang'] = lang();   // the server answers (error messages, content) in the language the learner sees
   if (opts.headers) Object.assign(headers, opts.headers);
   let res;
-  try { res = await fetch('/api' + url, { method, headers, credentials: 'same-origin', body: opts.raw ? body : body === undefined ? undefined : JSON.stringify(body) }); }
-  catch (_) { throw new ApiError(0, t('err.network')); }
+  // no request may hang for ever: after 30 s the learner gets a clear message (loaders then offer a retry)
+  const ctl = typeof AbortController === 'function' ? new AbortController() : null;
+  const timer = ctl ? setTimeout(() => ctl.abort(), opts.timeout || 30000) : null;
+  try { res = await fetch('/api' + url, { method, headers, credentials: 'same-origin', signal: ctl ? ctl.signal : undefined, body: opts.raw ? body : body === undefined ? undefined : JSON.stringify(body) }); }
+  catch (e) { throw new ApiError(0, e && e.name === 'AbortError' ? t('err.timeout') : t('err.network')); }
+  finally { if (timer) clearTimeout(timer); }
   let data = null; try { data = await res.json(); } catch (_) { /* empty body */ }
   if (data && data.csrfToken) session.csrf = data.csrfToken;
   if (!res.ok) {

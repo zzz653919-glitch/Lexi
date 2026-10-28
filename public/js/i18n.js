@@ -32,6 +32,7 @@ export const onChange = (fn) => { listeners.add(fn); return () => listeners.dele
 export async function init({ user, config }) {
   if (config && Array.isArray(config.languages) && config.languages.length) offered = config.languages.map((l) => l.code);
   const wanted = [user && user.uiLanguage, readStore(), config && config.defaultLanguage, core.DEFAULT_LANGUAGE].find((c) => c && isSupported(c) && offered.includes(c)) || core.DEFAULT_LANGUAGE;
+  if (wanted === current && dicts[wanted] && Object.keys(dicts[wanted]).length) { if (user && user.uiLanguage) writeStore(wanted); return current; }   // already loaded (the start-up screen loads the device language first)
   await use(wanted, { remember: !!(user && user.uiLanguage) || !!readStore() });
   return current;
 }

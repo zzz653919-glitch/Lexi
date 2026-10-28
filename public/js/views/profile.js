@@ -3,6 +3,7 @@ import { get, patch, post, session, api } from '../api.js';
 import { field, wireForm, formErrorBox } from '../forms.js';
 import { setUser, navigate, switcher } from '../app.js';
 import { t, n, fmt } from '../i18n.js';
+import { getPref, setPref } from '../motion.js';
 
 const GOALS = [10, 20, 30, 50, 100];
 export default async function profile() {
@@ -40,6 +41,9 @@ export default async function profile() {
 
   el.append(h('div', { class: 'page-head' }, h('div', { class: 'hello' }, avatar(u.avatar, 72), h('div', {}, h('h1', {}, u.displayName), h('p', { class: 'muted', style: { margin: 0 } }, t('profile.joined', { email: u.email, date: fmt.date(u.createdAt) })))), h('div', { class: 'chips' }, h('span', { class: 'chip bolt' }, icon('bolt'), t('stats.xp_value', { n: fmt.number(u.xpTotal) })), h('span', { class: 'chip flame' }, icon('flame'), n('count.day_streak', p.stats.streak.current)), h('span', { class: 'chip ok' }, icon('check'), n('count.lessons', p.stats.lessonsCompleted)), h('span', { class: 'chip warn' }, icon('star'), n('count.badges', p.stats.achievements)))),
     h('div', { class: 'grid two' }, h('section', { class: 'card' }, h('h2', {}, t('profile.settings')), form), h('div', {}, h('section', { class: 'card', style: { marginTop: 0 } }, h('h2', {}, t('profile.password')), pform),
+      h('section', { class: 'card' }, h('h2', {}, t('profile.appearance')), h('label', { class: 'field' }, h('span', { class: 'label' }, t('profile.animations')),
+        h('select', { class: 'input', id: 'motion-pref', name: 'motion', onchange: (e) => { setPref(e.target.value); toast(t('profile.animations_saved'), 'success', 1800); } }, ['system', 'on', 'off'].map((v) => h('option', { value: v, selected: getPref() === v }, t('profile.motion_' + v)))),
+        h('div', { class: 'muted small' }, t('profile.animations_hint')))),
       h('section', { class: 'card' }, h('h2', {}, t('profile.account')), h('div', { class: 'stack' }, h('a', { class: 'btn secondary block', href: '/achievements' }, t('nav.achievements')), h('a', { class: 'btn secondary block', href: '/leaderboard' }, t('nav.leaderboard')),
         ['admin', 'editor'].includes(u.role) ? h('a', { class: 'btn secondary block', href: '/admin' }, icon('shield'), t('nav.admin_panel')) : null,
         h('button', { class: 'btn danger block', type: 'button', onclick: async () => { if (await confirmDialog(t('profile.signout_title'), t('profile.signout_text'), t('nav.sign_out'))) { await api('POST', '/auth/logout', {}); setUser(null, null); session.csrf = null; navigate('/login', true); } } }, icon('logout'), t('nav.sign_out')))))));

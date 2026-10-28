@@ -11,8 +11,10 @@ async function withBrowser(fn, { viewport = { width: 1280, height: 800 }, ...ctx
   try { return await fn(browser, viewport, ctxOpts); } finally { await browser.close(); }
 }
 /* a page that records every console error, uncaught exception and failed (>=400, unexpected) request */
-async function openPage(browser, viewport, { lang = 'en', ...ctxOpts } = {}) {
+async function openPage(browser, viewport, { lang = 'en', motion = 'off', ...ctxOpts } = {}) {
   const ctx = await browser.newContext({ viewport, ...ctxOpts });
+  // layout / contrast / flow tests run without animations (deterministic measurements); tests/ui/motion.ui.js turns them on explicitly
+  if (motion) await ctx.addInitScript((m) => { try { if (!localStorage.getItem('lexi.motion')) localStorage.setItem('lexi.motion', m); } catch (_) { /* storage blocked */ } }, motion);
   if (lang) await ctx.addInitScript((l) => { try { if (!localStorage.getItem('lexi.lang')) localStorage.setItem('lexi.lang', l); } catch (_) { /* storage blocked */ } }, lang);
   const page = await ctx.newPage();
   page.problems = [];

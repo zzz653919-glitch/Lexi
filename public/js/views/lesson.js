@@ -1,6 +1,7 @@
 import { h, icon, toast, confirmDialog, spinner, speak } from '../ui.js';
 import { get, post, ApiError } from '../api.js';
-import { navigate, refreshStats } from '../app.js';
+import { navigate, refreshStats, getStats } from '../app.js';
+import { burst, countUp, play } from '../motion.js';
 import { t, n } from '../i18n.js';
 import { RENDERERS } from './exercises.js';
 import { achievementIcon } from './achievements.js';
@@ -13,6 +14,7 @@ export default async function lesson({ params }) {
   const root = h('main', { class: 'lesson' });
   let current = null, answered = false, busy = false, cleaned = false;
   let celebrate = null;
+  const statsBefore = Promise.resolve(getStats() || refreshStats());   // to tell whether this lesson really extended the streak
 
   const heartsEl = h('div', { class: 'hearts', 'aria-label': t('stats.hearts') });
   const bar = h('i', { style: { width: '0%' } });
@@ -63,8 +65,10 @@ export default async function lesson({ params }) {
       setHearts(); setProgress();
       const fb = res.feedback;
       foot.className = 'lesson-foot ' + (fb.correct ? 'good' : 'bad');
+      if (fb.correct) { burst(feedback, { kind: 'stars' }); play(foot, 'good-glow', 750); }
+      else { play(current.el, 'shake-x', 450); hintAt(); }
       feedback.replaceChildren(...[
-        h('b', {}, icon(fb.correct ? 'check' : 'x'), fb.correct ? (fb.typo ? t('lesson.correct_typo') : t(PRAISE[Math.floor(Math.random() * PRAISE.length)])) : t('lesson.incorrect'), fb.xp ? h('span', { class: 'xp' }, t('lesson.xp_gain', { n: fb.xp })) : null),
+        h('b', {}, icon(fb.correct ? 'check' : 'x'), fb.correct ? (fb.typo ? t('lesson.correct_typo') : t(PRAISE[Math.floor(Math.random() * PRAISE.length)])) : t('lesson.incorrect'), fb.xp ? h('span', { class: 'xp xp-float' }, t('lesson.xp_gain', { n: fb.xp })) : null),
         !fb.correct || fb.typo ? h('p', {}, t('lesson.correct_answer') + ' ', h('span', { class: 'correct-answer' }, fb.correctAnswer)) : null,
         fb.explanation ? h('p', {}, fb.explanation) : null, fb.translation && !fb.correct ? h('p', { class: 'muted' }, fb.translation) : null].filter(Boolean));
       action.textContent = state.status === 'in_progress' ? t('lesson.continue') : t('lesson.finish'); action.className = 'btn' + (fb.correct ? '' : ' danger'); action.disabled = false; action.onclick = next; action.focus();
@@ -74,11 +78,16 @@ export default async function lesson({ params }) {
       if (e instanceof ApiError && e.status === 409) { state = await get('/attempts/' + id); render(); }
     }
   }
+  /* a gentle visual hint after a mistake: the right answer pulses */
+  function hintAt() {
+    const target = body.querySelector('.option.right, .option.correct') || feedback.querySelector('.correct-answer');
+    if (target) play(target, 'hint-pulse', 2100);
+  }
   function next() { if (state.status !== 'in_progress') return showResult(); render(); }
   function render() { if (state.status !== 'in_progress') return showResult(); if (!state.exercise) return showResult(); showExercise(); }
 
   function showResult() {
-    refreshStats();
+    const statsAfter = refreshStats();
     const r = state.result || { correct: state.correct, incorrect: state.incorrect, total: state.totalPlanned, accuracy: 0, xp: 0, mistakes: [], words: [], outcome: state.status };
     foot.hidden = true; top.hidden = true;
     if (r.outcome === 'out_of_hearts') {
@@ -88,18 +97,27 @@ export default async function lesson({ params }) {
       return;
     }
     const earned = celebrate && celebrate.earned ? celebrate.earned : [];
-    body.replaceChildren(h('div', { class: 'result' }, h('img', { src: '/img/mascot.svg', alt: '' }),
+    const xpNum = h('b', {}, '+' + r.xp), accNum = h('b', {}, r.accuracy + '%'), streakSlot = h('div', { class: 'streak-slot', style: { margin: '0 0 12px' } });
+    body.replaceChildren(h('div', { class: 'result celebrate' }, h('img', { src: '/img/mascot.svg', alt: '' }),
       h('h1', {}, state.kind === 'mistakes' ? t('lesson.mistakes_reviewed') : r.accuracy === 100 ? t('lesson.perfect') : t('lesson.complete')),
       h('div', { class: 'result-stats' },
-        h('div', { class: 'card xp' }, h('b', {}, '+' + r.xp), h('span', { class: 'muted small' }, t('lesson.xp_earned'))),
-        h('div', { class: 'card acc' }, h('b', {}, r.accuracy + '%'), h('span', { class: 'muted small' }, t('lesson.accuracy'))),
+        h('div', { class: 'card xp' }, xpNum, h('span', { class: 'muted small' }, t('lesson.xp_earned'))),
+        h('div', { class: 'card acc' }, accNum, h('span', { class: 'muted small' }, t('lesson.accuracy'))),
         h('div', { class: 'card' }, h('b', {}, `${r.correct}/${r.total}`), h('span', { class: 'muted small' }, t('lesson.first_try')))),
       h('div', { class: 'chips', style: { justifyContent: 'center', marginBottom: '12px' } }, h('span', { class: 'chip ok' }, icon('check'), t('lesson.n_correct', { n: r.correct })), h('span', { class: 'chip bad' }, icon('x'), t('lesson.n_incorrect', { n: r.incorrect }))),
-      earned.length ? h('div', { class: 'card', style: { textAlign: 'left' } }, h('h2', {}, n('lesson.new_achievements', earned.length)), earned.map((a) => h('div', { class: 'ach-card', style: { marginTop: '8px' } }, h('div', { class: 'ico' }, icon(achievementIcon(a.icon))), h('div', {}, h('b', {}, t('ach.' + a.code + '.title')), h('div', { class: 'muted small' }, t('ach.' + a.code + '.desc')))))) : null,
+      streakSlot,
+      earned.length ? h('div', { class: 'card', style: { textAlign: 'left' } }, h('h2', {}, n('lesson.new_achievements', earned.length)), earned.map((a, i) => h('div', { class: 'ach-card badge-reveal', style: { '--i': i, marginTop: '8px' } }, h('div', { class: 'ico' }, icon(achievementIcon(a.icon))), h('div', {}, h('b', {}, t('ach.' + a.code + '.title')), h('div', { class: 'muted small' }, t('ach.' + a.code + '.desc')))))) : null,
       r.words.length ? h('div', { class: 'card', style: { textAlign: 'left' } }, h('h2', {}, t('lesson.words_to_review')), h('ul', { class: 'review-list' }, r.words.map((w) => h('li', {}, h('b', {}, w.en), ' — ', w.translation, w.example ? h('div', { class: 'muted small' }, w.example) : null)))) : null,
       r.mistakes.length ? h('div', { class: 'card', style: { textAlign: 'left' } }, h('h2', {}, t('lesson.your_mistakes')), h('ul', { class: 'review-list' }, r.mistakes.map((m) => h('li', {}, h('span', { class: 'muted' }, m.prompt || t('ex.type.' + m.type)), m.answer ? h('div', {}, t('lesson.answer_label') + ' ', h('b', {}, m.answer)) : null)))) : null,
       h('div', { class: 'stack', style: { marginTop: '18px' } }, h('a', { class: 'btn block', href: '/learn' }, t('common.continue')), r.mistakes.length ? h('a', { class: 'btn secondary block', href: '/practice' }, t('lesson.review_mistakes')) : null)));
     document.querySelector('.result a.btn') && document.querySelector('.result a.btn').focus();
+    // celebration: confetti and stars, numbers that count up to the REAL results, a streak flame only when the streak really grew
+    setTimeout(() => { burst(null, { kind: 'confetti' }); burst(xpNum, { kind: 'stars' }); }, 200);
+    countUp(xpNum, 0, r.xp, { format: (v) => '+' + v });
+    countUp(accNum, 0, r.accuracy, { format: (v) => v + '%' });
+    Promise.all([statsBefore, statsAfter]).then(([b0, a0]) => {
+      if (b0 && a0 && a0.streak.current > b0.streak.current && streakSlot.isConnected) streakSlot.append(h('span', { class: 'streak-up' }, icon('flame'), n('lesson.streak_up', a0.streak.current)));
+    });
   }
 
   const onKey = (e) => {

@@ -62,6 +62,9 @@ Role rules enforced by the server: only administrators change roles; nobody chan
 ## Languages
 The interface is available in Uzbek (default), Russian and English, switchable from the header or Profile; translations are editable by administrators. See [docs/I18N.md](docs/I18N.md).
 
+## Animations
+A start-up screen, loading animations, page transitions and answer / lesson-completion effects (all tied to real loading and real results; can be reduced or turned off in Profile). See [docs/ANIMATIONS.md](docs/ANIMATIONS.md).
+
 ## Rules (all calculated on the server)
 
 * **XP:** 10 per exercise answered correctly on the first try, 5 for a correct retry (a wrong exercise comes back once at the end of the lesson), the lesson's completion XP (default 20) and a perfect-lesson bonus (10). Vocabulary review pays 2 XP per correct typed / multiple-choice / spelling answer (capped per day, each word at most once a day and only when it was due); flashcards are self-graded and never pay XP. All values are editable in Settings.

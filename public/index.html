@@ -10,9 +10,37 @@
   <link rel="stylesheet" href="/css/base.css">
   <link rel="stylesheet" href="/css/pages.css">
   <link rel="stylesheet" href="/css/lesson.css">
+  <link rel="stylesheet" href="/css/motion.css">
 </head>
 <body>
-  <div id="app"><div class="spinner" role="status" aria-label="Loading"></div></div>
+  <div id="app"></div>
+  <div id="splash" class="splash" role="status" aria-live="polite" aria-label="Lexi Learn">
+    <div class="splash-floats" aria-hidden="true">
+      <span class="sp-f word" style="--x:6%;--y:14%;--s:1.15rem;--t:7s;--mx:14px;--my:-18px" aria-hidden="true">Learn</span>
+      <span class="sp-f word" style="--x:70%;--y:10%;--s:1.3rem;--t:8s;--d:-2s;--mx:-12px;--my:-20px" aria-hidden="true">Improve</span>
+      <span class="sp-f word" style="--x:12%;--y:72%;--s:1.2rem;--t:9s;--d:-3s;--mx:16px;--my:-14px" aria-hidden="true">Discover</span>
+      <span class="sp-f word" style="--x:62%;--y:78%;--s:1.1rem;--t:7.5s;--d:-1s;--mx:-16px;--my:-18px" aria-hidden="true">Practice</span>
+      <span class="sp-f" style="--x:22%;--y:30%;--s:2.2rem;--c:#e5484d;--t:6s;--d:-1s" aria-hidden="true">A</span>
+      <span class="sp-f" style="--x:78%;--y:34%;--s:2rem;--c:#3b82f6;--t:7s;--d:-2s" aria-hidden="true">B</span>
+      <span class="sp-f hide-sm" style="--x:84%;--y:60%;--s:2.4rem;--c:#a78bfa;--t:8s;--d:-4s" aria-hidden="true">Z</span>
+      <span class="sp-f hide-sm" style="--x:4%;--y:50%;--s:1.9rem;--c:#f5a524;--t:6.5s;--d:-3s" aria-hidden="true">c</span>
+      <span class="sp-f" style="--x:40%;--y:8%;--s:26px;--c:#f5a524;--t:5.5s;--d:-1s" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg></span>
+      <span class="sp-f" style="--x:88%;--y:14%;--s:20px;--c:#f5a524;--t:6s;--d:-2.5s" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg></span>
+      <span class="sp-f" style="--x:30%;--y:86%;--s:22px;--c:#f5a524;--t:7s;--d:-4s" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.5l2.9 6 6.6.9-4.8 4.6 1.2 6.5L12 17.4 6.1 20.5l1.2-6.5L2.5 9.4l6.6-.9z"/></svg></span>
+      <span class="sp-f bubble" style="--x:46%;--y:60%;--s:18px;--c:#1f9d6b;--t:6s;--d:-3s" aria-hidden="true"></span>
+      <span class="sp-f" style="--x:16%;--y:14%;--s:38px;--c:#1f9d6b;--t:7s;--d:-2s" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5C6 4 9 4 12 5.5v14c-3-1.5-6-1.5-9 0zM21 5.5C18 4 15 4 12 5.5v14c3-1.5 6-1.5 9 0z"/></svg></span>
+      <span class="sp-f hide-sm" style="--x:74%;--y:62%;--s:36px;--c:#3b82f6;--t:8s;--d:-1s" aria-hidden="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 5.5C6 4 9 4 12 5.5v14c-3-1.5-6-1.5-9 0zM21 5.5C18 4 15 4 12 5.5v14c3-1.5 6-1.5 9 0z"/></svg></span>
+      <span class="sp-f bubble" style="--x:8%;--y:36%;--s:40px;--c:#3b82f6;--t:6s;--d:-2s" aria-hidden="true">"</span>
+      <span class="sp-f bubble hide-sm" style="--x:90%;--y:84%;--s:44px;--c:#a78bfa;--t:7s;--d:-3s" aria-hidden="true">?</span>
+    </div>
+    <div class="splash-center">
+      <div class="splash-logo-wrap"><img class="splash-logo" src="/img/logo.svg" alt="" width="120" height="120"></div>
+      <div class="splash-name">Lexi Learn</div>
+      <div class="splash-msg" id="splash-msg"></div>
+      <div class="splash-bar" id="splash-bar" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><i id="splash-fill"></i></div>
+    </div>
+    <p class="splash-stuck">Lexi Learn is taking too long to start. <a href="">Reload / Qayta yuklash / Перезагрузить</a></p>
+  </div>
   <noscript><p style="padding:24px">Lexi Learn needs JavaScript to run.</p></noscript>
   <script src="/shared/i18n-core.js"></script>
   <script type="module" src="/js/app.js"></script>
