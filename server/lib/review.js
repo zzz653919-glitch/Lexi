@@ -6,7 +6,7 @@ const L10N = require('./localize');
 const BOX_DAYS = [0, 1, 2, 4, 8, 16, 32];          // days until the next review after a correct answer, by box
 const MODES = ['flashcards', 'choice', 'typed', 'spelling'];
 
-function make(db, settings, core) {
+function make(db, settings, core, learning) {
   const S = () => settings.all();
   const published = "v.status = 'published'";
 
@@ -96,6 +96,7 @@ function make(db, settings, core) {
       }
       const full = await core.userById(user.id), s = S();
       await schedule(user.id, vid, ok);
+      if (learning && mode !== 'flashcards' && /^(A0|A1|A2|B1|B2|C1|C2)$/.test(v.cefr || '')) await learning.recordEvidence(user.id, 'vocabulary', v.cefr, ok, 'review', null);
       await core.bumpDay(full, { answers: 1, correct: ok ? 1 : 0, reviewCorrect: ok ? 1 : 0 });
       let xp = 0, heart = false;
       if (ok && mode !== 'flashcards' && wasDue) {       // flashcards are self-graded, so they never pay XP; each word pays at most once a day
@@ -123,7 +124,7 @@ function make(db, settings, core) {
     return await counts(user);
   }
 
-  return { counts, session, answer, setDifficult, addToReview, dueItems, MODES, BOX_DAYS };
+  return { counts, session, answer, setDifficult, addToReview, dueItems, schedule, MODES, BOX_DAYS };
 }
 
 module.exports = { make, BOX_DAYS };

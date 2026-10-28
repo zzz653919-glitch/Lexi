@@ -65,6 +65,8 @@ The interface is available in Uzbek (default), Russian and English, switchable f
 ## Animations
 A start-up screen, loading animations, page transitions and answer / lesson-completion effects (all tied to real loading and real results; can be reduced or turned off in Profile). See [docs/ANIMATIONS.md](docs/ANIMATIONS.md).
 
+A **placement test** (adaptive, 20–35 questions, Pre-A1 … C2), personalised **daily lessons**, per-skill tracking and automatic level adjustment. See [docs/ASSESSMENT.md](docs/ASSESSMENT.md).
+
 ## Rules (all calculated on the server)
 
 * **XP:** 10 per exercise answered correctly on the first try, 5 for a correct retry (a wrong exercise comes back once at the end of the lesson), the lesson's completion XP (default 20) and a perfect-lesson bonus (10). Vocabulary review pays 2 XP per correct typed / multiple-choice / spelling answer (capped per day, each word at most once a day and only when it was due); flashcards are self-graded and never pay XP. All values are editable in Settings.

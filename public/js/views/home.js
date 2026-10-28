@@ -1,9 +1,10 @@
-import { h, icon, avatar } from '../ui.js';
-import { get, post, session } from '../api.js';
+import { h, icon, avatar, toast } from '../ui.js';
+import { get, post, session, ApiError } from '../api.js';
 import { navigate, switcher } from '../app.js';
 import { t, n, fmt } from '../i18n.js';
 import { startAttempt } from './start.js';
 import { achievementIcon } from './achievements.js';
+import { levelBadge, levelName, skillName } from './level-info.js';
 
 function landing() {
   const site = session.config ? session.config.siteName : 'Lexi Learn';
@@ -37,12 +38,37 @@ export default async function home() {
   const contBtn = h('button', { class: 'btn', type: 'button' }, rec ? (rec.resume ? t('dashboard.continue_lesson') : t('dashboard.start_lesson')) : t('dashboard.view_course'));
   contBtn.addEventListener('click', () => (rec ? startRec(contBtn) : navigate('/learn')));
 
+  const dl = d.daily, lr = d.learning;
+  const startDaily = async (btn) => {
+    btn.disabled = true;
+    try { const st = await post('/daily/start'); navigate('/daily/' + st.attemptId); }
+    catch (e) { toast(e instanceof ApiError ? e.message : t('app.error_text'), 'error', 5000); btn.disabled = false; }
+  };
+  const dailyBtn = h('button', { class: 'btn', type: 'button' }, dl.inProgress ? t('daily.continue') : dl.completedToday ? t('daily.again') : t('daily.start'));
+  dailyBtn.addEventListener('click', () => startDaily(dailyBtn));
+  const retake = h('button', { class: 'btn small', type: 'button' }, t('reassess.button'));
+  retake.addEventListener('click', async () => { retake.disabled = true; try { await post('/assessment/start', {}); navigate('/placement'); } catch (e) { retake.disabled = false; toast(e instanceof ApiError ? e.message : t('app.error_text'), 'error', 5000); } });
+  const rec2 = lr.recommendation;
+  const levelUp = lr.lastChange && lr.lastChange.source === 'auto' && Date.now() - Date.parse(lr.lastChange.at) < 3 * 86400000;
+  const banners = [
+    levelUp ? h('div', { class: 'notice level-up', role: 'status' }, icon('star'), t('daily.level_up', { level: t('level.' + lr.level + '.short') })) : null,
+    rec2 && rec2.reassess ? h('div', { class: 'notice reassess', role: 'note' }, h('span', {}, t('reassess.' + rec2.reason, { accuracy: rec2.accuracy, days: rec2.days })), retake) : null,
+  ].filter(Boolean);
+
   const el = h('div', { class: 'stack' },
     h('div', { class: 'page-head' }, h('div', { class: 'hello' }, h('img', { src: '/img/mascot.svg', alt: '' }), h('div', {}, h('h1', {}, t('dashboard.hello', { name: u.displayName })), h('p', { class: 'muted', style: { margin: 0 } }, d.today.goalMet ? t('dashboard.goal_reached') : t('dashboard.xp_to_goal', { n: Math.max(0, d.today.goal - d.today.xp) }))))),
     h('section', { class: 'card continue-card', 'aria-labelledby': 'cont-h' },
       h('span', { class: 'eyebrow' }, d.course ? `${d.course.title}${rec ? ' · ' + rec.level : ''}` : t('dashboard.no_course')),
       h('h2', { id: 'cont-h' }, rec ? rec.title : d.course ? t('dashboard.all_done') : t('dashboard.no_published')),
       rec ? h('p', { style: { margin: 0, opacity: .9 } }, t('dashboard.unit', { title: rec.unit })) : null, contBtn),
+    ...banners,
+    lr.level ? h('section', { class: 'card daily-card', 'aria-labelledby': 'daily-h' },
+      h('div', { class: 'row between' }, h('span', { class: 'eyebrow' }, t('daily.eyebrow')), h('a', { class: 'level-link', href: '/profile', title: t('level.change_hint') }, levelBadge(lr.level), h('span', { class: 'sr-only' }, levelName(lr.level)))),
+      h('h2', { id: 'daily-h' }, dl.completedToday ? t('daily.done_title') : t('daily.title')),
+      h('p', { class: 'muted' }, dl.inProgress ? t('daily.in_progress', { done: dl.inProgress.position, total: dl.inProgress.total }) : t('daily.text', { items: dl.items })),
+      dl.reviewDue ? h('p', { class: 'small muted' }, t('daily.review_due', { n: dl.reviewDue })) : null,
+      lr.weaknesses.length ? h('p', { class: 'small muted' }, t('daily.focus', { skills: lr.weaknesses.map(skillName).join(', ') })) : null,
+      dailyBtn) : null,
     h('div', { class: 'stat-row' },
       h('div', { class: 'card stat' }, h('div', { class: 'ico', style: { color: 'var(--flame)' } }, icon('flame')), h('div', {}, h('b', {}, fmt.number(d.streak.current)), h('span', {}, d.streak.activeToday ? t('dashboard.streak_today') : t('dashboard.streak')))),
       h('div', { class: 'card stat' }, h('div', { class: 'ico', style: { color: 'var(--gold-ink)' } }, icon('bolt')), h('div', {}, h('b', {}, fmt.number(u.xpTotal)), h('span', {}, t('dashboard.total_xp')))),

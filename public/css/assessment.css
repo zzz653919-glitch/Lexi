@@ -1,0 +1,46 @@
+/* Placement test, results, level badge and the personalised daily lesson */
+.level-badge { display: inline-grid; place-items: center; min-width: 52px; height: 36px; padding: 0 12px; border-radius: 12px; font-weight: 900; letter-spacing: .02em; color: #fff; background: var(--brand-dark); box-shadow: inset 0 -3px 0 rgba(0, 0, 0, .18); }
+.level-badge.big { min-width: 84px; height: 56px; font-size: 1.6rem; border-radius: 16px; }
+.lv-A0 { background: #52606d; } .lv-A1 { background: #0f6243; } .lv-A2 { background: #0b6a73; } .lv-B1 { background: #1f5cb0; } .lv-B2 { background: #5b3fb0; } .lv-C1 { background: #a1296b; } .lv-C2 { background: #8a2f0c; }
+.level-link { display: inline-flex; text-decoration: none; }
+
+.welcome { align-items: start; }
+.welcome-wrap { width: min(100%, 560px); padding: 24px 0 40px; }
+.welcome .mascot { display: block; margin: 0 auto 8px; }
+.choice-card.recommended { border: 2px solid var(--brand); }
+.check-list { list-style: none; margin: 10px 0 14px; padding: 0; display: grid; gap: 8px; }
+.check-list li { display: flex; gap: 8px; align-items: flex-start; } .check-list svg { width: 20px; height: 20px; color: var(--ok); flex: none; margin-top: 2px; }
+.level-options { display: grid; gap: 10px; margin-bottom: 14px; }
+.level-option { display: flex; align-items: center; gap: 12px; text-align: left; width: 100%; padding: 12px; min-height: 56px; border: 2px solid var(--line); border-radius: var(--radius); background: var(--surface); color: var(--ink); font: inherit; cursor: pointer; }
+.level-option:hover { border-color: var(--brand); } .level-option[aria-checked="true"] { border-color: var(--brand); background: var(--brand-soft); box-shadow: var(--focus); }
+.lo-text { display: grid; gap: 2px; min-width: 0; }
+
+.placement .q-count { white-space: nowrap; }
+.placement .lesson-foot .inner { justify-content: space-between; }
+.q-in { animation: q-in .3s cubic-bezier(.2, .8, .3, 1) both; }
+@keyframes q-in { from { opacity: 0; transform: translateX(18px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .q-in { animation: none; } }
+html[data-motion="off"] .q-in { animation: none; }
+
+.result-wrap { width: min(100%, 640px); margin: 0 auto; padding: 18px 14px 80px; }
+.placement-result .result-hero img { margin-bottom: 4px; }
+.placement-result .result-stats { margin: 14px 0; }
+.skill-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.skill-row .progress > i { transition: width .9s cubic-bezier(.2, .8, .3, 1); }
+.plan-list { margin: 0; padding-left: 22px; display: grid; gap: 10px; }
+.notice.level-up { display: flex; gap: 10px; align-items: center; background: var(--gold-soft); color: var(--gold-ink); border-color: var(--gold); font-weight: 800; }
+.notice.level-up svg { width: 22px; height: 22px; flex: none; }
+.notice.reassess { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+
+.daily-card { border: 2px solid var(--brand); background: linear-gradient(180deg, var(--brand-soft), var(--surface)); }
+.daily-card h2 { margin-top: 2px; }
+.level-card .row { gap: 12px; flex-wrap: wrap; align-items: center; }
+.level-history ul { margin: 8px 0 0; padding-left: 20px; }
+
+.info-card { padding-top: 8px; }
+.info-card .q-title { display: flex; align-items: center; gap: 12px; }
+.info-body { font-size: 1.15rem; font-weight: 700; margin: 0 0 12px; }
+.info-examples { margin: 0; padding: 12px 14px 12px 32px; background: var(--surface); border: 2px solid var(--line); border-radius: 14px; display: grid; gap: 6px; }
+.info-card.grammar .info-body { font-weight: 600; line-height: 1.5; }
+.notice { padding: 12px 14px; border: 2px solid var(--line); border-radius: 14px; background: var(--info-soft); color: var(--ink); }
+.notice.small { padding: 10px 12px; }

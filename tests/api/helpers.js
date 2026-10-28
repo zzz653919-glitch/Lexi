@@ -18,7 +18,7 @@ async function startServer(opts = {}) {
   const base = 'http://127.0.0.1:' + server.address().port;
   const createUser = ({ email, password = 'Passw0rd!x', role = 'learner', name = 'Test User', timezone = 'UTC' }) => {
     const t = new Date().toISOString();
-    return db.run('INSERT INTO users (email, display_name, password_hash, role, timezone, hearts, hearts_updated_at, created_at) VALUES (?,?,?,?,?,?,?,?)', email, name, A.hashPassword(password), role, timezone, 5, t, t).id;
+    return db.run('INSERT INTO users (email, display_name, password_hash, role, timezone, hearts, hearts_updated_at, created_at, cefr_level, level_source, onboarded) VALUES (?,?,?,?,?,?,?,?,?,?,?)', email, name, A.hashPassword(password), role, timezone, 5, t, t, 'A1', 'manual', 1).id;
   };
   return { ...inst, appDb: inst.db, db, base, dir, createUser, async stop() { await new Promise((r) => server.close(r)); db.close(); await inst.close(); fs.rmSync(dir, { recursive: true, force: true }); } };
 }

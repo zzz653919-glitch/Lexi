@@ -268,8 +268,8 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   }
   async function insertExercise(lessonId, ex, position) {
     const t = now();
-    const id = (await db.run(`INSERT INTO exercises (lesson_id, type, position, difficulty, prompt, answer, sentence, passage, audio_text, audio_url, translation, explanation, hint, direction, status, vocabulary_id, translations, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      lessonId, ex.type, position, ex.difficulty, ex.prompt, ex.answer, ex.sentence, ex.passage, ex.audio_text, ex.audio_url, ex.translation, ex.explanation, ex.hint, ex.direction, ex.status, ex.vocabulary_id, JSON.stringify(ex.translations || {}), t, t)).id;
+    const id = (await db.run(`INSERT INTO exercises (lesson_id, type, position, difficulty, prompt, answer, sentence, passage, audio_text, audio_url, translation, explanation, hint, direction, status, vocabulary_id, translations, skill, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      lessonId, ex.type, position, ex.difficulty, ex.prompt, ex.answer, ex.sentence, ex.passage, ex.audio_text, ex.audio_url, ex.translation, ex.explanation, ex.hint, ex.direction, ex.status, ex.vocabulary_id, JSON.stringify(ex.translations || {}), ex.skill || null, t, t)).id;
     await saveOptions(id, ex.options);
     return id;
   }
@@ -295,8 +295,8 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
     const errs = X.validate(ex);
     if (errs.length && ex.status === 'published') throw bad('err.exercise_cannot_publish', Object.fromEntries(errs.map((e) => [e.field, { key: e.message, params: e.params }])), { reason: req.t(errs[0].message, errs[0].params) });
     await db.tx(async () => {
-      await db.run(`UPDATE exercises SET type=?, difficulty=?, prompt=?, answer=?, sentence=?, passage=?, audio_text=?, audio_url=?, translation=?, explanation=?, hint=?, direction=?, status=?, vocabulary_id=?, translations=?, updated_at=? WHERE id=?`,
-        ex.type, ex.difficulty, ex.prompt, ex.answer, ex.sentence, ex.passage, ex.audio_text, ex.audio_url, ex.translation, ex.explanation, ex.hint, ex.direction, ex.status, ex.vocabulary_id, JSON.stringify(ex.translations || {}), now(), old.id);
+      await db.run(`UPDATE exercises SET type=?, difficulty=?, prompt=?, answer=?, sentence=?, passage=?, audio_text=?, audio_url=?, translation=?, explanation=?, hint=?, direction=?, status=?, vocabulary_id=?, translations=?, skill=?, updated_at=? WHERE id=?`,
+        ex.type, ex.difficulty, ex.prompt, ex.answer, ex.sentence, ex.passage, ex.audio_text, ex.audio_url, ex.translation, ex.explanation, ex.hint, ex.direction, ex.status, ex.vocabulary_id, JSON.stringify(ex.translations || {}), ex.skill || null, now(), old.id);
       await saveOptions(old.id, ex.options);
     });
     await audit(req, 'exercise.update', 'exercise', old.id, { type: ex.type });

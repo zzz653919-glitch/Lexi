@@ -3,6 +3,7 @@ const { now } = require('../lib/util');
 const X = require('../lib/exercises');
 const data = require('./sample-data');
 const TR = require('./translations');
+const { ensureAssessmentContent } = require('./assessment-content');
 
 const navJson = (title) => { const n = TR.NAV[title]; if (!n) return '{}'; return JSON.stringify(Object.fromEntries(['uz', 'ru'].map((l) => [l, { title: n[l][0], description: n[l][1] }]))); };
 const ru = (w) => TR.RU_WORDS[w.en] || null;
@@ -90,7 +91,8 @@ async function ensureSample(db) {
     for (const [i, spec] of [data.GENERAL, data.IELTS].entries()) { const s = await buildCourse(db, spec, i); total.exercises += s.exercises; total.vocabulary += s.vocabulary; }
     await db.run("INSERT INTO settings (key, value) VALUES ('sample_seeded', 'true')");
   });
+  await ensureAssessmentContent(db);   // the word pool needs the course that was just created
   return { created: true, ...total };
 }
 
-module.exports = { ensureSample, lessonExercises };
+module.exports = { ensureSample, ensureAssessmentContent, lessonExercises };

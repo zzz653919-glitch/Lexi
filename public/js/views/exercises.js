@@ -111,7 +111,21 @@ function matchPairs(ex, ctx, { header }) {
 const title = (ex) => h('h1', { class: 'q-title' }, instruction(ex));
 const sentenceBox = (text, audio) => h('div', { class: 'q-sentence' }, audio ? h('button', { type: 'button', class: 'speak', 'aria-label': t('ex.play'), title: t('ex.play'), onclick: () => speak(audio) }, icon('volume')) : null, h('span', { lang: audio ? 'en' : undefined }, text));
 
+/* a teaching card (a new word or a grammar point): nothing to answer, the learner just reads it and continues */
+function card(ex, ctx) {
+  const c = ex.card;
+  ctx.changed(true);
+  const el = h('div', { class: 'info-card' + (c.grammar ? ' grammar' : '') },
+    h('span', { class: 'eyebrow' }, t(c.grammar ? 'daily.card_grammar' : 'daily.card_word')),
+    h('h1', { class: 'q-title', lang: c.grammar ? undefined : 'en' }, c.title, c.grammar ? null : h('button', { type: 'button', class: 'speak', 'aria-label': t('ex.play'), title: t('ex.play'), onclick: () => speak({ text: c.audio || c.title }) }, icon('volume'))),
+    h('p', { class: 'info-body' }, c.body),
+    c.examples && c.examples.length ? h('ul', { class: 'info-examples', lang: 'en' }, c.examples.map((x) => h('li', {}, x))) : null,
+    c.note ? h('p', { class: 'muted small' }, c.note) : null);
+  return { el, answer: () => true, lock() {}, focus() {} };
+}
+
 export const RENDERERS = {
+  card,
   multiple_choice: (ex, ctx) => choices(ex, ctx, { header: title(ex) }),
   translation_choice: (ex, ctx) => choices(ex, ctx, { header: h('div', {}, title(ex), sentenceBox(ex.sentence, ex.direction === 'uz-en' ? null : { text: ex.sentence })) }),
   reading: (ex, ctx) => choices(ex, ctx, { header: h('div', {}, h('p', { class: 'q-sub' }, t('ex.read_passage')), h('div', { class: 'passage', lang: 'en' }, ex.passage), title(ex)) }),

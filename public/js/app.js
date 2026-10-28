@@ -18,6 +18,10 @@ route('/forgot', view('auth-forgot'), { guest: true });
 route('/reset', view('auth-reset'), { guest: true });
 route('/learn', view('path'), { auth: true });
 route('/attempt/:id', view('lesson'), { auth: true, focus: true });
+route('/daily/:id', async (ctx) => (await import('./views/lesson.js')).default({ ...ctx, daily: true }), { auth: true, focus: true });
+route('/welcome', view('welcome'), { auth: true, onboarding: true });
+route('/placement', view('placement'), { auth: true, focus: true });
+route('/results', view('results'), { auth: true });
 route('/practice', view('practice'), { auth: true });
 route('/vocabulary', view('vocabulary'), { auth: true });
 route('/review', view('review'), { auth: true });
@@ -38,7 +42,7 @@ const NAV = [
   { key: 'profile', href: '/profile', label: 'nav.profile', icon: 'user', mobile: true },
 ];
 const stats = { data: null, prev: null };
-const LOADER_KIND = [[/^\/learn/, 'progress'], [/^\/achievements/, 'progress'], [/^\/vocabulary/, 'vocab'], [/^\/attempt\//, 'lesson'], [/^\/(review|practice)/, 'quiz']];
+const LOADER_KIND = [[/^\/learn/, 'progress'], [/^\/achievements/, 'progress'], [/^\/vocabulary/, 'vocab'], [/^\/(attempt|daily)\//, 'lesson'], [/^\/(placement|welcome)/, 'quiz'], [/^\/(review|practice)/, 'quiz']];
 const loaderKind = (path) => (LOADER_KIND.find(([re]) => re.test(path)) || [null, 'generic'])[1];
 let firstPaint = true;
 const siteName = () => (session.config ? session.config.siteName : 'Lexi Learn');
@@ -120,6 +124,10 @@ async function render() {
   if (!match) return renderOutcome(token, { el: h('div', { class: 'card center' }, h('h1', {}, t('app.not_found_title')), h('p', { class: 'muted' }, t('app.not_found_text')), h('a', { class: 'btn', href: '/' }, t('app.go_home'))), title: t('app.not_found_title'), nav: '' }, { auth: true });
   if (match.auth && !session.user) return navigate('/login?next=' + encodeURIComponent(path + location.search), true);
   if (match.guest && session.user) return navigate('/', true);
+  // a new learner starts with the welcome screen (placement test or choosing a level); staff accounts and existing learners skip it
+  const fresh = session.user && session.user.role === 'learner' && !session.user.onboarded;
+  if (fresh && match.auth && !['/welcome', '/placement'].includes(path)) return navigate('/welcome', true);
+  if (match.onboarding && session.user && !fresh) return navigate('/', true);
   document.body.classList.toggle('focus', !!match.focus);
   // a loader appears only if the page really takes a moment to load (and is removed as soon as it has loaded)
   const stopLoader = shell && !firstPaint ? showLoader(shell.content, loaderKind(path), { onRetry: () => render() }) : () => {};
