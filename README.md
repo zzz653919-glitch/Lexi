@@ -3,7 +3,7 @@
 An English-learning platform with a game-like learning path, interactive exercises, XP / streaks / hearts, a vocabulary trainer with spaced repetition,
 and a separate administrator panel for managing courses, exercises, vocabulary and users.
 
-* **Server:** Node.js (≥ 22.5) + Express, SQLite through the built-in `node:sqlite` module (no native add-ons, one runtime dependency: `express`).
+* **Server:** Node.js (≥ 22.5) + Express, SQLite through the built-in `node:sqlite` module for a local file, or a hosted Turso/libSQL database (HTTP client `@libsql/client`, no native add-ons) on serverless hosts. All database access is asynchronous. Runtime dependencies: `express`, `@libsql/client`.
 * **Front-end:** plain ES modules, no build step. Learner app at `/`, admin panel at `/admin`.
 * **Brand:** original name, mascot ("Sprig" the sprout) and artwork. It is *inspired by* the learning flow of apps like Duolingo but copies none of their code, logos, characters or lessons.
 
@@ -85,7 +85,7 @@ The interface is available in Uzbek (default), Russian and English, switchable f
 
 ## Configuration
 
-Environment variables (all optional): `PORT` (3000), `HOST` (127.0.0.1), `COOKIE_SECURE=1` (set behind HTTPS), `TRUST_PROXY=1` (behind a reverse proxy), `PUBLIC_URL` (used in password-reset links), `LEXI_NO_SEED=1` (do not create the sample course), and for the CLI `LEXI_DB` (database file, default `data/lexi.sqlite`).
+Environment variables (all optional): `PORT` (3000), `HOST` (127.0.0.1 locally, 0.0.0.0 when `NODE_ENV=production` or `PORT` is set), `COOKIE_SECURE=1` (set behind HTTPS), `TRUST_PROXY=1` (behind a reverse proxy), `PUBLIC_URL` (used in password-reset links), `LEXI_NO_SEED=1` (do not create the sample course), and for the CLI `LEXI_DB` (database file) / `LEXI_DATA_DIR` (database directory, default `data/`), `DATABASE_URL` + `DATABASE_AUTH_TOKEN` (a hosted Turso/libSQL database instead of the local file – needed on Vercel). To publish the site see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 Site behaviour (names, XP, hearts, registration, maintenance mode …) is configured in the admin panel, not in files.
 
 Commands: `npm run migrate` · `npm run seed` · `npm run create-admin` · `npm run backup` (consistent copy into `backups/`) · `npm run import-legacy-vocab` (imports the ~4,200 old Lexi v1 words as **draft** entries for review).
@@ -104,7 +104,7 @@ docs/              audit and migration notes
 ## Tests
 
 ```bash
-npm test             # 50 server tests (real HTTP server + temporary SQLite database per test)
+npm test             # server tests (real HTTP server + temporary SQLite database per test)
 npm run test:ui      # 3 browser test files; needs Playwright with Chromium installed
 npm run test:legacy  # the preserved v1 app's data / answer-checking tests
 ```
@@ -116,7 +116,7 @@ The browser tests drive the real UI at 320, 360, 390, 430, 768, 1024 and 1440 px
 * **No e-mail delivery is configured.** Password-reset links are written to `data/outbox/password-resets.log` and the server log; connect a mailer by passing `mailer` to `createApp` (see `server/routes/auth.js`).
 * **Audio** uses the browser's speech synthesis unless a recording is uploaded. For listening exercises that use text-to-speech the text to be spoken is part of the exercise data, so a determined learner could read the answer from the network response; use uploaded recordings where that matters.
 * The sample curriculum is small (2 courses, 12 lessons, 144 exercises, 72 words, written for this project). Uzbek translations were not reviewed by a professional translator; the same is true of the optional legacy word import.
-* `node:sqlite` is marked experimental in Node 22 (the warning is silenced by the npm scripts). SQLite in one process suits small and medium deployments; there are no "down" migrations, so use `npm run backup` before upgrading.
+* `node:sqlite` is marked experimental in Node 22 (the warning is silenced by the npm scripts). A single SQLite file in one process suits small and medium deployments (use Turso for serverless hosting); there are no "down" migrations, so use `npm run backup` before upgrading.
 * The interface is in English; the translation language of vocabulary is Uzbek (Russian is stored optionally). Progress from the old browser-only app is not migrated automatically.
 * Whole-course *import* is not implemented (courses can be exported; lessons and vocabulary can be imported).
 * HTTPS must be provided by a reverse proxy / hosting platform.

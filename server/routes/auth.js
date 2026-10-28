@@ -33,19 +33,19 @@ function validateProfile(input, settings, { partial }) {
 
 module.exports = function authRoutes({ db, settings, auth, core, opts }) {
   const r = express.Router();
-  const loginLimit = A.limiter(8, 10 * 60000, opts.rateLimit);
-  const regLimit = A.limiter(20, 3600000, opts.rateLimit);
-  const forgotLimit = A.limiter(5, 3600000, opts.rateLimit);
+  const loginLimit = A.limiter(db, 'login', 8, 10 * 60000, opts.rateLimit);
+  const regLimit = A.limiter(db, 'signup', 20, 3600000, opts.rateLimit);
+  const forgotLimit = A.limiter(db, 'forgot', 5, 3600000, opts.rateLimit);
   const outbox = path.join(opts.dataDir, 'outbox');
 
   const meBody = (req) => ({ user: req.user ? publicUser(req.user) : null, csrfToken: req.session ? req.session.csrf_token : null });
 
-  r.get('/me', (req, res) => res.json(meBody(req)));
+  r.get('/me', async (req, res) => res.json(meBody(req)));
 
-  r.post('/register', (req, res) => {
+  r.post('/register', async (req, res) => {
     const s = settings.all();
     if (!s.registration_open) throw new HttpError(403, 'err.registration_closed');
-    if (!regLimit.take(req.ip)) throw new HttpError(429, 'err.rate_signups');
+    if (!(await regLimit.take(req.ip))) throw new HttpError(429, 'err.rate_signups');
     const b = req.body || {};
     const errors = {};
     const email = clean(b.email, 254).toLowerCase();
@@ -55,46 +55,46 @@ module.exports = function authRoutes({ db, settings, auth, core, opts }) {
     const p = validateProfile({ displayName: b.displayName, timezone: b.timezone, startLevel: b.startLevel || 'A1', dailyGoalXp: b.dailyGoalXp === undefined ? s.default_daily_goal_xp : b.dailyGoalXp, uiLanguage: b.uiLanguage || req.lang, translationLanguage: b.translationLanguage || (b.uiLanguage === 'ru' || (!b.uiLanguage && req.lang === 'ru') ? 'ru' : s.default_translation_language), avatar: b.avatar || 'sprout' }, settings, { partial: false });
     Object.assign(errors, p.errors);
     if (Object.keys(errors).length) throw bad('err.fix_fields', errors);
-    if (db.get('SELECT 1 x FROM users WHERE email = ?', email)) throw bad('err.fix_fields', { email: 'val.email_taken' });
+    if (await db.get('SELECT 1 x FROM users WHERE email = ?', email)) throw bad('err.fix_fields', { email: 'val.email_taken' });
     const v = p.values;
-    const course = core.courseFor({ course_id: null });
+    const course = await core.courseFor({ course_id: null });
     const t = now();
     // new accounts are always plain learners; roles can only be changed by an administrator
-    const id = db.run('INSERT INTO users (email, display_name, password_hash, role, avatar, timezone, ui_language, translation_language, course_id, start_level, daily_goal_xp, hearts, hearts_updated_at, created_at, last_active_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-      email, v.display_name, A.hashPassword(b.password), 'learner', v.avatar, v.timezone || 'UTC', v.ui_language, v.translation_language, course ? course.id : null, v.start_level, v.daily_goal_xp, s.max_hearts, t, t, t).id;
-    const sess = auth.createSession(id, req);
+    const id = (await db.run('INSERT INTO users (email, display_name, password_hash, role, avatar, timezone, ui_language, translation_language, course_id, start_level, daily_goal_xp, hearts, hearts_updated_at, created_at, last_active_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      email, v.display_name, A.hashPassword(b.password), 'learner', v.avatar, v.timezone || 'UTC', v.ui_language, v.translation_language, course ? course.id : null, v.start_level, v.daily_goal_xp, s.max_hearts, t, t, t)).id;
+    const sess = await auth.createSession(id, req);
     auth.setCookie(res, sess.token);
-    req.user = core.userById(id); req.session = { csrf_token: sess.csrf };
+    req.user = await core.userById(id); req.session = { csrf_token: sess.csrf };
     res.status(201).json(meBody(req));
   });
 
-  r.post('/login', (req, res) => {
+  r.post('/login', async (req, res) => {
     const email = clean((req.body || {}).email, 254).toLowerCase(), password = (req.body || {}).password;
     const key = req.ip + '|' + email;
-    if (!loginLimit.take(key)) throw new HttpError(429, 'err.rate_login');
-    const u = A.validateEmail(email) ? db.get('SELECT * FROM users WHERE email = ?', email) : null;
+    if (!(await loginLimit.take(key))) throw new HttpError(429, 'err.rate_login');
+    const u = A.validateEmail(email) ? await db.get('SELECT * FROM users WHERE email = ?', email) : null;
     const ok = A.verifyPassword(typeof password === 'string' ? password : '', u ? u.password_hash : A.DUMMY_HASH);
     if (!u || !ok) throw new HttpError(401, 'err.login_failed');
     if (u.status !== 'active') throw new HttpError(403, 'err.account_suspended');
-    loginLimit.clear(key);
-    if (req.session) auth.destroySession(req);
-    const sess = auth.createSession(u.id, req);
+    await loginLimit.clear(key);
+    if (req.session) await auth.destroySession(req);
+    const sess = await auth.createSession(u.id, req);
     auth.setCookie(res, sess.token);
-    db.run('UPDATE users SET last_active_at = ? WHERE id = ?', now(), u.id);
+    await db.run('UPDATE users SET last_active_at = ? WHERE id = ?', now(), u.id);
     req.user = u; req.session = { csrf_token: sess.csrf };
     res.json(meBody(req));
   });
 
-  r.post('/logout', (req, res) => { auth.destroySession(req); auth.clearCookie(res); res.json({ ok: true }); });
+  r.post('/logout', async (req, res) => { await auth.destroySession(req); auth.clearCookie(res); res.json({ ok: true }); });
 
   // Password recovery. No e-mail server is configured by default: the reset link is written to data/outbox/ and the server log.
-  r.post('/forgot', (req, res) => {
-    if (!forgotLimit.take(req.ip)) throw new HttpError(429, 'err.rate_requests');
+  r.post('/forgot', async (req, res) => {
+    if (!(await forgotLimit.take(req.ip))) throw new HttpError(429, 'err.rate_requests');
     const email = clean((req.body || {}).email, 254).toLowerCase();
-    const u = A.validateEmail(email) ? db.get("SELECT * FROM users WHERE email = ? AND status = 'active'", email) : null;
+    const u = A.validateEmail(email) ? await db.get("SELECT * FROM users WHERE email = ? AND status = 'active'", email) : null;
     if (u) {
       const token = randomToken(32);
-      db.run('INSERT INTO password_resets (token_hash, user_id, expires_at) VALUES (?,?,?)', sha256(token), u.id, new Date(Date.now() + 3600000).toISOString());
+      await db.run('INSERT INTO password_resets (token_hash, user_id, expires_at) VALUES (?,?,?)', sha256(token), u.id, new Date(Date.now() + 3600000).toISOString());
       const link = `${opts.publicUrl || (req.protocol + '://' + req.get('host'))}/reset?token=${token}`;
       if (opts.mailer) opts.mailer({ to: u.email, link });
       else { try { fs.mkdirSync(outbox, { recursive: true }); fs.appendFileSync(path.join(outbox, 'password-resets.log'), `${now()}  ${u.email}  ${link}\n`, { mode: 0o600 }); } catch (_) { /* ignore */ } if (!opts.quiet) console.log(`[password reset] ${u.email}: ${link}`); }
@@ -102,16 +102,16 @@ module.exports = function authRoutes({ db, settings, auth, core, opts }) {
     res.json({ ok: true, message: req.t('msg.reset_prepared') });
   });
 
-  r.post('/reset', (req, res) => {
+  r.post('/reset', async (req, res) => {
     const b = req.body || {};
     const pwErr = A.passwordProblem(b.password);
     if (pwErr) throw bad(pwErr, { password: pwErr });
-    const row = db.get('SELECT * FROM password_resets WHERE token_hash = ?', sha256(String(b.token || '')));
+    const row = await db.get('SELECT * FROM password_resets WHERE token_hash = ?', sha256(String(b.token || '')));
     if (!row || row.used_at || row.expires_at < now()) throw bad('err.reset_invalid');
-    db.tx(() => {
-      db.run('UPDATE users SET password_hash = ? WHERE id = ?', A.hashPassword(b.password), row.user_id);
-      db.run('UPDATE password_resets SET used_at = ? WHERE token_hash = ?', now(), row.token_hash);
-      db.run('DELETE FROM sessions WHERE user_id = ?', row.user_id);   // sign out everywhere
+    await db.tx(async () => {
+      await db.run('UPDATE users SET password_hash = ? WHERE id = ?', A.hashPassword(b.password), row.user_id);
+      await db.run('UPDATE password_resets SET used_at = ? WHERE token_hash = ?', now(), row.token_hash);
+      await db.run('DELETE FROM sessions WHERE user_id = ?', row.user_id);   // sign out everywhere
     });
     res.json({ ok: true });
   });

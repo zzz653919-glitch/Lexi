@@ -4,3 +4,4 @@ data/
 backups/*.sqlite
 .env
 *.log
+vercel-static/

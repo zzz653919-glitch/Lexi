@@ -1,0 +1,7 @@
+tests
+legacy
+backups
+data
+docs
+.git
+.env

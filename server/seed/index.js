@@ -51,43 +51,44 @@ function lessonExercises(lesson, vocabIds) {
   return out;
 }
 
-function buildCourse(db, spec, position) {
+async function buildCourse(db, spec, position) {
   const t = now();
   const stats = { exercises: 0, vocabulary: 0 };
-  const courseId = db.run('INSERT INTO courses (slug, title, description, track, status, position, created_at, updated_at, translations) VALUES (?,?,?,?,?,?,?,?,?)', spec.slug, spec.title, spec.description, spec.track, 'published', position, t, t, navJson(spec.title)).id;
-  spec.levels.forEach((lv, li) => {
-    const levelId = db.run('INSERT INTO levels (course_id, code, title, description, position, unlock_rule, unlock_threshold_pct, translations) VALUES (?,?,?,?,?,?,?,?)', courseId, lv.code, lv.title, lv.description, li, 'sequential', 60, navJson(lv.title)).id;
-    lv.units.forEach((un, ui) => {
-      const unitId = db.run('INSERT INTO units (level_id, title, description, position, translations) VALUES (?,?,?,?,?)', levelId, un.title, un.description, ui, navJson(un.title)).id;
-      un.lessons.forEach((ls, k) => {
-        const lessonId = db.run('INSERT INTO lessons (unit_id, title, description, position, status, unlock_rule, xp_reward, created_at, updated_at, translations) VALUES (?,?,?,?,?,?,?,?,?,?)', unitId, ls.title, ls.description, k, 'published', 'sequential', 20, t, t, navJson(ls.title)).id;
-        const vocabIds = ls.words.map((w) => {
-          const r = db.run('INSERT OR IGNORE INTO vocabulary (course_id, level_id, unit_id, lesson_id, en, uz, translations, pos, example, example_uz, cefr, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', courseId, levelId, unitId, lessonId, w.en, w.uz, ru(w) ? JSON.stringify({ ru: ru(w)[0], ru_example: ru(w)[1] }) : '{}', w.pos, w.ex, w.exUz, lv.code === 'IELTS' ? '' : lv.code, 'published', t, t);
+  const courseId = (await db.run('INSERT INTO courses (slug, title, description, track, status, position, created_at, updated_at, translations) VALUES (?,?,?,?,?,?,?,?,?)', spec.slug, spec.title, spec.description, spec.track, 'published', position, t, t, navJson(spec.title))).id;
+  for (const [li, lv] of spec.levels.entries()) {
+    const levelId = (await db.run('INSERT INTO levels (course_id, code, title, description, position, unlock_rule, unlock_threshold_pct, translations) VALUES (?,?,?,?,?,?,?,?)', courseId, lv.code, lv.title, lv.description, li, 'sequential', 60, navJson(lv.title))).id;
+    for (const [ui, un] of lv.units.entries()) {
+      const unitId = (await db.run('INSERT INTO units (level_id, title, description, position, translations) VALUES (?,?,?,?,?)', levelId, un.title, un.description, ui, navJson(un.title))).id;
+      for (const [k, ls] of un.lessons.entries()) {
+        const lessonId = (await db.run('INSERT INTO lessons (unit_id, title, description, position, status, unlock_rule, xp_reward, created_at, updated_at, translations) VALUES (?,?,?,?,?,?,?,?,?,?)', unitId, ls.title, ls.description, k, 'published', 'sequential', 20, t, t, navJson(ls.title))).id;
+        const vocabIds = [];
+        for (const w of ls.words) {
+          const r = await db.run('INSERT OR IGNORE INTO vocabulary (course_id, level_id, unit_id, lesson_id, en, uz, translations, pos, example, example_uz, cefr, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', courseId, levelId, unitId, lessonId, w.en, w.uz, ru(w) ? JSON.stringify({ ru: ru(w)[0], ru_example: ru(w)[1] }) : '{}', w.pos, w.ex, w.exUz, lv.code === 'IELTS' ? '' : lv.code, 'published', t, t);
           if (r.changes) stats.vocabulary++;
-          return r.changes ? r.id : db.get('SELECT id FROM vocabulary WHERE en = ? COLLATE NOCASE AND uz = ? COLLATE NOCASE', w.en, w.uz).id;
-        });
-        lessonExercises(ls, vocabIds).forEach((ex, pos) => {
+          vocabIds.push(r.changes ? r.id : (await db.get('SELECT id FROM vocabulary WHERE en = ? COLLATE NOCASE AND uz = ? COLLATE NOCASE', w.en, w.uz)).id);
+        }
+        for (const [pos, ex] of lessonExercises(ls, vocabIds).entries()) {
           const errs = X.validate({ ...X.normalizeInput(ex) });
           if (errs.length) throw new Error(`Sample exercise invalid (${ls.title} / ${ex.type}): ${errs[0].message}`);
           const n = X.normalizeInput(ex);
-          const id = db.run('INSERT INTO exercises (lesson_id, type, position, difficulty, prompt, answer, sentence, passage, audio_text, audio_url, translation, explanation, hint, direction, status, vocabulary_id, created_at, updated_at, translations) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-            lessonId, n.type, pos, n.difficulty, n.prompt, n.answer, n.sentence, n.passage, n.audio_text, '', n.translation, n.explanation, n.hint, n.direction, 'published', ex.vocabulary_id || null, t, t, JSON.stringify(n.translations || {})).id;
-          n.options.filter((o) => o.text).forEach((o, i) => db.run('INSERT INTO exercise_options (exercise_id, text, match_text, is_correct, position) VALUES (?,?,?,?,?)', id, o.text, o.match_text, o.is_correct ? 1 : 0, i));
+          const id = (await db.run('INSERT INTO exercises (lesson_id, type, position, difficulty, prompt, answer, sentence, passage, audio_text, audio_url, translation, explanation, hint, direction, status, vocabulary_id, created_at, updated_at, translations) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+            lessonId, n.type, pos, n.difficulty, n.prompt, n.answer, n.sentence, n.passage, n.audio_text, '', n.translation, n.explanation, n.hint, n.direction, 'published', ex.vocabulary_id || null, t, t, JSON.stringify(n.translations || {}))).id;
+          for (const [i, o] of n.options.filter((o) => o.text).entries()) await db.run('INSERT INTO exercise_options (exercise_id, text, match_text, is_correct, position) VALUES (?,?,?,?,?)', id, o.text, o.match_text, o.is_correct ? 1 : 0, i);
           stats.exercises++;
-        });
-      });
-    });
-  });
+        }
+      }
+    }
+  }
   return stats;
 }
 
 /* creates the sample content once (only when the database has no courses yet) */
-function ensureSample(db) {
-  if (db.get("SELECT 1 x FROM settings WHERE key = 'sample_seeded'") || db.get('SELECT 1 x FROM courses')) return { created: false };
+async function ensureSample(db) {
+  if (await db.get("SELECT 1 x FROM settings WHERE key = 'sample_seeded'") || await db.get('SELECT 1 x FROM courses')) return { created: false };
   const total = { exercises: 0, vocabulary: 0 };
-  db.tx(() => {
-    [data.GENERAL, data.IELTS].forEach((spec, i) => { const s = buildCourse(db, spec, i); total.exercises += s.exercises; total.vocabulary += s.vocabulary; });
-    db.run("INSERT INTO settings (key, value) VALUES ('sample_seeded', 'true')");
+  await db.tx(async () => {
+    for (const [i, spec] of [data.GENERAL, data.IELTS].entries()) { const s = await buildCourse(db, spec, i); total.exercises += s.exercises; total.vocabulary += s.vocabulary; }
+    await db.run("INSERT INTO settings (key, value) VALUES ('sample_seeded', 'true')");
   });
   return { created: true, ...total };
 }

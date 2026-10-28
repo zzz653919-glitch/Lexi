@@ -1,3 +1,4 @@
+require('./lib/async-routes');
 const express = require('express');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -9,6 +10,7 @@ const attemptsLib = require('./lib/attempts');
 const reviewLib = require('./lib/review');
 const i18nLib = require('./lib/i18n');
 const coreI18n = require('../shared/i18n-core');
+const seed = require('./seed');
 const { now, HttpError } = require('./lib/util');
 
 const PUBLIC = path.join(__dirname, '..', 'public');
@@ -16,18 +18,30 @@ const PUBLIC = path.join(__dirname, '..', 'public');
 function createApp(options = {}) {
   const opts = {
     dbPath: path.join(__dirname, '..', 'data', 'lexi.sqlite'), dataDir: path.join(__dirname, '..', 'data'),
-    rateLimit: true, quiet: false, secureCookies: false, publicUrl: '', trustProxy: false, ...options,
+    rateLimit: true, quiet: false, secureCookies: false, publicUrl: '', trustProxy: false, seedSample: false, settingsTtl: 2000, ...options,
   };
-  const db = dbLib.open(opts.dbPath);
-  dbLib.migrate(db);
-  const settings = settingsLib.make(db);
+  const db = dbLib.open(opts.databaseUrl || opts.dbPath, { authToken: opts.databaseAuthToken });
+  const settings = settingsLib.make(db, { ttl: opts.settingsTtl });
   const auth = authLib.make(db, { secureCookies: opts.secureCookies });
-  const i18n = i18nLib.make(db, settings);
+  const i18n = i18nLib.make(db, settings, { ttl: opts.settingsTtl });
   const core = coreLib.make(db, settings);
   const attempts = attemptsLib.make(db, settings, core);
   const review = reviewLib.make(db, settings, core);
-  const audit = (req, action, entity, entityId, details) => db.run('INSERT INTO audit_log (admin_id, admin_email, action, entity, entity_id, details, created_at) VALUES (?,?,?,?,?,?,?)', req.user.id, req.user.email, action, entity, String(entityId == null ? '' : entityId), JSON.stringify(details || {}).slice(0, 2000), now());
+  const audit = async (req, action, entity, entityId, details) => db.run('INSERT INTO audit_log (admin_id, admin_email, action, entity, entity_id, details, created_at) VALUES (?,?,?,?,?,?,?)', req.user.id, req.user.email, action, entity, String(entityId == null ? '' : entityId), JSON.stringify(details || {}).slice(0, 2000), now());
   const ctx = { db, settings, auth, core, attempts, review, audit, opts, i18n };
+
+  /* One-time start-up work, done lazily on the first request that needs the database (so a serverless cold start or a database that is
+     briefly unreachable does not crash the process): schema migrations, optional sample content, first read of settings and texts. */
+  let ready = null, seeded = null;
+  const init = () => {
+    if (!ready) ready = (async () => {
+      await dbLib.migrate(db);
+      if (opts.seedSample) seeded = await seed.ensureSample(db);
+      await Promise.all([settings.refresh(true), i18n.refresh(true)]);
+    })().catch((e) => { ready = null; throw e; });
+    return ready;
+  };
+  const dbReady = async (req, res, next) => { await init(); await Promise.all([settings.refresh(), i18n.refresh()]); next(); };
 
   const app = express();
   app.disable('x-powered-by');
@@ -42,14 +56,20 @@ function createApp(options = {}) {
     next();
   });
 
+  /* health check for hosting platforms and uptime monitors (no authentication, no data) */
+  app.get('/healthz', async (req, res) => { try { await db.get('SELECT 1 x'); res.setHeader('Cache-Control', 'no-store'); res.json({ ok: true }); } catch (e) { res.status(503).json({ ok: false }); } });
+  app.use(['/api', '/admin', '/uploads'], dbReady);
+
   /* ---------- uploaded audio (public, fixed content type from the database) ---------- */
   app.get('/shared/i18n-core.js', (req, res) => { res.setHeader('Cache-Control', 'no-cache'); res.type('application/javascript').sendFile(path.join(__dirname, '..', 'shared', 'i18n-core.js')); });
-  app.get('/uploads/:id', (req, res) => {
-    const u = /^[A-Za-z0-9_-]{6,40}$/.test(req.params.id) ? db.get('SELECT * FROM uploads WHERE id = ?', req.params.id) : null;
-    const file = u && path.join(opts.dataDir, 'uploads', u.id);
-    if (!u || !fs.existsSync(file)) return res.status(404).end();
+  app.get('/uploads/:id', async (req, res) => {
+    const u = /^[A-Za-z0-9_-]{6,40}$/.test(req.params.id) ? await db.get('SELECT * FROM uploads WHERE id = ?', req.params.id) : null;
+    if (!u) return res.status(404).end();
+    let body = u.data ? Buffer.from(u.data, 'base64') : null;
+    if (!body) { const file = path.join(opts.dataDir, 'uploads', u.id); if (fs.existsSync(file)) body = fs.readFileSync(file); }   // files stored by earlier versions
+    if (!body) return res.status(404).end();
     res.setHeader('Content-Type', u.mime); res.setHeader('Cache-Control', 'public, max-age=86400');
-    res.sendFile(file);
+    res.end(body);
   });
 
   /* ---------- API ---------- */
@@ -104,10 +124,13 @@ function createApp(options = {}) {
 
   /* ---------- learner app ---------- */
   app.use(express.static(PUBLIC, { index: false, redirect: false, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
+  /* client-side routes of the single-page app: opening one directly (or reloading it) serves the app shell;
+     any other path still gets the shell (so the app can show its own "page not found" screen) but with a real 404 status */
+  const CLIENT_ROUTES = /^\/(?:login|register|forgot|reset|learn|attempt\/[^/]+|practice|vocabulary|review|leaderboard|achievements|profile)?\/?$/;
   app.get(/^\/(?!api\/|uploads\/).*/, (req, res, next) => {
     if (path.extname(req.path)) return next();
     res.setHeader('Cache-Control', 'no-store');
-    res.sendFile(path.join(PUBLIC, 'index.html'));
+    res.status(CLIENT_ROUTES.test(req.path) ? 200 : 404).sendFile(path.join(PUBLIC, 'index.html'));
   });
 
   app.use((err, req, res, next) => {   // eslint-disable-line no-unused-vars
@@ -123,7 +146,7 @@ function createApp(options = {}) {
     res.status(500).json({ error: T('err.server_error', { ref: id }), code: 'err.server_error' });
   });
 
-  return { app, db, settings, core, i18n, close: () => db.close(), opts };
+  return { app, db, settings, core, i18n, init, seeded: () => seeded, close: () => db.close(), opts };
 }
 
 module.exports = { createApp };
