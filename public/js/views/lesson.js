@@ -105,7 +105,7 @@ export default async function lesson({ params }) {
   const onKey = (e) => {
     if (cleaned || document.querySelector('dialog[open]')) return;
     if (e.key === 'Enter') {
-      if (e.target.tagName === 'BUTTON' && e.target !== action) return;
+      if (e.target.tagName === 'BUTTON' && e.target !== action && !e.target.classList.contains('option')) return;
       if (answered) { e.preventDefault(); next(); } else if (current && !busy) { e.preventDefault(); check(); }
       return;
     }

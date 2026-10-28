@@ -130,3 +130,46 @@ dialog::backdrop { background: rgba(10, 20, 15, .5); }
 .hero img { width: 100%; max-width: 340px; justify-self: center; }
 .hero h1 { font-size: clamp(1.9rem, 6vw, 2.9rem); }
 @media (max-width: 720px) { .hero { grid-template-columns: 1fr; text-align: center; } .hero .row { justify-content: center; } .hero img { max-width: 220px; order: -1; } }
+
+/* ---------- language selector ---------- */
+.lang-switcher { position: relative; display: inline-block; max-width: 100%; }
+.lang-btn { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; max-width: 100%; padding: 6px 12px; border: 2px solid var(--line); border-bottom-width: 4px; border-radius: 12px; background: var(--surface); color: var(--ink); font-weight: 800; cursor: pointer; }
+.lang-btn:hover { background: var(--surface-2); }
+.lang-btn:active { border-bottom-width: 2px; transform: translateY(2px); }
+.lang-flag { font-size: 1.25rem; line-height: 1; flex: none; }
+.lang-name { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lang-code { display: none; font-size: .85rem; letter-spacing: .04em; }
+.lang-caret { width: 1em; height: 1em; opacity: .7; transition: transform .15s; }
+.lang-switcher.open .lang-caret { transform: rotate(180deg); }
+.lang-list { position: absolute; z-index: 60; top: calc(100% + 6px); left: 0; margin: 0; padding: 6px; list-style: none; min-width: 100%; width: max-content; max-width: min(92vw, 280px); background: var(--surface); border: 2px solid var(--line); border-radius: 14px; box-shadow: var(--shadow), 0 12px 32px rgba(0,0,0,.18); outline: none; }
+.lang-option { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 8px 12px; border-radius: 10px; font-weight: 800; cursor: pointer; }
+.lang-option:hover, .lang-option.active { background: var(--surface-2); }
+.lang-option.active { box-shadow: inset 0 0 0 2px var(--info); }
+.lang-option.current { color: var(--brand-ink); }
+.lang-label { flex: 1; min-width: 0; }
+.lang-active { display: inline-flex; color: var(--brand-ink); }
+.lang-switcher.wide .lang-btn { width: 100%; justify-content: flex-start; }
+.lang-switcher.wide { display: block; }
+.lang-switcher.wide .lang-caret { margin-left: auto; }
+.side-lang { margin-top: auto; padding: 8px 4px 0; }
+.side-lang .lang-list, .adm-side .lang-list { top: auto; bottom: calc(100% + 6px); }
+.guest-bar { position: fixed; top: 10px; right: 12px; z-index: 40; }
+.guest-bar .lang-list { left: auto; right: 0; }
+.topbar .lang-switcher { margin-left: auto; }
+.topbar .lang-list { left: auto; right: 0; }
+.field .lang-switcher.wide { max-width: 360px; }
+.field .lang-list { top: calc(100% + 6px); bottom: auto; }
+@media (max-width: 899px) { .topbar { flex-wrap: wrap; } .lang-switcher.compact .lang-btn { padding: 6px 10px; } }
+@media (max-width: 520px) {
+  .lang-switcher.compact .lang-name { display: none; }
+  .lang-switcher.compact .lang-code { display: inline; }
+  .topbar .brand-name { max-width: 28vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+}
+/* long translations (Russian words are often 30-40% longer than English): wrap instead of overflowing */
+.btn, .chip, .badge, .option, .nav-i, .fchip, .tile-btn { overflow-wrap: anywhere; hyphens: auto; }
+.btn { max-width: 100%; text-align: center; }
+.page-head, .row, .chips { min-width: 0; }
+.page-head > * { min-width: 0; }
+.nav-i { line-height: 1.25; }
+.tabbar a span { hyphens: auto; }
+@media (max-width: 380px) { .tabbar a { font-size: .62rem; } }

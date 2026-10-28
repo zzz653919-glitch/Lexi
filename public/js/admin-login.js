@@ -10,9 +10,10 @@ const me = await api('GET', '/auth/me');
 session.csrf = me.csrfToken;
 let cfg = null;
 try { cfg = await api('GET', '/public/config'); applyBrand(cfg.brandColor); } catch (_) { /* default colours */ }
-await initI18n({ user: me.user, config: cfg });
+const staff = me.user && ['admin', 'editor'].includes(me.user.role);
+if (staff) { location.replace('/admin'); await new Promise(() => {}); }   // already signed in: leave without rendering
+try { await initI18n({ user: me.user, config: cfg }); } catch (_) { await new Promise(() => {}); }   // navigation aborted the request
 document.title = t('auth.admin_title');
-if (me.user && ['admin', 'editor'].includes(me.user.role)) location.replace('/admin');
 
 const email = field({ label: t('common.email'), name: 'email', type: 'email', autocomplete: 'username', required: true });
 const password = field({ label: t('common.password'), name: 'password', type: 'password', autocomplete: 'current-password', required: true });

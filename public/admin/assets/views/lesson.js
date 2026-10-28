@@ -155,7 +155,9 @@ async function exerciseDialog(lessonId, exerciseId, vocabItems) {
     if (lines.length) o.options = lines.map((ln) => { const [a, b] = ln.split('|').map((x) => x.trim()); return { text: a || '', match_text: b || '' }; });
     return Object.keys(o).length ? { ru: o } : {};
   };
-  const variantBox = h('details', { class: 'variant-box' }, h('summary', {}, t('adm.ex.ru_version')), h('p', { class: 'muted small' }, t('adm.ex.ru_version_hint')), ...VFIELDS.map(([k]) => variant[k].el), variantOptions.el);
+  const variantBody = h('div', { hidden: true }, h('p', { class: 'muted small' }, t('adm.ex.ru_version_hint')), ...VFIELDS.map(([k]) => variant[k].el), variantOptions.el);
+  const variantToggle = h('button', { type: 'button', class: 'btn secondary small', 'aria-expanded': 'false', onclick: () => { variantBody.hidden = !variantBody.hidden; variantToggle.setAttribute('aria-expanded', String(!variantBody.hidden)); } }, t('adm.ex.ru_version'));
+  const variantBox = h('div', { class: 'variant-box' }, variantToggle, variantBody);
   const errBox = h('div', {});
   const gather = () => ({ type: type.value, prompt: common.prompt.value, sentence: common.sentence.value, passage: common.passage.value, answer: common.answer.value.split('\n').map((x) => x.trim()).filter(Boolean).join('|'), audio_text: common.audio_text.value, audio_url: state.audio_url,
     direction: common.direction.value, translation: common.translation.value, explanation: common.explanation.value, hint: common.hint.value, difficulty: Number(common.difficulty.value), status: common.status.value, vocabulary_id: common.vocabulary_id.value ? Number(common.vocabulary_id.value) : null,

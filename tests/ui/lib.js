@@ -11,12 +11,13 @@ async function withBrowser(fn, { viewport = { width: 1280, height: 800 }, ...ctx
   try { return await fn(browser, viewport, ctxOpts); } finally { await browser.close(); }
 }
 /* a page that records every console error, uncaught exception and failed (>=400, unexpected) request */
-async function openPage(browser, viewport, ctxOpts = {}) {
+async function openPage(browser, viewport, { lang = 'en', ...ctxOpts } = {}) {
   const ctx = await browser.newContext({ viewport, ...ctxOpts });
+  if (lang) await ctx.addInitScript((l) => { try { if (!localStorage.getItem('lexi.lang')) localStorage.setItem('lexi.lang', l); } catch (_) { /* storage blocked */ } }, lang);
   const page = await ctx.newPage();
   page.problems = [];
   page.expectedStatuses = new Set();
-  page.on('pageerror', (e) => page.problems.push('pageerror: ' + e.message));
+  page.on('pageerror', (e) => page.problems.push('pageerror: ' + e.message + (process.env.UI_DEBUG ? ' ' + e.stack : '')));
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) page.problems.push('console: ' + m.text()); });
   page.on('response', (r) => { if (r.status() >= 400 && !page.expectedStatuses.has(r.status())) page.problems.push(`HTTP ${r.status()} ${r.url()}`); });
   return page;
