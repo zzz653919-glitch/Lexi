@@ -24,7 +24,7 @@ const { check, withBrowser, openPage, summary, loginUI, startServer, Client } = 
     const ed = await openPage(browser, viewport); ed.setDefaultTimeout(15000); ed.expectedStatuses.add(403);
     await loginUI(ed, s.base, 'editor@example.com', 'Passw0rd!x', '/admin/login'); await ed.waitForSelector('.adm');
     const edNav = await ed.locator('.adm-side nav a[data-nav]').allInnerTexts();
-    check(edNav.join(',') === 'Courses,Vocabulary', 'editors see only Courses and Vocabulary (' + edNav.join(',') + ')');
+    check(edNav.join(',') === 'Courses,Vocabulary,Placement & grammar', 'editors see only content sections (Courses, Vocabulary, Placement & grammar) (' + edNav.join(',') + ')');
     await ed.goto(s.base + '/admin/users'); await ed.waitForURL('**/admin/courses');
     check(true, 'an editor opening /admin/users is sent back to Courses');
     check((await ed.request.get(s.base + '/api/admin/users')).status() === 403, 'and the API refuses them too');
@@ -35,7 +35,7 @@ const { check, withBrowser, openPage, summary, loginUI, startServer, Client } = 
     const stat = async (label) => Number(await page.locator('.stat-card', { hasText: label }).first().locator('b').innerText());
     check((await stat('Registered users')) === 3 && (await stat('Exercises')) === 144 && (await stat('Lessons')) === 12, 'dashboard numbers equal the database');
     check((await page.locator('svg.chart').count()) === 4, 'four charts are drawn from real records');
-    check((await page.locator('.adm-side nav a[data-nav]').count()) === 7, 'administrator sees all 7 sections');
+    check((await page.locator('.adm-side nav a[data-nav]').count()) === 8, 'administrator sees all 8 sections');
 
     /* ---------- course -> level -> unit -> lesson -> exercise ---------- */
     await page.click('.adm-side a:has-text("Courses")'); await page.waitForSelector('.tbl');
