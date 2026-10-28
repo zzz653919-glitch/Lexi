@@ -43,3 +43,31 @@ class Client {
 }
 
 module.exports = { startServer, Client };
+
+/* ---------- answers for API-level tests (the test process can read the database; the browser cannot) ---------- */
+const X = require('../../server/lib/exercises');
+const { shuffled } = require('../../server/lib/util');
+const permOf = (n, seed) => { const idx = Array.from({ length: n }, (_, i) => i); let p = shuffled(idx, seed); for (let k = 1; k < 6 && n > 1 && p.every((v, i) => v === i); k++) p = shuffled(idx, seed + k * 104729); return p; };
+function answerFor(db, state, wrong = false) {
+  const ex = state.exercise, row = db.get('SELECT * FROM exercises WHERE id = ?', ex.id), opts = db.all('SELECT * FROM exercise_options WHERE exercise_id = ? ORDER BY position, id', ex.id), alts = X.alternatives(row.answer);
+  const seed = db.get('SELECT seed FROM lesson_attempts WHERE id = ?', state.attemptId).seed + ex.id;
+  if (X.CHOICE.has(ex.type)) return (opts.find((o) => (wrong ? !o.is_correct : o.is_correct))).id;
+  if (['fill_blank', 'listen_type', 'translate_type', 'fix_spelling'].includes(ex.type)) return wrong ? 'qqqzzz' : alts[0];
+  if (ex.type === 'scramble_letters') { const ids = alts[0].split('').map((_, i) => i); return wrong ? ids.reverse() : ids; }
+  if (ex.type === 'order_words') { const ids = X.tokensOf(row.sentence).map((_, i) => i); return wrong ? ids.reverse() : ids; }
+  if (ex.type === 'match_pairs') { const p = permOf(opts.length, seed); return opts.map((_, i) => ({ left: i, right: wrong && i < 2 ? p.findIndex((s) => s === (i + 1) % 2) : p.findIndex((s) => s === i) })); }
+  throw new Error('unknown type');
+}
+/* plays an attempt to the end through the API; wrongAt = set of question numbers (1-based) to answer wrongly */
+async function playAttempt(client, state, db, { wrongAt = new Set() } = {}) {
+  let n = 0, last = null;
+  while (state.status === 'in_progress' && state.exercise) {
+    n++;
+    const r = await client.post(`/api/attempts/${state.attemptId}/answer`, { exerciseId: state.exercise.id, answer: answerFor(db, state, wrongAt.has(n)) });
+    if (r.status !== 200) throw new Error('answer failed ' + r.status + ' ' + r.text);
+    last = r.json; state = r.json.state;
+    if (n > 80) throw new Error('lesson does not end');
+  }
+  return { state, last, answered: n };
+}
+module.exports.answerFor = answerFor; module.exports.playAttempt = playAttempt;

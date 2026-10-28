@@ -187,7 +187,7 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   r.get('/lessons/:id', (req, res) => {
     const l = need(db.get('SELECT * FROM lessons WHERE id = ?', int(req.params.id)), 'Lesson');
     const c = courseOfLesson(l.id);
-    res.json({ lesson: l, courseId: c.course_id, exercises: db.all('SELECT id, type, position, prompt, sentence, status, difficulty FROM exercises WHERE lesson_id = ? ORDER BY position, id', l.id),
+    res.json({ lesson: l, courseId: c.course_id, courseTitle: db.get('SELECT title FROM courses WHERE id = ?', c.course_id).title, exercises: db.all('SELECT id, type, position, prompt, sentence, status, difficulty FROM exercises WHERE lesson_id = ? ORDER BY position, id', l.id),
       siblings: db.all(`SELECT l2.id, l2.title FROM lessons l2 JOIN units u ON u.id = l2.unit_id JOIN levels lv ON lv.id = u.level_id WHERE lv.course_id = ? AND l2.id != ? ORDER BY lv.position, u.position, l2.position`, c.course_id, l.id) });
   });
   r.patch('/lessons/:id', (req, res) => {

@@ -13,7 +13,7 @@
     "create-admin": "node --disable-warning=ExperimentalWarning server/cli.js create-admin",
     "backup": "node --disable-warning=ExperimentalWarning server/cli.js backup",
     "import-legacy-vocab": "node --disable-warning=ExperimentalWarning server/cli.js import-legacy-vocab",
-    "test": "node --disable-warning=ExperimentalWarning --test tests/api/",
+    "test": "node --disable-warning=ExperimentalWarning --test \"tests/api/*.test.js\"",
     "test:ui": "node tests/ui/run-all.js",
     "test:legacy": "cd legacy/lexi-v1 && node tests/answer-check.test.js && node tests/vocab-data.test.js"
   },

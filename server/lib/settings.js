@@ -2,7 +2,7 @@
 const DEFAULTS = {
   site_name: 'Lexi Learn',
   tagline: 'Learn English a little every day',
-  brand_color: '#1f9d6b',
+  brand_color: '#147a54',
   default_translation_language: 'uz',
   supported_languages: ['uz', 'ru', 'en'],
   available_levels: ['A1', 'A2', 'B1', 'B2', 'C1', 'IELTS'],

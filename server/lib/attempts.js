@@ -7,6 +7,15 @@ function make(db, settings, core) {
   const exerciseRow = (id) => db.get('SELECT * FROM exercises WHERE id = ?', id);
   const optionsOf = (id) => db.all('SELECT * FROM exercise_options WHERE exercise_id = ? ORDER BY position, id', id);
 
+  /* Exercises the learner got wrong on the first try and has not since answered correctly in a fresh lesson run or a mistakes review
+     (a right answer on the automatic retry inside the same lesson does not clear a mistake). Newest mistakes first. */
+  function mistakeIds(userId, limit) {
+    return db.all(`SELECT e.id FROM exercises e
+      JOIN lessons l ON l.id = e.lesson_id AND l.status = 'published' JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id JOIN courses c ON c.id = lv.course_id AND c.status = 'published'
+      WHERE e.status = 'published' AND EXISTS (SELECT 1 FROM exercise_responses r WHERE r.user_id = ? AND r.exercise_id = e.id AND r.is_correct = 0 AND r.is_retry = 0
+        AND NOT EXISTS (SELECT 1 FROM exercise_responses r2 JOIN lesson_attempts a2 ON a2.id = r2.attempt_id WHERE r2.user_id = r.user_id AND r2.exercise_id = r.exercise_id AND r2.is_correct = 1 AND r2.id > r.id AND (r2.is_retry = 0 OR a2.kind = 'mistakes')))
+      ORDER BY (SELECT MAX(r4.id) FROM exercise_responses r4 WHERE r4.user_id = ? AND r4.exercise_id = e.id AND r4.is_correct = 0) DESC LIMIT ?`, userId, userId, limit).map((r) => r.id);
+  }
   function exercisePayload(attempt, id) {
     const ex = exerciseRow(id);
     return X.payload(ex, optionsOf(id), attempt.seed);
@@ -50,12 +59,7 @@ function make(db, settings, core) {
     return db.tx(() => {
       let a = db.get("SELECT * FROM lesson_attempts WHERE user_id = ? AND kind = 'mistakes' AND status = 'in_progress'", user.id);
       if (!a) {
-        const ids = db.all(`SELECT e.id FROM exercises e
-          JOIN lessons l ON l.id = e.lesson_id AND l.status = 'published' JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id JOIN courses c ON c.id = lv.course_id AND c.status = 'published'
-          WHERE e.status = 'published' AND EXISTS (SELECT 1 FROM exercise_responses r WHERE r.user_id = ? AND r.exercise_id = e.id AND r.is_correct = 0)
-            AND NOT EXISTS (SELECT 1 FROM exercise_responses r2 WHERE r2.user_id = ? AND r2.exercise_id = e.id AND r2.is_correct = 1
-              AND r2.id > (SELECT MAX(r3.id) FROM exercise_responses r3 WHERE r3.user_id = ? AND r3.exercise_id = e.id AND r3.is_correct = 0))
-          ORDER BY (SELECT MAX(r4.id) FROM exercise_responses r4 WHERE r4.user_id = ? AND r4.exercise_id = e.id AND r4.is_correct = 0) DESC LIMIT 8`, user.id, user.id, user.id, user.id).map((r) => r.id);
+        const ids = mistakeIds(user.id, 8);
         if (!ids.length) throw new HttpError(409, 'No mistakes to review right now. Nice work!');
         const r = db.run('INSERT INTO lesson_attempts (user_id, lesson_id, kind, queue, total_planned, started_at, seed) VALUES (?,?,?,?,?,?,?)', user.id, null, 'mistakes', JSON.stringify(ids), ids.length, now(), 1 + Math.floor(Math.random() * 1e6));
         a = db.get('SELECT * FROM lesson_attempts WHERE id = ?', r.id);
@@ -180,7 +184,7 @@ function make(db, settings, core) {
     return { ok: true };
   }
 
-  return { start, startMistakes, answer, getAttempt, abandon, view, noteVocabMiss };
+  return { start, startMistakes, mistakeIds, answer, getAttempt, abandon, view, noteVocabMiss };
 }
 
 module.exports = { make };

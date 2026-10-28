@@ -1,0 +1,62 @@
+/* admin panel layout (uses the tokens from /css/base.css) */
+body.admin { --sidebar: 232px; }
+.adm { display: grid; grid-template-columns: var(--sidebar) minmax(0, 1fr); min-height: 100vh; }
+.adm-side { position: sticky; top: 0; height: 100vh; background: var(--surface); border-right: 2px solid var(--line); padding: 18px 12px; display: flex; flex-direction: column; gap: 4px; overflow-y: auto; }
+.adm-side .brand { padding: 4px 10px 4px; font-size: 1.15rem; }
+.adm-side .tag { margin: 0 10px 14px; font-size: .72rem; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--ink-2); }
+.adm-side nav { display: flex; flex-direction: column; gap: 3px; }
+.adm-side a.nav-i { display: flex; gap: 10px; align-items: center; padding: 10px 12px; border-radius: 12px; text-decoration: none; color: var(--ink-2); font-weight: 800; min-height: 44px; border: 2px solid transparent; }
+.adm-side a.nav-i:hover { background: var(--surface-2); }
+.adm-side a.nav-i[aria-current="page"] { background: var(--brand-soft); color: var(--brand-ink); border-color: color-mix(in srgb, var(--brand) 40%, transparent); }
+.adm-main { min-width: 0; padding: 22px clamp(12px, 3vw, 30px) 60px; }
+.adm-top { display: none; }
+@media (max-width: 899px) {
+  .adm { display: block; }
+  .adm-side { position: static; height: auto; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: space-between; border-right: 0; border-bottom: 2px solid var(--line); padding: 8px 10px; gap: 4px 8px; }
+  .adm-side .tag, .adm-side .spacer { display: none; }
+  .adm-side nav { order: 3; flex-direction: row; flex-wrap: nowrap; flex: 1 1 100%; overflow-x: auto; padding-bottom: 4px; scrollbar-width: thin; }
+  .adm-side nav a.nav-i, .adm-side nav .nav-i { flex: none; padding: 6px 12px; min-height: 40px; font-size: .9rem; white-space: nowrap; }
+}
+.crumbs { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: .9rem; margin-bottom: 8px; color: var(--ink-2); }
+.crumbs a { font-weight: 700; }
+.tbl-wrap { overflow-x: auto; border: 2px solid var(--line); border-radius: var(--radius); background: var(--surface); }
+table.tbl { width: 100%; border-collapse: collapse; min-width: 560px; }
+.tbl th, .tbl td { padding: 10px 12px; text-align: left; border-bottom: 2px solid var(--surface-2); vertical-align: middle; }
+.tbl th { font-size: .75rem; text-transform: uppercase; letter-spacing: .06em; color: var(--ink-2); white-space: nowrap; background: var(--surface-2); }
+.tbl tr:last-child td { border-bottom: 0; }
+.tbl td.acts { white-space: nowrap; text-align: right; }
+.tbl td .truncate { max-width: 340px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; display: block; }
+.btn.icon { padding: 0; width: 40px; min-height: 40px; box-shadow: 0 3px 0 var(--line); }
+.btn.icon svg { width: 20px; height: 20px; }
+.toolbar { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 14px; }
+.toolbar .input { width: auto; min-width: 150px; flex: 1 1 160px; max-width: 280px; }
+.tree-level { border: 2px solid var(--line); border-radius: var(--radius); background: var(--surface); margin-bottom: 16px; overflow: hidden; }
+.tree-level > header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 12px 16px; background: var(--brand-soft); }
+.tree-unit { padding: 12px 16px; border-top: 2px solid var(--surface-2); }
+.tree-unit > header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.lesson-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: space-between; padding: 8px 12px; border: 2px solid var(--line); border-radius: 12px; margin-bottom: 6px; background: var(--bg); }
+.lesson-row .t { min-width: 0; flex: 1 1 220px; font-weight: 800; }
+.stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 18px; }
+.stat-card { background: var(--surface); border: 2px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.stat-card b { display: block; font-size: 1.7rem; line-height: 1.1; }
+.stat-card span { color: var(--ink-2); font-size: .85rem; font-weight: 700; }
+.chart { width: 100%; height: auto; aspect-ratio: 360 / 170; display: block; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart text { fill: var(--ink-2); font-size: 11px; font-family: var(--font); }
+.chart .bar { fill: var(--brand); } .chart .line { fill: none; stroke: var(--brand); stroke-width: 2.5; stroke-linejoin: round; }
+.chart .area { fill: color-mix(in srgb, var(--brand) 16%, transparent); }
+.opt-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 8px; align-items: center; margin-bottom: 8px; }
+.opt-row.pair { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; }
+.opt-row input[type="radio"] { width: 22px; height: 22px; accent-color: var(--brand); }
+.problems { background: var(--danger-soft); color: var(--danger); border-radius: 12px; padding: 10px 14px; font-weight: 700; margin: 10px 0; }
+.problems ul { margin: 6px 0 0; padding-left: 18px; }
+.ok-box { background: var(--ok-soft); color: var(--ok); border-radius: 12px; padding: 10px 14px; font-weight: 700; margin: 10px 0; }
+dialog.wide { width: min(96vw, 760px); }
+.two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr)); gap: 0 16px; }
+.kv { display: grid; grid-template-columns: 140px minmax(0, 1fr); gap: 4px 12px; font-size: .95rem; }
+.kv dt { color: var(--ink-2); font-weight: 700; } .kv dd { margin: 0; overflow-wrap: anywhere; }
+.preview-box { border: 2px dashed var(--line); border-radius: 16px; padding: 14px; background: var(--bg); }
+.preview-box .q-title { font-size: 1.2rem; }
+.preview-box .lesson-foot { position: static; border: 2px solid var(--line); border-radius: 14px; margin-top: 12px; }
+.tag-draft { background: var(--gold-soft); color: var(--gold-ink); } .tag-published { background: var(--ok-soft); color: var(--ok); } .tag-archived { background: var(--surface-2); color: var(--ink-2); } .tag-suspended, .tag-danger { background: var(--danger-soft); color: var(--danger); }
+.file-drop { border: 2px dashed var(--line); border-radius: 14px; padding: 14px; background: var(--surface-2); }

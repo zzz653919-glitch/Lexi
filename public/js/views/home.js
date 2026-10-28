@@ -7,7 +7,7 @@ function landing() {
   const site = session.config ? session.config.siteName : 'Lexi Learn';
   const tag = session.config ? session.config.tagline : '';
   const feature = (ic, t, d) => h('div', { class: 'card' }, h('div', { class: 'stat' }, h('div', { class: 'ico' }, icon(ic)), h('div', {}, h('b', { style: { fontSize: '1.05rem' } }, t), h('span', {}, d))));
-  const el = h('div', { class: 'landing' },
+  const el = h('main', { class: 'landing' },
     h('div', { class: 'landing-nav' }, h('a', { class: 'brand', href: '/', style: { padding: 0 } }, h('img', { src: '/img/logo.svg', alt: '', width: 34, height: 34 }), site),
       h('div', { class: 'row' }, h('a', { class: 'btn secondary small', href: '/login' }, 'Sign in'), session.config && session.config.registrationOpen ? h('a', { class: 'btn small', href: '/register' }, 'Get started') : null)),
     h('section', { class: 'hero' }, h('div', {}, h('h1', {}, tag || 'Learn English a little every day'), h('p', { class: 'muted', style: { fontSize: '1.1rem' } }, 'Short lessons, real exercises, daily goals and a vocabulary trainer — from A1 beginner to C1 advanced, with Uzbek translations.'),
@@ -34,9 +34,9 @@ export default async function home() {
       h('span', { class: 'eyebrow' }, d.course ? `${d.course.title}${rec ? ' · ' + rec.level : ''}` : 'No course yet'),
       h('h2', { id: 'cont-h' }, rec ? rec.title : d.course ? 'You have finished every available lesson!' : 'No published course is available yet'),
       rec ? h('p', { style: { margin: 0, opacity: .9 } }, `Unit: ${rec.unit}`) : null, contBtn),
-    h('div', { class: 'grid three' },
-      h('div', { class: 'card stat' }, h('div', { class: 'ico', style: { color: '#e8590c' } }, icon('flame')), h('div', {}, h('b', {}, String(d.streak.current)), h('span', {}, d.streak.activeToday ? 'day streak · done today' : 'day streak'))),
-      h('div', { class: 'card stat' }, h('div', { class: 'ico', style: { color: '#b7791f' } }, icon('bolt')), h('div', {}, h('b', {}, String(u.xpTotal)), h('span', {}, 'total XP'))),
+    h('div', { class: 'stat-row' },
+      h('div', { class: 'card stat' }, h('div', { class: 'ico', style: { color: 'var(--flame)' } }, icon('flame')), h('div', {}, h('b', {}, String(d.streak.current)), h('span', {}, d.streak.activeToday ? 'day streak · done today' : 'day streak'))),
+      h('div', { class: 'card stat' }, h('div', { class: 'ico', style: { color: 'var(--gold-ink)' } }, icon('bolt')), h('div', {}, h('b', {}, String(u.xpTotal)), h('span', {}, 'total XP'))),
       d.hearts.enabled ? h('div', { class: 'card stat' }, h('div', { class: 'ico', style: { color: 'var(--danger)' } }, icon('heart')), h('div', {}, h('b', {}, `${d.hearts.hearts} / ${d.hearts.max}`), h('span', {}, d.hearts.nextAt ? `next heart ${fmt.time(d.hearts.nextAt)}` : 'hearts'))) : null),
     h('div', { class: 'grid two' },
       h('section', { class: 'card', 'aria-labelledby': 'goal-h' }, h('h2', { id: 'goal-h' }, "Today's goal"),

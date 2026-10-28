@@ -6,7 +6,7 @@ import { RENDERERS } from './exercises.js';
 export default async function lesson({ params }) {
   const id = Number(params.id);
   let state = await get('/attempts/' + id);
-  const root = h('div', { class: 'lesson' });
+  const root = h('main', { class: 'lesson' });
   let current = null, answered = false, busy = false, cleaned = false;
   let celebrate = null;
 

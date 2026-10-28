@@ -1,5 +1,6 @@
 import { h, clear, icon, avatar, toast, spinner } from './ui.js';
 import { api, get, session, ApiError } from './api.js';
+import { applyBrand } from './brand.js';
 
 const routes = [];
 const route = (pattern, loader, opts = {}) => routes.push({ re: new RegExp('^' + pattern.replace(/:(\w+)/g, '(?<$1>[^/]+)') + '/?$'), loader, ...opts });
@@ -86,7 +87,7 @@ function setActive(key) {
 
 function showMaintenance(msg) {
   document.title = 'Maintenance';
-  root.replaceChildren(h('div', { class: 'guest' }, h('div', { class: 'card auth-card center' }, h('img', { class: 'mascot', src: '/img/mascot.svg', alt: '' }), h('h1', {}, 'Back soon'), h('p', { class: 'muted' }, msg || 'We are updating the platform.'), h('a', { class: 'btn', href: '/login' }, 'Staff sign in'))));
+  root.replaceChildren(h('main', { class: 'guest' }, h('div', { class: 'card auth-card center' }, h('img', { class: 'mascot', src: '/img/mascot.svg', alt: '' }), h('h1', {}, 'Back soon'), h('p', { class: 'muted' }, msg || 'We are updating the platform.'), h('a', { class: 'btn', href: '/login' }, 'Staff sign in'))));
 }
 
 async function render() {
@@ -137,7 +138,7 @@ export async function boot() {
   try {
     const [cfg, me] = await Promise.all([get('/public/config'), get('/auth/me')]);
     session.config = cfg; session.user = me.user; session.csrf = me.csrfToken;
-    if (cfg.brandColor) document.documentElement.style.setProperty('--brand', cfg.brandColor);
+    if (cfg.brandColor) applyBrand(cfg.brandColor);
     if (cfg.maintenance && !(me.user && ['admin', 'editor'].includes(me.user.role)) && location.pathname !== '/login') return showMaintenance(cfg.maintenance);
   } catch (e) {
     root.replaceChildren(h('div', { class: 'guest' }, h('div', { class: 'card auth-card center' }, h('h1', {}, 'Cannot connect'), h('p', { class: 'muted' }, e.message), h('button', { class: 'btn', onclick: () => location.reload() }, 'Retry'))));

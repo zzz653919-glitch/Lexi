@@ -83,11 +83,11 @@ function createApp(options = {}) {
   const sessionOnly = [auth.attach];
   app.get('/admin/login', sessionOnly, (req, res) => { res.setHeader('Cache-Control', 'no-store'); res.sendFile(path.join(PUBLIC, 'admin-login.html')); });
   app.use('/admin', sessionOnly, staffOnly, (req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); },
-    express.static(path.join(PUBLIC, 'admin'), { index: false, fallthrough: true }),
+    express.static(path.join(PUBLIC, 'admin'), { index: false, redirect: false, fallthrough: true }),
     (req, res) => res.sendFile(path.join(PUBLIC, 'admin', 'index.html')));
 
   /* ---------- learner app ---------- */
-  app.use(express.static(PUBLIC, { index: false, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
+  app.use(express.static(PUBLIC, { index: false, redirect: false, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
   app.get(/^\/(?!api\/|uploads\/).*/, (req, res, next) => {
     if (path.extname(req.path)) return next();
     res.setHeader('Cache-Control', 'no-store');

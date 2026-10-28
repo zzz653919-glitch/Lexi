@@ -9,7 +9,7 @@ async function currentState(page) {
 const perm = (n, seed) => { const idx = Array.from({ length: n }, (_, i) => i); let p = shuffled(idx, seed); for (let k = 1; k < 6 && n > 1 && p.every((v, i) => v === i); k++) p = shuffled(idx, seed + k * 104729); return p; };
 
 /* answers the exercise on screen; wrong=true gives a deliberately wrong answer */
-async function answer(page, db, wrong = false) {
+async function answer(page, db, wrong = false, { dbl = false } = {}) {
   const st = await currentState(page);
   const ex = st.exercise;
   const row = db.get('SELECT * FROM exercises WHERE id = ?', ex.id);
@@ -46,7 +46,7 @@ async function answer(page, db, wrong = false) {
     }
     default: throw new Error('unknown type ' + ex.type);
   }
-  await page.click('.lesson-foot .btn:has-text("Check")');
+  if (dbl) await page.locator('.lesson-foot .btn:has-text("Check")').dblclick(); else await page.click('.lesson-foot .btn:has-text("Check")');
   await page.waitForSelector('.lesson-foot.good, .lesson-foot.bad');
   const good = await page.$('.lesson-foot.good');
   return { type: ex.type, correct: !!good };

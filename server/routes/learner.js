@@ -67,10 +67,7 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
       leaderboardEnabled: s.leaderboard_enabled,
     });
   });
-  function mistakesAvailable(userId) {
-    return db.get(`SELECT COUNT(DISTINCT r.exercise_id) n FROM exercise_responses r JOIN exercises e ON e.id = r.exercise_id AND e.status = 'published'
-      WHERE r.user_id = ? AND r.is_correct = 0 AND NOT EXISTS (SELECT 1 FROM exercise_responses r2 WHERE r2.user_id = r.user_id AND r2.exercise_id = r.exercise_id AND r2.is_correct = 1 AND r2.id > r.id)`, userId).n;
-  }
+  const mistakesAvailable = (userId) => attempts.mistakeIds(userId, 50).length;
 
   /* ---------- lessons ---------- */
   r.post('/lessons/:id/start', (req, res) => {
