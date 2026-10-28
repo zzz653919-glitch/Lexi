@@ -16,19 +16,28 @@ function readFiles() {
   return out;
 }
 
-function make(db, settings) {
+function make(db, settings, { ttl = 2000 } = {}) {
   let base = readFiles();
-  let overrides = null;
-  let merged = {};
-  const loadOverrides = () => {
-    overrides = {};
-    for (const l of core.LANGUAGES) overrides[l.code] = {};
-    for (const r of db.all('SELECT lang, key, value FROM translation_overrides')) { try { overrides[r.lang][r.key] = JSON.parse(r.value); } catch (_) { /* skip */ } }
+  let overrides = {}, merged = {}, loadedAt = 0, loading = null;
+  const build = () => {
     merged = {};
-    for (const l of core.LANGUAGES) merged[l.code] = { ...base[l.code], ...overrides[l.code] };
+    for (const l of core.LANGUAGES) { overrides[l.code] = overrides[l.code] || {}; merged[l.code] = { ...base[l.code], ...overrides[l.code] }; }
   };
-  const dicts = () => { if (!overrides) loadOverrides(); return merged; };
-  const reload = () => { base = readFiles(); overrides = null; };
+  build();
+  const load = async () => {
+    const fresh = {};
+    for (const l of core.LANGUAGES) fresh[l.code] = {};
+    for (const r of await db.all('SELECT lang, key, value FROM translation_overrides')) { try { if (fresh[r.lang]) fresh[r.lang][r.key] = JSON.parse(r.value); } catch (_) { /* skip */ } }
+    overrides = fresh; build(); loadedAt = Date.now();
+  };
+  /* the administrator's edits are read once per request (cached for `ttl` ms), the dictionaries are then used synchronously */
+  const refresh = async (force = false) => {
+    if (!force && loadedAt && Date.now() - loadedAt < ttl) return;
+    if (!loading) loading = load().finally(() => { loading = null; });
+    return loading;
+  };
+  const dicts = () => merged;
+  const reload = () => { base = readFiles(); build(); };
 
   const defaultLanguage = () => { const d = settings.all().default_language; return core.isSupported(d) ? d : core.DEFAULT_LANGUAGE; };
   /* language of a request: the explicit header sent by the browser, else the signed-in user's saved language, else the site default */
@@ -89,11 +98,11 @@ function make(db, settings) {
     } else check(value, 'other');
     return Array.from(new Map(errs.map((e) => [e.key + JSON.stringify(e.params || {}), e])).values());
   }
-  function setOverride(lang, key, value, userId) {
-    db.run('INSERT INTO translation_overrides (lang, key, value, updated_by, updated_at) VALUES (?,?,?,?,?) ON CONFLICT(lang, key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at', lang, key, JSON.stringify(value), userId || null, now());
-    overrides = null;
+  async function setOverride(lang, key, value, userId) {
+    await db.run('INSERT INTO translation_overrides (lang, key, value, updated_by, updated_at) VALUES (?,?,?,?,?) ON CONFLICT(lang, key) DO UPDATE SET value = excluded.value, updated_by = excluded.updated_by, updated_at = excluded.updated_at', lang, key, JSON.stringify(value), userId || null, now());
+    await refresh(true);
   }
-  function removeOverride(lang, key) { const r = db.run('DELETE FROM translation_overrides WHERE lang = ? AND key = ?', lang, key); overrides = null; return r.changes; }
+  async function removeOverride(lang, key) { const r = await db.run('DELETE FROM translation_overrides WHERE lang = ? AND key = ?', lang, key); await refresh(true); return r.changes; }
   /* the entries of one language for the admin editor */
   function entries(lang, { filter = 'all', q = '', prefix = '' } = {}) {
     const d = dicts(); const out = [];
@@ -110,7 +119,7 @@ function make(db, settings) {
     return out;
   }
   const groups = () => Array.from(new Set(Object.keys(base.en).map((k) => k.split('.')[0]))).sort();
-  return { dicts, tr, msg, languageFor, defaultLanguage, completeness, missingKeys, validate, setOverride, removeOverride, entries, groups, reload, core };
+  return { refresh, dicts, tr, msg, languageFor, defaultLanguage, completeness, missingKeys, validate, setOverride, removeOverride, entries, groups, reload, core };
 }
 
 module.exports = { make, LOCALES_DIR };

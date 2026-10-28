@@ -22,7 +22,7 @@ const ACHIEVEMENTS = [
 
 function make(db, settings) {
   const S = () => settings.all();
-  const userById = (id) => db.get('SELECT * FROM users WHERE id = ?', id);
+  const userById = async (id) => await db.get('SELECT * FROM users WHERE id = ?', id);
   const todayFor = (user) => localDate(new Date(), user.timezone);
 
   /* ---------- hearts ---------- */
@@ -37,117 +37,117 @@ function make(db, settings) {
     } else base = Date.now();
     return { enabled: true, hearts: h, max: s.max_hearts, nextAt: h < s.max_hearts ? new Date(base + regen).toISOString() : null, baseAt: new Date(base).toISOString() };
   }
-  function syncHearts(userId) {
-    const u = userById(userId), st = heartState(u);
-    if (st.enabled && (st.hearts !== u.hearts || st.baseAt !== u.hearts_updated_at)) db.run('UPDATE users SET hearts = ?, hearts_updated_at = ? WHERE id = ?', st.hearts, st.baseAt, userId);
+  async function syncHearts(userId) {
+    const u = await userById(userId), st = heartState(u);
+    if (st.enabled && (st.hearts !== u.hearts || st.baseAt !== u.hearts_updated_at)) await db.run('UPDATE users SET hearts = ?, hearts_updated_at = ? WHERE id = ?', st.hearts, st.baseAt, userId);
     return st;
   }
-  function changeHearts(userId, delta) {
-    const st = syncHearts(userId);
+  async function changeHearts(userId, delta) {
+    const st = await syncHearts(userId);
     if (!st.enabled) return st;
     const h = Math.max(0, Math.min(st.max, st.hearts + delta));
     const at = st.hearts >= st.max && h < st.max ? now() : st.baseAt;   // the regeneration clock starts when the first heart is lost
-    db.run('UPDATE users SET hearts = ?, hearts_updated_at = ? WHERE id = ?', h, at, userId);
-    return heartState(userById(userId));
+    await db.run('UPDATE users SET hearts = ?, hearts_updated_at = ? WHERE id = ?', h, at, userId);
+    return heartState(await userById(userId));
   }
 
   /* ---------- XP, days, streaks ---------- */
-  function awardXp(user, amount, reason, refType, refId) {
+  async function awardXp(user, amount, reason, refType, refId) {
     if (amount <= 0) return 0;
     const date = todayFor(user);
-    const r = db.run('INSERT OR IGNORE INTO xp_transactions (user_id, amount, reason, ref_type, ref_id, local_date, created_at) VALUES (?,?,?,?,?,?,?)', user.id, amount, reason, refType, refId, date, now());
+    const r = await db.run('INSERT OR IGNORE INTO xp_transactions (user_id, amount, reason, ref_type, ref_id, local_date, created_at) VALUES (?,?,?,?,?,?,?)', user.id, amount, reason, refType, refId, date, now());
     if (!r.changes) return 0;                 // already paid for this activity
-    db.run('UPDATE users SET xp_total = xp_total + ? WHERE id = ?', amount, user.id);
-    db.run('INSERT INTO user_days (user_id, local_date, xp) VALUES (?,?,?) ON CONFLICT(user_id, local_date) DO UPDATE SET xp = xp + excluded.xp', user.id, date, amount);
+    await db.run('UPDATE users SET xp_total = xp_total + ? WHERE id = ?', amount, user.id);
+    await db.run('INSERT INTO user_days (user_id, local_date, xp) VALUES (?,?,?) ON CONFLICT(user_id, local_date) DO UPDATE SET xp = xp + excluded.xp', user.id, date, amount);
     return amount;
   }
-  function bumpDay(user, { answers = 0, correct = 0, lessons = 0, reviewCorrect = 0 }) {
-    db.run('INSERT INTO user_days (user_id, local_date, answers, correct, lessons, review_correct) VALUES (?,?,?,?,?,?) ON CONFLICT(user_id, local_date) DO UPDATE SET answers = answers + excluded.answers, correct = correct + excluded.correct, lessons = lessons + excluded.lessons, review_correct = review_correct + excluded.review_correct', user.id, todayFor(user), answers, correct, lessons, reviewCorrect);
+  async function bumpDay(user, { answers = 0, correct = 0, lessons = 0, reviewCorrect = 0 }) {
+    await db.run('INSERT INTO user_days (user_id, local_date, answers, correct, lessons, review_correct) VALUES (?,?,?,?,?,?) ON CONFLICT(user_id, local_date) DO UPDATE SET answers = answers + excluded.answers, correct = correct + excluded.correct, lessons = lessons + excluded.lessons, review_correct = review_correct + excluded.review_correct', user.id, todayFor(user), answers, correct, lessons, reviewCorrect);
   }
   /* A day counts for the streak when the learner COMPLETES an activity that day: a lesson, a mistakes review, or 5 correct
      vocabulary-review answers. Days are calendar days in the learner's own time zone. */
-  function markStreakDay(user) {
+  async function markStreakDay(user) {
     const today = todayFor(user);
-    const s = db.get('SELECT * FROM user_streaks WHERE user_id = ?', user.id) || { current_streak: 0, longest_streak: 0, last_active_date: null };
+    const s = await db.get('SELECT * FROM user_streaks WHERE user_id = ?', user.id) || { current_streak: 0, longest_streak: 0, last_active_date: null };
     if (s.last_active_date === today) return s;
     const cur = s.last_active_date === addDays(today, -1) ? s.current_streak + 1 : 1;
     const longest = Math.max(s.longest_streak, cur);
-    db.run('INSERT INTO user_streaks (user_id, current_streak, longest_streak, last_active_date) VALUES (?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET current_streak = excluded.current_streak, longest_streak = excluded.longest_streak, last_active_date = excluded.last_active_date', user.id, cur, longest, today);
+    await db.run('INSERT INTO user_streaks (user_id, current_streak, longest_streak, last_active_date) VALUES (?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET current_streak = excluded.current_streak, longest_streak = excluded.longest_streak, last_active_date = excluded.last_active_date', user.id, cur, longest, today);
     return { current_streak: cur, longest_streak: longest, last_active_date: today };
   }
-  function streakInfo(user) {
-    const s = db.get('SELECT * FROM user_streaks WHERE user_id = ?', user.id);
+  async function streakInfo(user) {
+    const s = await db.get('SELECT * FROM user_streaks WHERE user_id = ?', user.id);
     const today = todayFor(user);
     if (!s) return { current: 0, longest: 0, activeToday: false, lastActiveDate: null };
     const alive = s.last_active_date === today || s.last_active_date === addDays(today, -1);
     return { current: alive ? s.current_streak : 0, longest: s.longest_streak, activeToday: s.last_active_date === today, lastActiveDate: s.last_active_date };
   }
-  const dayInfo = (user) => {
-    const d = db.get('SELECT xp, lessons, answers, correct FROM user_days WHERE user_id = ? AND local_date = ?', user.id, todayFor(user)) || { xp: 0, lessons: 0, answers: 0, correct: 0 };
+  const dayInfo = async (user) => {
+    const d = await db.get('SELECT xp, lessons, answers, correct FROM user_days WHERE user_id = ? AND local_date = ?', user.id, todayFor(user)) || { xp: 0, lessons: 0, answers: 0, correct: 0 };
     return { ...d, goal: user.daily_goal_xp, goalMet: d.xp >= user.daily_goal_xp };
   };
-  function weekDays(user) {
+  async function weekDays(user) {
     const today = todayFor(user), out = [];
-    const rows = db.all('SELECT local_date, xp FROM user_days WHERE user_id = ? AND local_date >= ?', user.id, addDays(today, -6));
+    const rows = await db.all('SELECT local_date, xp FROM user_days WHERE user_id = ? AND local_date >= ?', user.id, addDays(today, -6));
     const m = Object.fromEntries(rows.map((r) => [r.local_date, r.xp]));
     for (let i = 6; i >= 0; i--) { const d = addDays(today, -i); out.push({ date: d, xp: m[d] || 0 }); }
     return out;
   }
 
   /* ---------- achievements ---------- */
-  function checkAchievements(userId) {
-    const u = userById(userId);
-    const have = new Set(db.all('SELECT code FROM user_achievements WHERE user_id = ?', userId).map((r) => r.code));
-    const lessons = db.get('SELECT COUNT(*) n FROM user_progress WHERE user_id = ?', userId).n;
-    const perfect = db.get("SELECT COUNT(*) n FROM lesson_attempts WHERE user_id = ? AND kind = 'lesson' AND status = 'completed' AND incorrect = 0", userId).n;
-    const st = db.get('SELECT longest_streak FROM user_streaks WHERE user_id = ?', userId) || { longest_streak: 0 };
-    const rev = db.get('SELECT COALESCE(SUM(correct),0) n FROM review_items WHERE user_id = ?', userId).n;
-    const today = dayInfo(u);
+  async function checkAchievements(userId) {
+    const u = await userById(userId);
+    const have = new Set((await db.all('SELECT code FROM user_achievements WHERE user_id = ?', userId)).map((r) => r.code));
+    const lessons = (await db.get('SELECT COUNT(*) n FROM user_progress WHERE user_id = ?', userId)).n;
+    const perfect = (await db.get("SELECT COUNT(*) n FROM lesson_attempts WHERE user_id = ? AND kind = 'lesson' AND status = 'completed' AND incorrect = 0", userId)).n;
+    const st = await db.get('SELECT longest_streak FROM user_streaks WHERE user_id = ?', userId) || { longest_streak: 0 };
+    const rev = (await db.get('SELECT COALESCE(SUM(correct),0) n FROM review_items WHERE user_id = ?', userId)).n;
+    const today = await dayInfo(u);
     const checks = {
       first_lesson: lessons >= 1, lessons_10: lessons >= 10, lessons_25: lessons >= 25, perfect_lesson: perfect >= 1,
       streak_3: st.longest_streak >= 3, streak_7: st.longest_streak >= 7, streak_30: st.longest_streak >= 30,
       xp_100: u.xp_total >= 100, xp_500: u.xp_total >= 500, xp_2000: u.xp_total >= 2000,
       daily_goal: today.goalMet, first_review: rev >= 10, reviews_100: rev >= 100,
-      level_complete: lessons > 0 && anyLevelComplete(u),
+      level_complete: lessons > 0 && await anyLevelComplete(u),
     };
     const earned = [];
     for (const a of ACHIEVEMENTS) {
-      if (checks[a.code] && !have.has(a.code)) { db.run('INSERT OR IGNORE INTO user_achievements (user_id, code, earned_at) VALUES (?,?,?)', userId, a.code, now()); earned.push(a); }
+      if (checks[a.code] && !have.has(a.code)) { await db.run('INSERT OR IGNORE INTO user_achievements (user_id, code, earned_at) VALUES (?,?,?)', userId, a.code, now()); earned.push(a); }
     }
     return earned;
   }
-  function anyLevelComplete(user) {
-    const rows = db.all(`SELECT lv.id, COUNT(l.id) total, SUM(CASE WHEN p.lesson_id IS NOT NULL THEN 1 ELSE 0 END) done
+  async function anyLevelComplete(user) {
+    const rows = await db.all(`SELECT lv.id, COUNT(l.id) total, SUM(CASE WHEN p.lesson_id IS NOT NULL THEN 1 ELSE 0 END) done
       FROM levels lv JOIN courses c ON c.id = lv.course_id AND c.status = 'published'
       JOIN units un ON un.level_id = lv.id JOIN lessons l ON l.unit_id = un.id AND l.status = 'published'
       LEFT JOIN user_progress p ON p.lesson_id = l.id AND p.user_id = ?
       GROUP BY lv.id`, user.id);
     return rows.some((r) => r.total > 0 && r.done === r.total);
   }
-  const achievementList = (userId) => {
-    const got = Object.fromEntries(db.all('SELECT code, earned_at FROM user_achievements WHERE user_id = ?', userId).map((r) => [r.code, r.earned_at]));
+  const achievementList = async (userId) => {
+    const got = Object.fromEntries((await db.all('SELECT code, earned_at FROM user_achievements WHERE user_id = ?', userId)).map((r) => [r.code, r.earned_at]));
     return ACHIEVEMENTS.map((a) => ({ ...a, earnedAt: got[a.code] || null }));
   };
 
   /* ---------- learning path ---------- */
-  function courseFor(user, courseId) {
+  async function courseFor(user, courseId) {
     const wanted = courseId || user.course_id;
-    let c = wanted ? db.get("SELECT * FROM courses WHERE id = ? AND status = 'published'", wanted) : null;
-    if (!c) c = db.get("SELECT * FROM courses WHERE status = 'published' ORDER BY (track = 'general') DESC, position, id LIMIT 1");
+    let c = wanted ? await db.get("SELECT * FROM courses WHERE id = ? AND status = 'published'", wanted) : null;
+    if (!c) c = await db.get("SELECT * FROM courses WHERE status = 'published' ORDER BY (track = 'general') DESC, position, id LIMIT 1");
     return c || null;
   }
   /* Course -> levels -> units -> lessons with a state for every lesson: completed | available | locked.
      Rules: a level opens when the previous level has `unlock_threshold_pct` % of its lessons finished (or its rule is "open", or
      it is at/below the learner's chosen start level); inside a level a "sequential" lesson opens when the previous lesson is
      finished, an "open" lesson is always open, a "prerequisite" lesson opens when its chosen lesson is finished. */
-  function buildPath(user, course, lang) {
+  async function buildPath(user, course, lang) {
     const T = (row, f) => L10N.text(row, f, lang);
-    const levels = db.all('SELECT * FROM levels WHERE course_id = ? ORDER BY position, id', course.id);
-    const units = db.all('SELECT u.* FROM units u JOIN levels l ON l.id = u.level_id WHERE l.course_id = ? ORDER BY u.position, u.id', course.id);
-    const lessons = db.all("SELECT l.*, u.level_id FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE lv.course_id = ? AND l.status = 'published' ORDER BY l.position, l.id", course.id);
-    const prog = Object.fromEntries(db.all('SELECT * FROM user_progress WHERE user_id = ?', user.id).map((p) => [p.lesson_id, p]));
-    const counts = Object.fromEntries(db.all("SELECT lesson_id, COUNT(*) n FROM exercises WHERE status = 'published' GROUP BY lesson_id").map((r) => [r.lesson_id, r.n]));
-    const open = db.all("SELECT lesson_id FROM lesson_attempts WHERE user_id = ? AND status = 'in_progress' AND lesson_id IS NOT NULL", user.id).map((r) => r.lesson_id);
+    const levels = await db.all('SELECT * FROM levels WHERE course_id = ? ORDER BY position, id', course.id);
+    const units = await db.all('SELECT u.* FROM units u JOIN levels l ON l.id = u.level_id WHERE l.course_id = ? ORDER BY u.position, u.id', course.id);
+    const lessons = await db.all("SELECT l.*, u.level_id FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE lv.course_id = ? AND l.status = 'published' ORDER BY l.position, l.id", course.id);
+    const prog = Object.fromEntries((await db.all('SELECT * FROM user_progress WHERE user_id = ?', user.id)).map((p) => [p.lesson_id, p]));
+    const counts = Object.fromEntries((await db.all("SELECT lesson_id, COUNT(*) n FROM exercises WHERE status = 'published' GROUP BY lesson_id")).map((r) => [r.lesson_id, r.n]));
+    const open = (await db.all("SELECT lesson_id FROM lesson_attempts WHERE user_id = ? AND status = 'in_progress' AND lesson_id IS NOT NULL", user.id)).map((r) => r.lesson_id);
     const startPos = (levels.find((l) => l.code === user.start_level) || levels[0] || { position: 0 }).position;
     const out = { course: { id: course.id, slug: course.slug, title: T(course, 'title'), description: T(course, 'description'), track: course.track }, levels: [] };
     let prevLevel = null, order = [];
@@ -159,18 +159,18 @@ function make(db, settings) {
       let unlocked = lv.unlock_rule === 'open' || !prevLevel || lv.position <= startPos;
       if (!unlocked) unlocked = prevLevel.total === 0 || Math.round(100 * prevLevel.done / prevLevel.total) >= lv.unlock_threshold_pct;
       const lvOut = { id: lv.id, code: lv.code, title: T(lv, 'title'), description: T(lv, 'description'), unlocked, total: flat.length, done, pct: Math.round(100 * done / flat.length), threshold: lv.unlock_threshold_pct, units: [] };
-      flat.forEach((l, i) => {
+      for (const [i, l] of flat.entries()) {
         let state = 'locked', reason = null;
         if (prog[l.id]) state = 'completed';
         else if (!unlocked) reason = { key: 'path.lock_level', params: { pct: lv.unlock_threshold_pct, level: lv.code } };
         else if (l.unlock_rule === 'open') state = 'available';
         else if (l.unlock_rule === 'prerequisite' && l.prerequisite_lesson_id) {
           if (prog[l.prerequisite_lesson_id]) state = 'available';
-          else { const pre = db.get('SELECT title, translations FROM lessons WHERE id = ?', l.prerequisite_lesson_id); reason = pre ? { key: 'path.lock_lesson', params: { title: T(pre, 'title') } } : { key: 'path.lock_required' }; }
+          else { const pre = await db.get('SELECT title, translations FROM lessons WHERE id = ?', l.prerequisite_lesson_id); reason = pre ? { key: 'path.lock_lesson', params: { title: T(pre, 'title') } } : { key: 'path.lock_required' }; }
         } else if (i === 0 || prog[flat[i - 1].id]) state = 'available';
         else reason = { key: 'path.lock_lesson', params: { title: T(flat[i - 1], 'title') } };
         l._state = state; l._reason = reason;
-      });
+      }
       for (const u of lvUnits) {
         const uDone = u.lessons.filter((l) => prog[l.id]).length;
         lvOut.units.push({ id: u.id, title: T(u, 'title'), description: T(u, 'description'), total: u.lessons.length, done: uDone, lessons: u.lessons.map((l) => ({
@@ -189,10 +189,10 @@ function make(db, settings) {
     out.totals = { lessons: states.length, done: states.filter((x) => x.l.state === 'completed').length };
     return out;
   }
-  function lessonAccess(user, lessonId, lang) {
-    const row = db.get("SELECT l.*, c.id course_id, c.status course_status FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id JOIN courses c ON c.id = lv.course_id WHERE l.id = ?", lessonId);
+  async function lessonAccess(user, lessonId, lang) {
+    const row = await db.get("SELECT l.*, c.id course_id, c.status course_status FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id JOIN courses c ON c.id = lv.course_id WHERE l.id = ?", lessonId);
     if (!row || row.status !== 'published' || row.course_status !== 'published') return { ok: false, status: 404, key: 'err.lesson_not_found' };
-    const path = buildPath(user, db.get('SELECT * FROM courses WHERE id = ?', row.course_id), lang);
+    const path = await buildPath(user, await db.get('SELECT * FROM courses WHERE id = ?', row.course_id), lang);
     const hit = path.levels.flatMap((lv) => lv.units.flatMap((u) => u.lessons)).find((l) => l.id === lessonId);
     if (!hit) return { ok: false, status: 404, key: 'err.lesson_not_found' };
     if (hit.state === 'locked') return { ok: false, status: 403, key: hit.lockReason ? hit.lockReason.key : 'err.lesson_locked', params: hit.lockReason ? hit.lockReason.params : null };

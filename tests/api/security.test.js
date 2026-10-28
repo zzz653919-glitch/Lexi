@@ -45,8 +45,8 @@ test('errors never leak internals; malformed and oversized input is handled', as
 test('data survives an application restart; migrations are repeatable', async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lexi-restart-'));
   const dbPath = path.join(dir, 'lexi.sqlite');
-  const boot = async () => { const inst = createApp({ dbPath, dataDir: dir, rateLimit: false, quiet: true }); seed.ensureSample(inst.db); const server = await new Promise((r) => { const sv = inst.app.listen(0, '127.0.0.1', () => r(sv)); }); return { inst, server, base: 'http://127.0.0.1:' + server.address().port }; };
-  const stop = async (x) => { await new Promise((r) => x.server.close(r)); x.inst.close(); };
+  const boot = async () => { const inst = createApp({ dbPath, dataDir: dir, rateLimit: false, quiet: true, settingsTtl: 0 }); await inst.init(); await seed.ensureSample(inst.db); const db = require('./syncdb').open(dbPath); const server = await new Promise((r) => { const sv = inst.app.listen(0, '127.0.0.1', () => r(sv)); }); return { inst: { ...inst, appDb: inst.db, db, close: async () => { db.close(); await inst.close(); } }, server, base: 'http://127.0.0.1:' + server.address().port }; };
+  const stop = async (x) => { await new Promise((r) => x.server.close(r)); await x.inst.close(); };
   try {
     let x = await boot();
     const c = new Client(x.base);
@@ -61,7 +61,7 @@ test('data survives an application restart; migrations are repeatable', async ()
     await again.login('p@example.com', 'Passw0rd1');
     const dash = (await again.get('/api/dashboard')).json; assert.strictEqual(dash.today.xp, 10); assert.strictEqual(dash.user.xpTotal, 10);
     const resumed = (await again.post(`/api/lessons/${path0.levels[0].units[0].lessons[0].id}/start`)).json; assert.strictEqual(resumed.attemptId, st.attemptId); assert.strictEqual(resumed.position, 1, 'the lesson resumes where it stopped');
-    assert.deepStrictEqual(require('../../server/lib/db').migrate(x.inst.db), [], 'no migration runs twice');
+    assert.deepStrictEqual(await require('../../server/lib/db').migrate(x.inst.appDb), [], 'no migration runs twice');
     assert.strictEqual(x.inst.db.get('SELECT COUNT(*) n FROM schema_migrations').n, require('node:fs').readdirSync(require('node:path').join(__dirname, '../../server/migrations')).filter((f) => f.endsWith('.sql')).length);
     await stop(x);
   } finally { fs.rmSync(dir, { recursive: true, force: true }); }
@@ -74,7 +74,7 @@ test('command line: create-admin (environment password), seed, backup', () => {
   try {
     assert.match(run('migrate'), /Applied migrations/);
     assert.match(run('create-admin'), /Administrator root@example.com created/);
-    const { open } = require('../../server/lib/db'); const A = require('../../server/lib/auth');
+    const { open } = require('./syncdb'); const A = require('../../server/lib/auth');
     const db = open(path.join(dir, 'cli.sqlite'));
     const u = db.get("SELECT * FROM users WHERE email = 'root@example.com'");
     assert.strictEqual(u.role, 'admin'); assert.ok(A.verifyPassword('Sup3rSecret!', u.password_hash)); assert.ok(!u.password_hash.includes('Sup3rSecret'));

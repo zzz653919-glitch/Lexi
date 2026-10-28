@@ -187,6 +187,7 @@ const A = require('../../server/lib/auth');
     check((await page.locator('.ach-card:not(.locked)').count()) >= 2 && (await page.locator('.ach-card.locked').count()) >= 5, 'achievements page separates earned and locked badges');
 
     /* ---------- no obsolete pages, unknown routes ---------- */
+    page.expectedStatuses.add(404);   // unknown pages are real 404 responses that still show the app's not-found screen
     for (const old of ['/lessons', '/sessions', '/topics', '/path', '/sample', '/vocabularies']) {
       await page.goto(s.base + old); await page.waitForSelector('#app > *');
       check((await page.locator('h1').first().innerText()) === 'Page not found', `old route ${old} is gone (404 page)`);

@@ -37,10 +37,10 @@ function parseCookies(header) {
 }
 
 function make(db, { secureCookies = false } = {}) {
-  function createSession(userId, req) {
+  async function createSession(userId, req) {
     const token = randomToken(32), csrf = randomToken(24);
     const expires = new Date(Date.now() + SESSION_DAYS * 86400000).toISOString();
-    db.run('INSERT INTO sessions (token_hash, user_id, csrf_token, created_at, expires_at, ip, user_agent) VALUES (?,?,?,?,?,?,?)', sha256(token), userId, csrf, now(), expires, String(req.ip || '').slice(0, 64), String(req.get('user-agent') || '').slice(0, 200));
+    await db.run('INSERT INTO sessions (token_hash, user_id, csrf_token, created_at, expires_at, ip, user_agent) VALUES (?,?,?,?,?,?,?)', sha256(token), userId, csrf, now(), expires, String(req.ip || '').slice(0, 64), String(req.get('user-agent') || '').slice(0, 200));
     return { token, csrf, expires };
   }
   /* Secure when forced by COOKIE_SECURE=1 or when the request itself arrived over HTTPS (behind a proxy this needs trust proxy) */
@@ -49,19 +49,19 @@ function make(db, { secureCookies = false } = {}) {
   function clearCookie(res) { res.append('Set-Cookie', `${COOKIE}=${cookieFlags(res)}; Max-Age=0`); }
 
   // attaches req.user / req.session when the cookie holds a valid session of an active account
-  function attach(req, res, next) {
+  async function attach(req, res, next) {
     req.user = null; req.session = null;
     const token = parseCookies(req.headers.cookie)[COOKIE];
     if (token) {
-      const s = db.get('SELECT * FROM sessions WHERE token_hash = ?', sha256(token));
+      const s = await db.get('SELECT * FROM sessions WHERE token_hash = ?', sha256(token));
       if (s && s.expires_at > now()) {
-        const u = db.get('SELECT * FROM users WHERE id = ?', s.user_id);
+        const u = await db.get('SELECT * FROM users WHERE id = ?', s.user_id);
         if (u && u.status === 'active') { req.user = u; req.session = s; }
       }
     }
     next();
   }
-  const destroySession = (req) => { if (req.session) db.run('DELETE FROM sessions WHERE token_hash = ?', req.session.token_hash); };
+  const destroySession = async (req) => { if (req.session) await db.run('DELETE FROM sessions WHERE token_hash = ?', req.session.token_hash); };
 
   /* CSRF defence for every state-changing /api request: JSON (or raw upload) content type, same-origin Origin header, and for
      signed-in users the per-session token in X-CSRF-Token. The session cookie is also SameSite=Lax. */
@@ -83,19 +83,19 @@ function make(db, { secureCookies = false } = {}) {
   return { createSession, setCookie, clearCookie, attach, destroySession, csrf, requireUser, requireRole };
 }
 
-/* fixed-window counter keyed by string; `limit` hits per `windowMs` */
-function limiter(limit, windowMs, enabled = true) {
-  const hits = new Map();
+/* fixed-window counter keyed by string; `limit` hits per `windowMs`. Stored in the database so the limit holds across serverless
+   instances and restarts. take() resolves to false once the limit is exceeded. */
+function limiter(db, name, limit, windowMs, enabled = true) {
   return {
-    take(key) {
+    async take(key) {
       if (!enabled) return true;
-      const t = Date.now(); let e = hits.get(key);
-      if (!e || e.reset < t) { e = { n: 0, reset: t + windowMs }; hits.set(key, e); }
-      e.n++;
-      if (hits.size > 5000) for (const [k, v] of hits) if (v.reset < t) hits.delete(k);
-      return e.n <= limit;
+      const k = name + ':' + key, t = Date.now();
+      const row = await db.get('SELECT n, reset_at FROM rate_limits WHERE key = ?', k);
+      if (!row || row.reset_at < t) { await db.run('INSERT INTO rate_limits (key, n, reset_at) VALUES (?,?,?) ON CONFLICT(key) DO UPDATE SET n = 1, reset_at = excluded.reset_at', k, 1, t + windowMs); return true; }
+      await db.run('UPDATE rate_limits SET n = n + 1 WHERE key = ?', k);
+      return row.n + 1 <= limit;
     },
-    clear(key) { hits.delete(key); },
+    async clear(key) { if (enabled) await db.run('DELETE FROM rate_limits WHERE key = ?', name + ':' + key); },
   };
 }
 

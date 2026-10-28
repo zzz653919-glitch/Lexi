@@ -92,7 +92,7 @@ test('leaderboard: opt-in only, no private data, weekly XP order', async () => {
     assert.ok(!text.includes('@example.com') && !text.includes('Hidden') && !/"id"/.test(text), 'no e-mail addresses, ids or opted-out users');
     await b.patch('/api/me', { leaderboardOptIn: false });
     assert.deepStrictEqual((await a.get('/api/leaderboard')).json.items.map((x) => x.displayName), ['Alice'], 'leaving the leaderboard removes the learner');
-    s.settings.update({ leaderboard_enabled: false });
+    await s.settings.update({ leaderboard_enabled: false });
     assert.strictEqual((await a.get('/api/leaderboard')).json.enabled, false, 'an administrator can turn it off');
   } finally { await s.stop(); }
 });
@@ -137,7 +137,7 @@ test('vocabulary review: schedule, difficult words, server-side XP rules', async
 test('review XP is capped per day', async () => {
   const s = await startServer();
   try {
-    s.settings.update({ xp_review_daily_cap: 4 });
+    await s.settings.update({ xp_review_daily_cap: 4 });
     const c = await learner(s, 'cap@example.com');
     await finishNext(s, c);
     s.db.run("UPDATE review_items SET due_at = '2000-01-01T00:00:00.000Z'");

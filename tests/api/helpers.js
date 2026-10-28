@@ -5,18 +5,22 @@ const path = require('node:path');
 const { createApp } = require('../../server/app');
 const seed = require('../../server/seed');
 const A = require('../../server/lib/auth');
+const syncdb = require('./syncdb');
 
 async function startServer(opts = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lexi-test-'));
-  const inst = createApp({ dbPath: path.join(dir, 'test.sqlite'), dataDir: dir, rateLimit: false, quiet: true, ...opts });
-  if (opts.seed !== false) seed.ensureSample(inst.db);
+  const dbPath = path.join(dir, 'test.sqlite');
+  const inst = createApp({ dbPath, dataDir: dir, rateLimit: false, quiet: true, settingsTtl: 0, ...opts });
+  await inst.init();
+  if (opts.seed !== false) await seed.ensureSample(inst.db);
+  const db = syncdb.open(dbPath);   // synchronous handle on the same file, for arranging and checking data
   const server = await new Promise((resolve) => { const s = inst.app.listen(0, '127.0.0.1', () => resolve(s)); });
   const base = 'http://127.0.0.1:' + server.address().port;
   const createUser = ({ email, password = 'Passw0rd!x', role = 'learner', name = 'Test User', timezone = 'UTC' }) => {
     const t = new Date().toISOString();
-    return inst.db.run('INSERT INTO users (email, display_name, password_hash, role, timezone, hearts, hearts_updated_at, created_at) VALUES (?,?,?,?,?,?,?,?)', email, name, A.hashPassword(password), role, timezone, 5, t, t).id;
+    return db.run('INSERT INTO users (email, display_name, password_hash, role, timezone, hearts, hearts_updated_at, created_at) VALUES (?,?,?,?,?,?,?,?)', email, name, A.hashPassword(password), role, timezone, 5, t, t).id;
   };
-  return { ...inst, base, dir, createUser, async stop() { await new Promise((r) => server.close(r)); inst.close(); fs.rmSync(dir, { recursive: true, force: true }); } };
+  return { ...inst, appDb: inst.db, db, base, dir, createUser, async stop() { await new Promise((r) => server.close(r)); db.close(); await inst.close(); fs.rmSync(dir, { recursive: true, force: true }); } };
 }
 
 class Client {

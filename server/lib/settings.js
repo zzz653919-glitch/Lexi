@@ -50,14 +50,22 @@ const SCHEMA = {
   maintenance_message: { t: 'str', max: 300 },
 };
 
-function make(db) {
-  let cache = null;
-  const load = () => {
+/* The settings live in the database. They are read once per request (refresh) and cached for `ttl` ms, so the rest of the code can read
+   them synchronously with all(); an update made by this process is visible immediately, one made by another server instance within `ttl`. */
+function make(db, { ttl = 2000 } = {}) {
+  let cache = null, loadedAt = 0, loading = null;
+  const load = async () => {
     const out = { ...DEFAULTS };
-    for (const r of db.all('SELECT key, value FROM settings')) { if (r.key in DEFAULTS) { try { out[r.key] = JSON.parse(r.value); } catch (_) { /* keep default */ } } }
+    for (const r of await db.all('SELECT key, value FROM settings')) { if (r.key in DEFAULTS) { try { out[r.key] = JSON.parse(r.value); } catch (_) { /* keep default */ } } }
+    cache = out; loadedAt = Date.now();
     return out;
   };
-  const all = () => (cache = cache || load());
+  const refresh = async (force = false) => {
+    if (!force && cache && Date.now() - loadedAt < ttl) return cache;
+    if (!loading) loading = load().finally(() => { loading = null; });
+    return loading;
+  };
+  const all = () => cache || DEFAULTS;
   /* validates a partial update; returns { values } or { errors } */
   function validate(input) {
     const values = {}, errors = {};
@@ -81,11 +89,11 @@ function make(db) {
     if (!errors.default_language && !errors.supported_languages && !sup.includes(def)) errors[values.default_language ? 'default_language' : 'supported_languages'] = 'val.default_language_unsupported';
     return Object.keys(errors).length ? { errors } : { values };
   }
-  function update(values) {
-    db.tx(() => { for (const [k, v] of Object.entries(values)) db.run('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', k, JSON.stringify(v)); });
-    cache = null;
+  async function update(values) {
+    await db.tx(async () => { for (const [k, v] of Object.entries(values)) await db.run('INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value', k, JSON.stringify(v)); });
+    await refresh(true);
   }
-  return { all, validate, update, DEFAULTS };
+  return { all, refresh, validate, update, DEFAULTS };
 }
 
 module.exports = { make, DEFAULTS, SCHEMA };

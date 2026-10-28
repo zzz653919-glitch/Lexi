@@ -4,7 +4,9 @@
   "description": "Lexi Learn — an English-learning platform (courses, lessons, exercises, XP/streaks, admin panel). Node.js + SQLite.",
   "private": true,
   "license": "MIT",
-  "engines": { "node": ">=22.5" },
+  "engines": {
+    "node": ">=22.5"
+  },
   "scripts": {
     "start": "node --disable-warning=ExperimentalWarning server/index.js",
     "dev": "node --disable-warning=ExperimentalWarning --watch server/index.js",
@@ -18,6 +20,7 @@
     "test:legacy": "cd legacy/lexi-v1 && node tests/answer-check.test.js && node tests/vocab-data.test.js"
   },
   "dependencies": {
+    "@libsql/client": "^0.15.15",
     "express": "^4.21.2"
   }
 }
