@@ -15,7 +15,7 @@ export async function api(method, url, body, opts = {}) {
   let data = null; try { data = await res.json(); } catch (_) { /* empty body */ }
   if (data && data.csrfToken) session.csrf = data.csrfToken;
   if (!res.ok) {
-    const err = new ApiError(res.status, (data && data.error) || 'Something went wrong.', data);
+    const err = new ApiError(res.status, (data && data.error) || (data === null ? `The server answered ${res.status} but not with data from the Lexi Learn API.` : 'Something went wrong.'), Object.assign({ notApi: data === null }, data || {}));
     if (res.status === 401 && session.user && session.onUnauthorized) session.onUnauthorized();
     if (res.status === 503 && data && data.maintenance && session.onMaintenance) session.onMaintenance(err.message);
     throw err;

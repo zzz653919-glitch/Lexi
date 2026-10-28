@@ -141,7 +141,7 @@ export async function boot() {
     if (cfg.brandColor) applyBrand(cfg.brandColor);
     if (cfg.maintenance && !(me.user && ['admin', 'editor'].includes(me.user.role)) && location.pathname !== '/login') return showMaintenance(cfg.maintenance);
   } catch (e) {
-    root.replaceChildren(h('div', { class: 'guest' }, h('div', { class: 'card auth-card center' }, h('h1', {}, 'Cannot connect'), h('p', { class: 'muted' }, e.message), h('button', { class: 'btn', onclick: () => location.reload() }, 'Retry'))));
+    root.replaceChildren(h('div', { class: 'guest' }, h('div', { class: 'card auth-card center' }, h('h1', {}, 'Cannot connect'), h('p', { class: 'muted' }, e.message), (e.data && e.data.notApi) || e.status === 0 ? h('p', { class: 'small muted' }, 'This page must be opened from the Lexi Learn server (run “npm start”, then open the address it prints, normally http://127.0.0.1:3000). Opening the files directly or through a plain file server does not work because the API is missing.') : null, h('button', { class: 'btn', onclick: () => location.reload() }, 'Retry'))));
     return;
   }
   await render();
