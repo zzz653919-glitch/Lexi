@@ -117,10 +117,22 @@ function createApp(options = {}) {
     res.redirect('/admin/login');
   };
   const sessionOnly = [auth.attach];
-  app.get('/admin/login', sessionOnly, (req, res) => { res.setHeader('Cache-Control', 'no-store'); res.sendFile(path.join(PUBLIC, 'admin-login.html')); });
+  /* Serverless hosts transpile .js files that are bundled with a function, which would break the browser (ES module) code of the admin
+     panel. The build therefore packs the admin files into server/generated/admin-bundle.json (base64, never transpiled); when that
+     file exists the admin panel is served from it, otherwise straight from public/. */
+  let bundle = null;
+  try { bundle = require('./generated/admin-bundle.json'); } catch (_) { /* served from disk */ }
+  const sendAdmin = (res, rel) => {
+    if (!bundle) return res.sendFile(path.join(PUBLIC, rel));
+    const f = bundle[rel];
+    if (!f) return res.status(404).end();
+    return res.type(f.type).send(Buffer.from(f.data, 'base64'));
+  };
+  app.get('/admin/login', sessionOnly, (req, res) => { res.setHeader('Cache-Control', 'no-store'); sendAdmin(res, 'admin-login.html'); });
   app.use('/admin', sessionOnly, staffOnly, (req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); },
+    (req, res, next) => { if (bundle && req.method === 'GET' && bundle['admin' + req.path]) return sendAdmin(res, 'admin' + req.path); next(); },
     express.static(path.join(PUBLIC, 'admin'), { index: false, redirect: false, fallthrough: true }),
-    (req, res) => res.sendFile(path.join(PUBLIC, 'admin', 'index.html')));
+    (req, res) => sendAdmin(res, 'admin/index.html'));
 
   /* ---------- learner app ---------- */
   app.use(express.static(PUBLIC, { index: false, redirect: false, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
