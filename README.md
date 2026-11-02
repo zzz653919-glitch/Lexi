@@ -62,6 +62,8 @@ Role rules enforced by the server: only administrators change roles; nobody chan
 ## Languages
 The interface is available in Uzbek (default), Russian and English, switchable from the header or Profile; translations are editable by administrators. See [docs/I18N.md](docs/I18N.md).
 
+Uzbek is written in the **new Uzbek Latin alphabet** (Law O‘RQ-1184, 21 October 2026): Ö ö, Ğ ğ, Ş ş, Ç ç instead of O‘ o‘, G‘ g‘, Sh sh, Ch ch; the tutuq belgisi (ma’no) is unchanged. The converter lives in `shared/uz-alphabet.js`. Typed answers are accepted in both the old and the new spelling. To convert the Uzbek content of an existing database run `npm run uz-alphabet` (add `-- --dry-run` to only count; safe to run twice).
+
 ## Animations
 A start-up screen, loading animations, page transitions and answer / lesson-completion effects (all tied to real loading and real results; can be reduced or turned off in Profile). See [docs/ANIMATIONS.md](docs/ANIMATIONS.md).
 
@@ -93,7 +95,7 @@ A **placement test** (adaptive, 20–35 questions, Pre-A1 … C2), personalised 
 Environment variables (all optional): `PORT` (3000), `HOST` (127.0.0.1 locally, 0.0.0.0 when `NODE_ENV=production` or `PORT` is set), `COOKIE_SECURE=1` (set behind HTTPS), `TRUST_PROXY=1` (behind a reverse proxy), `PUBLIC_URL` (used in password-reset links), `LEXI_NO_SEED=1` (do not create the sample course), and for the CLI `LEXI_DB` (database file) / `LEXI_DATA_DIR` (database directory, default `data/`), `DATABASE_URL` + `DATABASE_AUTH_TOKEN` (a hosted Turso/libSQL database instead of the local file – needed on Vercel). To publish the site see [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
 Site behaviour (names, XP, hearts, registration, maintenance mode …) is configured in the admin panel, not in files.
 
-Commands: `npm run migrate` · `npm run seed` · `npm run create-admin` · `npm run backup` (consistent copy into `backups/`) · `npm run import-legacy-vocab` (imports the ~4,200 old Lexi v1 words as **draft** entries for review).
+Commands: `npm run migrate` · `npm run seed` · `npm run create-admin` · `npm run backup` (consistent copy into `backups/`) · `npm run import-legacy-vocab` (imports the ~4,200 old Lexi v1 words as **draft** entries for review) · `npm run uz-alphabet` (converts stored Uzbek content to the new alphabet).
 
 ## Project layout
 
