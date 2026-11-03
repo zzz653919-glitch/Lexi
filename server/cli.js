@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-/* Command line helpers:  migrate | seed | create-admin | backup | import-legacy-vocab */
+/* Command line helpers:  migrate | seed | create-admin | backup | import-legacy-vocab | uz-alphabet */
 const fs = require('node:fs');
 const path = require('node:path');
 const readline = require('node:readline');
@@ -64,8 +64,13 @@ function prompt(question, hidden) {
     }
   } else if (cmd === 'import-legacy-vocab') {
     await require('./legacy-import').run((await openDb()).db);
+  } else if (cmd === 'uz-alphabet') {
+    /* converts the Uzbek content already in the database to the new Uzbek Latin alphabet (ŏ ğ ş ç); --dry-run only counts */
+    const dryRun = process.argv.includes('--dry-run');
+    const s = await require('./lib/uz-convert').convertDatabase((await openDb()).db, { dryRun });
+    console.log((dryRun ? 'Would convert: ' : 'Converted: ') + Object.entries(s).map(([k, n]) => `${k} ${n}`).join(', '));
   } else {
-    console.log('Usage: node server/cli.js <migrate|seed|create-admin|backup|import-legacy-vocab>');
+    console.log('Usage: node server/cli.js <migrate|seed|create-admin|backup|import-legacy-vocab|uz-alphabet>');
     process.exit(cmd ? 1 : 0);
   }
 })().then(() => process.exit(0), (e) => { console.error(e.message); process.exit(1); });

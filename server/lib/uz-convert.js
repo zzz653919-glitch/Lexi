@@ -1,5 +1,5 @@
 /* One-time conversion of the Uzbek content already stored in a database to the new Uzbek Latin alphabet
-   (o‘ → ö, g‘ → ğ, sh → ş, ch → ç; see shared/uz-alphabet.js).  Run with:  npm run uz-alphabet  [-- --dry-run]
+   (o‘ → ŏ, g‘ → ğ, sh → ş, ch → ç; see shared/uz-alphabet.js).  Run with:  npm run uz-alphabet  [-- --dry-run]
    Only fields that hold Uzbek text are touched:
      - vocabulary.uz / example_uz, the "uz" entry of the translations JSON of courses, levels, units, lessons and grammar points,
      - exercise fields in the translation language (translation; the Uzbek side of translation_choice, translate_type,

@@ -62,7 +62,7 @@ Role rules enforced by the server: only administrators change roles; nobody chan
 ## Languages
 The interface is available in Uzbek (default), Russian and English, switchable from the header or Profile; translations are editable by administrators. See [docs/I18N.md](docs/I18N.md).
 
-Uzbek is written in the **new Uzbek Latin alphabet** (Law O‘RQ-1184, 21 October 2026): Ö ö, Ğ ğ, Ş ş, Ç ç instead of O‘ o‘, G‘ g‘, Sh sh, Ch ch; the tutuq belgisi (ma’no) is unchanged. The converter lives in `shared/uz-alphabet.js`. Typed answers are accepted in both the old and the new spelling. To convert the Uzbek content of an existing database run `npm run uz-alphabet` (add `-- --dry-run` to only count; safe to run twice).
+Uzbek is written in the **new Uzbek Latin alphabet**: Ŏ ŏ, Ğ ğ, Ş ş, Ç ç instead of O‘ o‘, G‘ g‘, Sh sh, Ch ch; the tutuq belgisi (ma’no) is unchanged. The converter lives in `shared/uz-alphabet.js`. Typed answers are accepted in both the old and the new spelling. To convert the Uzbek content of an existing database run `npm run uz-alphabet` (add `-- --dry-run` to only count; safe to run twice).
 
 ## Animations
 A start-up screen, loading animations, page transitions and answer / lesson-completion effects (all tied to real loading and real results; can be reduced or turned off in Profile). See [docs/ANIMATIONS.md](docs/ANIMATIONS.md).

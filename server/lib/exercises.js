@@ -2,6 +2,7 @@
    and server-side grading. */
 const { shuffled, clean, cleanMultiline } = require('./util');
 const I18N = require('../../shared/i18n-core');
+const UZ = require('../../shared/uz-alphabet');
 
 // the labels and default instructions of the types are interface texts (locales: ex.type.<id>, ex.instr.<id>)
 const TYPES = Object.fromEntries(['multiple_choice', 'translation_choice', 'fill_blank', 'translate_type', 'scramble_letters', 'order_words', 'match_pairs', 'listen_choice', 'listen_type', 'reading', 'fix_spelling'].map((id) => [id, {}]));
@@ -11,7 +12,8 @@ const CHOICE = new Set(['multiple_choice', 'translation_choice', 'listen_choice'
 /* ---------- normalisation ---------- */
 const CONTRACTIONS = [["i'm", 'i am'], ["you're", 'you are'], ["he's", 'he is'], ["she's", 'she is'], ["it's", 'it is'], ["we're", 'we are'], ["they're", 'they are'], ["that's", 'that is'], ["there's", 'there is'], ["don't", 'do not'], ["doesn't", 'does not'], ["didn't", 'did not'], ["can't", 'cannot'], ["won't", 'will not'], ["isn't", 'is not'], ["aren't", 'are not'], ["wasn't", 'was not'], ["weren't", 'were not'], ["haven't", 'have not'], ["hasn't", 'has not'], ["i've", 'i have'], ["i'll", 'i will'], ["i'd", 'i would']];
 function norm(text) {
-  let s = String(text == null ? '' : text).normalize('NFKC').toLowerCase()
+  // the new Uzbek letters ŏ ğ ş ç are folded to o' g' sh ch, so an answer is accepted in either alphabet
+  let s = UZ.foldOld(String(text == null ? '' : text).normalize('NFKC').toLowerCase())
     .replace(/[‘’ʻʼʹ`´]/g, "'")        // every apostrophe-like mark (also Uzbek o‘ g‘) becomes '
     .replace(/[.,!?;:"“”()\[\]{}]/g, ' ').replace(/\s+/g, ' ').trim();
   for (const [a, b] of CONTRACTIONS) s = s.split(a).join(b);

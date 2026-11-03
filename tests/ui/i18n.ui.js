@@ -2,7 +2,7 @@
 const { check, withBrowser, openPage, summary, loginUI, startServer, Client } = require('./lib');
 const A = require('../../server/lib/auth');
 
-const NAMES = ['🇺🇿 O‘zbekcha', '🇷🇺 Русский', '🇬🇧 English'];
+const NAMES = ['🇺🇿 Ŏzbekça', '🇷🇺 Русский', '🇬🇧 English'];
 const lang = (page) => page.evaluate(() => document.documentElement.lang);
 const stored = (page) => page.evaluate(() => localStorage.getItem('lexi.lang'));
 async function pick(page, code, withKeyboard) {

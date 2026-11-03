@@ -50,7 +50,7 @@ test('default language, language list and texts endpoint', async () => {
     const c = new Client(s.base);
     const cfg = (await c.get('/api/public/config')).json;
     assert.strictEqual(cfg.defaultLanguage, 'uz');
-    assert.deepStrictEqual(cfg.languages.map((l) => l.label), ['🇺🇿 O‘zbekcha', '🇷🇺 Русский', '🇬🇧 English']);
+    assert.deepStrictEqual(cfg.languages.map((l) => l.label), ['🇺🇿 Ŏzbekça', '🇷🇺 Русский', '🇬🇧 English']);
     const ru = (await c.get('/api/i18n/ru')).json;
     assert.strictEqual(ru.messages['nav.home'], dict.ru['nav.home']);
     assert.strictEqual((await c.get('/api/i18n/xx')).status, 404);
