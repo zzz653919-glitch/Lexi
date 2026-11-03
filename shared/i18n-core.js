@@ -6,7 +6,7 @@
   if (typeof module === 'object' && module.exports) module.exports = api; else root.LexiI18n = api;
 })(typeof globalThis !== 'undefined' ? globalThis : this, function () {
   const LANGUAGES = [
-    { code: 'uz', name: 'O‘zbekcha', flag: '🇺🇿', locale: 'uz-UZ', label: '🇺🇿 O‘zbekcha' },
+    { code: 'uz', name: 'Ŏzbekça', flag: '🇺🇿', locale: 'uz-UZ', label: '🇺🇿 Ŏzbekça' },
     { code: 'ru', name: 'Русский', flag: '🇷🇺', locale: 'ru-RU', label: '🇷🇺 Русский' },
     { code: 'en', name: 'English', flag: '🇬🇧', locale: 'en-GB', label: '🇬🇧 English' },
   ];

@@ -6,23 +6,23 @@ const { convertDatabase } = require('../../server/lib/uz-convert');
 const { startServer } = require('./helpers');
 
 test('the four letters of the new Uzbek alphabet', () => {
-  assert.strictEqual(UZ.toNew('O‘zbekcha'), 'Özbekça');
-  assert.strictEqual(UZ.toNew("To'g'ri, shu choyni ichaman"), 'Töğri, şu çoyni içaman');
+  assert.strictEqual(UZ.toNew('O‘zbekcha'), 'Ŏzbekça');
+  assert.strictEqual(UZ.toNew("To'g'ri, shu choyni ichaman"), 'Tŏğri, şu çoyni içaman');
   assert.strictEqual(UZ.toNew('SHAHAR Chiroyli'), 'ŞAHAR Çiroyli');
   assert.strictEqual(UZ.toNew('ma’no, a’lo, Is’hoq'), 'ma’no, a’lo, Is’hoq', 'the tutuq belgisi stays');
-  assert.strictEqual(UZ.toNew('{n} ta so‘z <b>shu</b> Asia/Tashkent'), '{n} ta söz <b>şu</b> Asia/Tashkent', 'placeholders, tags and time zones are kept');
-  assert.strictEqual(UZ.toNew(UZ.toNew('o‘qish')), 'öqiş', 'converting twice changes nothing');
+  assert.strictEqual(UZ.toNew('{n} ta so‘z <b>shu</b> Asia/Tashkent'), '{n} ta sŏz <b>şu</b> Asia/Tashkent', 'placeholders, tags and time zones are kept');
+  assert.strictEqual(UZ.toNew(UZ.toNew('o‘qish')), 'ŏqiş', 'converting twice changes nothing');
 });
 
 test('interface texts are in the new alphabet', () => {
   const uz = require('../../locales/uz.json');
   const text = JSON.stringify(Object.entries(uz).filter(([k]) => !k.startsWith('lang.native.')).map(([, v]) => v)).replace(/Asia\/Tashkent/g, '');
   assert.doesNotMatch(text, /[oOgG][‘ʻ'`]|sh|ch/i);
-  assert.strictEqual(uz['lang.native.uz'], 'Özbekça');
+  assert.strictEqual(uz['lang.native.uz'], 'Ŏzbekça');
 });
 
 test('answers are accepted in both the old and the new spelling', () => {
-  assert.strictEqual(X.norm('öqituvçi'), X.norm("o'qituvchi"));
+  assert.strictEqual(X.norm('ŏqituvçi'), X.norm("o'qituvchi"));
   assert.strictEqual(X.norm('Şahar'), X.norm('shahar'));
   assert.strictEqual(X.norm('yiğiliş'), X.norm('yig‘ilish'));
 });
@@ -36,7 +36,7 @@ test('an existing database is converted once, keeping English words', async () =
     const first = await convertDatabase(s.appDb);
     assert.ok(first.vocabulary >= 1 && first.overrides === 1);
     const w = s.db.get("SELECT uz, example_uz FROM vocabulary WHERE en = 'corner shop'");
-    assert.deepStrictEqual([w.uz, w.example_uz], ['köça dökoni', 'U dökonga boradi, şu yerda çoy bor.']);
+    assert.deepStrictEqual([w.uz, w.example_uz], ['kŏça dŏkoni', 'U dŏkonga boradi, şu yerda çoy bor.']);
     assert.strictEqual(JSON.parse(s.db.get("SELECT value FROM translation_overrides WHERE key = 'nav.home'").value), 'Boş sahifa');
     const g = JSON.parse(s.db.get("SELECT translations FROM grammar_points WHERE slug = 'to-be-present'").translations).uz.explanation;
     assert.match(g, /\bshe\b/, 'English grammar words inside Uzbek text are kept');

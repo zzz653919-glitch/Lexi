@@ -60,7 +60,7 @@ function artProgress() {
 }
 function artImport(count) {
   const wrap = h('div', { class: 'ld-art ld-import' });
-  const stack = h('div', { class: 'ld-stack', 'aria-hidden': 'true' }, ['word', 'mot', 'слово', 'so‘z'].map((w, i) => h('span', { class: 'ld-card', style: { '--i': i } }, w)));
+  const stack = h('div', { class: 'ld-stack', 'aria-hidden': 'true' }, ['word', 'mot', 'слово', 'sŏz'].map((w, i) => h('span', { class: 'ld-card', style: { '--i': i } }, w)));
   wrap.append(stack);
   if (Number.isFinite(count)) wrap.append(h('div', { class: 'ld-count', 'aria-hidden': 'true' }, String(count)));
   return wrap;

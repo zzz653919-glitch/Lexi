@@ -1,5 +1,5 @@
-/* Uzbek Latin alphabet update (Law O'RQ-1184 of 21 October 2026): four letters get a single-character form.
-     O‘ o‘ → Ö ö     G‘ g‘ → Ğ ğ     Sh sh → Ş ş     Ch ch → Ç ç
+/* Uzbek Latin alphabet update: four letters get a single-character form.
+     O‘ o‘ → Ŏ ŏ     G‘ g‘ → Ğ ğ     Sh sh → Ş ş     Ch ch → Ç ç
    The apostrophe-like mark after other letters is the tutuq belgisi (ma’no, a’lo) and stays as it is.
    toNew(text)      converts Uzbek text written in the 1995 alphabet (any apostrophe variant: ‘ ʻ ' ` ’) to the new one.
                     {placeholders}, <html tags>, &entities;, URLs and time-zone names (Asia/Tashkent) are left untouched.
@@ -11,7 +11,7 @@
 
   function convertPlain(s) {
     return s
-      .replace(new RegExp('O' + APOS, 'g'), 'Ö').replace(new RegExp('o' + APOS, 'g'), 'ö')
+      .replace(new RegExp('O' + APOS, 'g'), 'Ŏ').replace(new RegExp('o' + APOS, 'g'), 'ŏ')
       .replace(new RegExp('G' + APOS, 'g'), 'Ğ').replace(new RegExp('g' + APOS, 'g'), 'ğ')
       // SH / CH inside an all-caps word stay one capital letter; Sh / Ch at a word start become Ş / Ç
       .replace(/SH|Sh/g, 'Ş').replace(/sh/g, 'ş')
@@ -27,7 +27,7 @@
   function foldOld(text) {
     if (text == null) return text;
     return String(text)
-      .replace(/Ö/g, "O'").replace(/ö/g, "o'").replace(/Ğ/g, "G'").replace(/ğ/g, "g'")
+      .replace(/Ŏ/g, "O'").replace(/ŏ/g, "o'").replace(/Ğ/g, "G'").replace(/ğ/g, "g'")
       .replace(/Ş/g, 'Sh').replace(/ş/g, 'sh').replace(/Ç/g, 'Ch').replace(/ç/g, 'ch');
   }
 

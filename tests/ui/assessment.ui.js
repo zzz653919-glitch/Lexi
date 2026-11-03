@@ -100,7 +100,7 @@ const settingsMin = (s) => JSON.parse(s.db.get("SELECT value FROM settings WHERE
     check(page.problems.length === 0, 'no console errors or failed requests (' + page.problems.slice(0, 3).join(' | ') + ')');
 
     /* ---------- mobile + other languages ---------- */
-    for (const [lang, word] of [['ru', /Добро пожаловать/], ['uz', /Xush kelibsiz/]]) {
+    for (const [lang, word] of [['ru', /Добро пожаловать/], ['uz', /Xuş kelibsiz/]]) {
       const p = await openPage(browser, { width: 390, height: 780 }, { lang });
       p.setDefaultTimeout(15000);
       const email = `m-${lang}@example.com`;
