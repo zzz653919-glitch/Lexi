@@ -11,6 +11,7 @@ const reviewLib = require('./lib/review');
 const learningLib = require('./lib/learning');
 const assessmentLib = require('./lib/assessment');
 const dailyLib = require('./lib/daily');
+const roadmapLib = require('./lib/roadmap');
 const i18nLib = require('./lib/i18n');
 const coreI18n = require('../shared/i18n-core');
 const seed = require('./seed');
@@ -33,8 +34,9 @@ function createApp(options = {}) {
   const review = reviewLib.make(db, settings, core, learning);
   const assessment = assessmentLib.make(db, settings, learning);
   const daily = dailyLib.make(db, settings, core, review, learning);
+  const roadmap = roadmapLib.make(db);
   const audit = async (req, action, entity, entityId, details) => db.run('INSERT INTO audit_log (admin_id, admin_email, action, entity, entity_id, details, created_at) VALUES (?,?,?,?,?,?,?)', req.user.id, req.user.email, action, entity, String(entityId == null ? '' : entityId), JSON.stringify(details || {}).slice(0, 2000), now());
-  const ctx = { db, settings, auth, core, attempts, review, audit, opts, i18n, learning, assessment, daily };
+  const ctx = { db, settings, auth, core, attempts, review, audit, opts, i18n, learning, assessment, daily, roadmap };
 
   /* One-time start-up work, done lazily on the first request that needs the database (so a serverless cold start or a database that is
      briefly unreachable does not crash the process): schema migrations, optional sample content, first read of settings and texts. */

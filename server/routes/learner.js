@@ -4,7 +4,7 @@ const { publicUser, validateProfile, AVATARS } = require('./auth');
 const L10N = require('../lib/localize');
 const { now, clean, int, clamp, HttpError, bad, escapeLike, weekStart, addDays } = require('../lib/util');
 
-module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n, learning, daily: dailySummary }) {
+module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n, learning, daily: dailySummary, roadmap }) {
   const r = express.Router();
   r.use(auth.requireUser);
 
@@ -68,7 +68,7 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
       achievements: achievements.filter((a) => a.earnedAt).sort((a, b) => (a.earnedAt < b.earnedAt ? 1 : -1)).slice(0, 3),
       review: reviewCounts, mistakesAvailable: mistakes,
       leaderboardEnabled: s.leaderboard_enabled,
-      daily, learning: learningInfo,
+      daily, learning: learningInfo, roadmap: await roadmap.summary(user, path),
     });
   });
   const mistakesAvailable = async (userId) => (await attempts.mistakeIds(userId, 50)).length;
