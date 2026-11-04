@@ -168,7 +168,7 @@ export const RENDERERS = {
   fill_blank: (ex, ctx) => {
     const parts = ex.sentence.split(/_{3,}/);
     const s = h('div', { class: 'q-sentence', lang: 'en' }, h('span', {}, parts[0], h('span', { class: 'blank', 'aria-label': t('ex.blank') }, '   '), parts[1] || ''));
-    return textInput(ex, ctx, { header: h('div', {}, title(ex), s) });
+    return textInput(ex, ctx, { header: h('div', {}, title(ex), speakBtns(ex.audio), s) });
   },
   translate_type: (ex, ctx) => textInput(ex, ctx, { header: h('div', {}, title(ex), sentenceBox(ex.sentence, ex.direction === 'en-uz' ? { text: ex.sentence } : null)), placeholder: ex.direction === 'en-uz' ? t('ex.type_translation') : t('ex.type_in_english') }),
   fix_spelling: (ex, ctx) => {

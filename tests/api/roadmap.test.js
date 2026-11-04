@@ -175,3 +175,66 @@ test('a placement test cannot grant advanced roadmap levels', async () => {
     assert.ok(!p.levels.find((l) => l.code === 'C1').unlocked && !p.levels.find((l) => l.code === 'IELTS').unlocked);
   } finally { await s.stop(); }
 });
+
+test('IELTS center: original materials, practice tests with estimated bands, nothing locked', async () => {
+  const IELTS = require('../../server/lib/ielts');
+  assert.strictEqual(IELTS.bandFromPercent(100), 9); assert.strictEqual(IELTS.bandFromPercent(75), 7); assert.strictEqual(IELTS.bandFromPercent(50), 5.5); assert.strictEqual(IELTS.bandFromPercent(0), 2);
+  assert.strictEqual(IELTS.overall([6.5, 7]), 7); assert.strictEqual(IELTS.overall([null, null]), null);
+  const s = await startServer({ roadmap: true });
+  try {
+    const c = await learner(s, 'ielts@example.com');
+    const d = (await c.get('/api/ielts')).json;
+    assert.strictEqual(d.course.title, 'IELTS Preparation Center');
+    assert.deepStrictEqual(d.units.map((u) => u.title), ['Format and strategies', 'Listening practice', 'Reading practice', 'Writing practice', 'Speaking practice', 'Practice examinations']);
+    const all = d.units.flatMap((u) => u.lessons);
+    assert.ok(all.every((l) => l.state !== 'locked'), 'the center is never locked');
+    assert.ok(all.filter((l) => l.kind === 'practice_test').length >= 2);
+    // the writing lessons carry Band 6.5 and 7.0 example answers and time-management advice exists
+    const wl = s.db.get("SELECT content FROM lessons WHERE title LIKE 'Writing Task 1%'");
+    assert.match(JSON.parse(wl.content).explanation.en, /Band 6\.5 example[\s\S]*Band 7\.0 example/);
+    assert.ok(s.db.get("SELECT 1 x FROM lessons WHERE title = 'Time management strategies'"));
+    // note completion has audio and typed answers
+    const lis = all.find((l) => l.title === 'Note completion and forms');
+    const st = (await c.post(`/api/lessons/${lis.id}/start`)).json;
+    const out = await playAttempt(c, st, s.db);
+    assert.strictEqual(out.state.status, 'completed');
+    // a full practice test: perfect run gives a high estimated band; a poor run a lower one; both are saved
+    const test = all.find((l) => l.title === 'Listening practice test 1');
+    let a = (await c.post(`/api/lessons/${test.id}/start`)).json;
+    assert.strictEqual(a.lesson.kind, 'practice_test'); assert.strictEqual(a.heartsEnabled, false);
+    const first = await c.post(`/api/attempts/${a.attemptId}/answer`, { exerciseId: a.exercise.id, answer: require('./helpers').answerFor(s.db, a, false) });
+    assert.strictEqual(first.json.feedback.correctAnswer, undefined, 'a practice test shows answers only at the end');
+    const good = await playAttempt(c, first.json.state, s.db);
+    assert.strictEqual(good.state.result.exam.band, 9); assert.strictEqual(good.state.result.exam.score, 100);
+    a = (await c.post(`/api/lessons/${test.id}/start`)).json;
+    const poor = await playAttempt(c, a, s.db, { wrongAt: new Set([1, 2, 3, 4, 5, 6, 7, 8]) });
+    assert.ok(poor.state.result.exam.band < 9 && poor.state.result.exam.score < 100);
+    assert.ok(poor.state.result.mistakes.length >= 6 && poor.state.result.mistakes.some((m) => m.explanation), 'detailed answer explanations after the test');
+    const after = (await c.get('/api/ielts')).json;
+    assert.strictEqual(after.bands.listening, 9, 'the best estimated band is kept'); assert.strictEqual(after.bands.reading, null);
+    assert.strictEqual(after.bands.overall, 9);
+    assert.strictEqual(s.db.get("SELECT COUNT(*) n FROM exam_results WHERE band IS NOT NULL").n, 2);
+    // reading test
+    const rt = all.find((l) => l.title === 'Reading practice test 1');
+    const r2 = await playAttempt(c, (await c.post(`/api/lessons/${rt.id}/start`)).json, s.db, { wrongAt: new Set([2, 5, 9]) });
+    assert.ok(r2.state.result.exam.band >= 6 && r2.state.result.exam.band <= 8.5, 'band ' + r2.state.result.exam.band);
+  } finally { await s.stop(); }
+});
+
+test('roadmap seeding is resumable and does not duplicate content', async () => {
+  const s = await startServer({ roadmap: true });
+  try {
+    const before = s.db.get('SELECT COUNT(*) n FROM lessons').n;
+    s.db.run("DELETE FROM settings WHERE key LIKE 'seeded_roadmap%' OR key LIKE 'seeded_ielts%'");
+    const again = await require('../../server/seed').ensureRoadmap(s.appDb);
+    assert.deepStrictEqual(again, { lessons: 0, exercises: 0 }, 'nothing is created twice');
+    assert.strictEqual(s.db.get('SELECT COUNT(*) n FROM lessons').n, before);
+    // an interrupted run: a topic that lost its lessons is rebuilt, the others are untouched
+    const unit = s.db.get("SELECT u.id FROM units u JOIN levels l ON l.id = u.level_id WHERE l.code = 'A1' ORDER BY u.position LIMIT 1");
+    s.db.run('DELETE FROM lessons WHERE unit_id = ?', unit.id);
+    s.db.run("DELETE FROM settings WHERE key LIKE 'seeded_roadmap%'");
+    const resumed = await require('../../server/seed').ensureRoadmap(s.appDb);
+    assert.ok(resumed.lessons >= 3, 'the missing topic was recreated');
+    assert.strictEqual(s.db.get('SELECT COUNT(*) n FROM lessons').n, before);
+  } finally { await s.stop(); }
+});

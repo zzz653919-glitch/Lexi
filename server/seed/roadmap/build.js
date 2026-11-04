@@ -57,10 +57,10 @@ const tr3 = (arr, f1 = 'title') => JSON.stringify({ uz: { [f1]: arr[1] }, ru: { 
 const trNav = (title, desc) => JSON.stringify({ uz: { title: title[1], description: desc ? desc[1] : '' }, ru: { title: title[2], description: desc ? desc[2] : '' } });
 
 /* statements for one lesson (with its exercises, options and vocabulary) */
-async function lessonStatements(db, { unitId, position, kind, skill, title, desc, descs, content, exercises, words, levelId, courseId, cefr, xp, t }) {
+async function lessonStatements(db, { unlock = 'sequential', unitId, position, kind, skill, title, desc, descs, content, exercises, words, levelId, courseId, cefr, xp, t }) {
   const st = [], lid = await nextId(db, 'lessons');
   st.push({ sql: 'INSERT INTO lessons (id, unit_id, title, description, position, status, unlock_rule, xp_reward, created_at, updated_at, translations, kind, skill, content) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-    args: [lid, unitId, title[0], desc || '', position, 'published', 'sequential', xp, t, t, trNav(title, descs || null), kind, skill || null, JSON.stringify(content || {})] });
+    args: [lid, unitId, title[0], desc || '', position, 'published', unlock, xp, t, t, trNav(title, descs || null), kind, skill || null, JSON.stringify(content || {})] });
   for (const w of words || []) st.push({ sql: 'INSERT OR IGNORE INTO vocabulary (course_id, level_id, unit_id, lesson_id, en, uz, translations, pos, example, example_uz, cefr, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
     args: [courseId, levelId, unitId, lid, w[0], w[1], JSON.stringify({ ru: w[2] || '', ru_example: '' }), w[3] || '', w[4] || '', w[5] || '', cefr, 'published', t, t] });
   for (const [pos, e] of exercises.entries()) {
@@ -132,4 +132,4 @@ const lessonContent = (L) => ({ objective: { uz: L.obj[0], en: L.obj[1], ru: L.o
   examples: L.eg.map((e) => ({ en: e[0], tr: { uz: e[1], ru: e[2] } })), vocabulary: L.w.map((w) => ({ en: w[0], uz: w[1], ru: w[2] })) });
 const topicTestContent = (topic) => ({ objective: { uz: UZ.toNew('Mavzu bo‘yicha bilimingizni tekshiring. Har bir savolga bir marta javob berasiz; o‘tish bali 70%.'), en: 'Check what you learned in this topic. Each question has one try; the pass mark is 70%.' }, explanation: { en: '', uz: '' }, examples: [], vocabulary: [] });
 
-module.exports = { ensureRoadmap, lessonExercises, mcq, check };
+module.exports = { ensureRoadmap, lessonExercises, mcq, check, lessonStatements, nextId, trNav };

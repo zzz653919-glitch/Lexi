@@ -68,7 +68,8 @@ export default async function home() {
       h('div', {}, h('h3', {}, t('roadmap.skills')), h('ul', { class: 'skill-list' }, ['listening', 'reading', 'writing', 'speaking'].map(skillRow))),
       h('div', {}, h('h3', {}, t('roadmap.weak')), rm.weak.length ? h('div', { class: 'chips' }, rm.weak.map((k) => h('span', { class: 'chip warn' }, icon('target'), t('exam.skill_' + k)))) : h('p', { class: 'muted small' }, t('roadmap.weak_none')),
         h('h3', { style: { marginTop: '14px' } }, t('roadmap.tests')), rm.tests.length ? h('ul', { class: 'test-results' }, rm.tests.map((x) => h('li', {}, h('span', {}, x.title), h('span', { class: 'chip ' + (x.passed ? 'ok' : 'bad') }, `${x.score}%`)))) : h('p', { class: 'muted small' }, t('roadmap.tests_none')))),
-    h('p', { class: 'muted small' }, t('roadmap.lessons_summary', { done: rm.lessons.done, remaining: rm.lessons.remaining }))) : null;
+    h('p', { class: 'muted small' }, t('roadmap.lessons_summary', { done: rm.lessons.done, remaining: rm.lessons.remaining })),
+    h('div', { class: 'row between ielts-link' }, h('div', {}, h('b', {}, t('roadmap.ielts_card')), h('div', { class: 'muted small' }, t('roadmap.ielts_text'))), h('a', { class: 'btn small secondary', href: '/ielts' }, t('common.open')))) : null;
 
   const el = h('div', { class: 'stack' },
     h('div', { class: 'page-head' }, h('div', { class: 'hello' }, h('img', { src: '/img/mascot.svg', alt: '' }), h('div', {}, h('h1', {}, t('dashboard.hello', { name: u.displayName })), h('p', { class: 'muted', style: { margin: 0 } }, d.today.goalMet ? t('dashboard.goal_reached') : t('dashboard.xp_to_goal', { n: Math.max(0, d.today.goal - d.today.xp) }))))),

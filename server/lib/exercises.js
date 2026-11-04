@@ -137,6 +137,7 @@ function payload(ex, options, seed) {
   if (ex.type === 'reading') p.passage = ex.passage;
   if (ex.type === 'listen_choice' || ex.type === 'listen_type') p.audio = ex.audio_url ? { url: ex.audio_url } : { text: ex.audio_text };
   if (ex.type === 'fill_blank' || ex.type === 'translate_type' || ex.type === 'fix_spelling') p.sentence = ex.sentence;
+  if (ex.type === 'fill_blank' && (ex.audio_text || ex.audio_url)) p.audio = ex.audio_url ? { url: ex.audio_url } : { text: ex.audio_text };   // note completion while listening
   if (ex.type === 'scramble_letters') {
     p.sentence = ex.sentence;
     const letters = Array.from(alternatives(ex.answer)[0].toUpperCase());

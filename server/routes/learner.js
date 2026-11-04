@@ -2,6 +2,7 @@ const express = require('express');
 const A = require('../lib/auth');
 const { publicUser, validateProfile, AVATARS } = require('./auth');
 const L10N = require('../lib/localize');
+const IELTS = require('../lib/ielts');
 const { now, clean, int, clamp, HttpError, bad, escapeLike, weekStart, addDays } = require('../lib/util');
 
 module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n, learning, daily: dailySummary, roadmap }) {
@@ -72,6 +73,18 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     });
   });
   const mistakesAvailable = async (userId) => (await attempts.mistakeIds(userId, 50)).length;
+
+  /* ---------- IELTS preparation center ---------- */
+  r.get('/ielts', async (req, res) => {
+    const course = await db.get("SELECT * FROM courses WHERE slug = 'lexio-ielts' AND status = 'published'");
+    if (!course) return res.json({ course: null });
+    const user = await core.userById(req.user.id);
+    const path = await core.buildPath(user, course, req.lang);
+    const rows = await db.all('SELECT l.skill, MAX(x.band) best, COUNT(*) n FROM exam_results x JOIN lessons l ON l.id = x.lesson_id WHERE x.user_id = ? AND x.band IS NOT NULL GROUP BY l.skill', user.id);
+    const best = Object.fromEntries(rows.map((x) => [x.skill, x.best]));
+    res.json({ course: { id: course.id, title: path.course.title, description: path.course.description }, units: path.levels[0] ? path.levels[0].units : [], totals: path.totals,
+      bands: { listening: best.listening || null, reading: best.reading || null, overall: IELTS.overall([best.listening, best.reading]) }, recommended: path.recommended });
+  });
 
   /* ---------- lessons ---------- */
   r.post('/lessons/:id/start', async (req, res) => {

@@ -163,7 +163,7 @@ function make(db, settings) {
     const startPos = strictCourse
       ? (placed ? roadmapStart(levels, user.cefr_level) : -1)
       : (levels.find((l) => l.code === user.start_level) || levels[0] || { position: 0 }).position;
-    const examRows = await db.all("SELECT lesson_id, MAX(score_pct) best, MAX(passed) passed FROM exam_results WHERE user_id = ? GROUP BY lesson_id", user.id);
+    const examRows = await db.all("SELECT lesson_id, MAX(score_pct) best, MAX(passed) passed, MAX(band) band FROM exam_results WHERE user_id = ? GROUP BY lesson_id", user.id);
     const exams = Object.fromEntries(examRows.map((r) => [r.lesson_id, r]));
     const out = { course: { id: course.id, slug: course.slug, title: T(course, 'title'), description: T(course, 'description'), track: course.track, strict: strictCourse }, levels: [] };
     let prevLevel = null, order = [];
@@ -213,7 +213,7 @@ function make(db, settings) {
         lvOut.units.push({ id: u.id, title: T(u, 'title'), description: T(u, 'description'), total: u.lessons.length, done: uDone, lessons: u.lessons.map((l) => ({
           id: l.id, title: T(l, 'title'), description: T(l, 'description'), state: l._state, lockReason: l._reason, xp: l.xp_reward, exercises: counts[l.id] || 0, kind: l.kind || 'lesson', skill: l.skill || null,
           inProgress: open.includes(l.id), accuracy: prog[l.id] ? prog[l.id].best_accuracy : null, completions: prog[l.id] ? prog[l.id].completions : 0,
-          bestScore: exams[l.id] ? exams[l.id].best : null,
+          bestScore: exams[l.id] ? exams[l.id].best : null, band: exams[l.id] ? exams[l.id].band : null,
         })) });
         u.lessons.forEach((l) => order.push({ lesson: l, level: lvOut, unit: u }));
       }

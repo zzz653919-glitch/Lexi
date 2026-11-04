@@ -63,3 +63,11 @@ html[data-motion="off"] .q-in { animation: none; }
 .writing-feedback { margin-top: 14px; }
 .big-score b { font-size: 3rem; } .exam-result.passed .big-score b { color: var(--ok); } .exam-result.failed .big-score b { color: var(--danger); }
 .node.kind-exam, .node.kind-topic_test { outline: 3px dashed var(--gold); outline-offset: 3px; }
+
+/* IELTS center */
+.ielts-list { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 10px; }
+.ielts-lesson { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 14px; }
+.ielts-lesson .ico { display: inline-grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--surface-2); flex: none; } .ielts-lesson .ico svg { width: 20px; height: 20px; }
+.ielts-lesson.completed .ico { background: var(--ok-soft); color: var(--ok); }
+.ielts-info { flex: 1; min-width: 0; }
+.band-estimate b { font-size: 1.3rem; }

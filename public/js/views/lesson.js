@@ -67,7 +67,7 @@ export default async function lesson({ params, daily = false }) {
     action.textContent = ex.type === 'card' ? t('lesson.continue') : t('lesson.check'); action.className = 'btn'; action.disabled = ex.type !== 'card'; action.onclick = check;
     foot.hidden = false;
     setTimeout(() => current.focus && current.focus(), 50);
-    if ((ex.type === 'listen_choice' || ex.type === 'listen_type') && ex.audio) setTimeout(() => speak(ex.audio), 350);
+    if ((ex.type === 'listen_choice' || ex.type === 'listen_type' || ex.type === 'fill_blank' || ex.type === 'speaking') && ex.audio) setTimeout(() => speak(ex.audio), 350);
   }
 
   async function check() {
@@ -151,14 +151,15 @@ export default async function lesson({ params, daily = false }) {
     const scoreEl = h('b', {}, '0%');
     body.replaceChildren(h('div', { class: 'result exam-result ' + (e.passed ? 'passed' : 'failed') },
       h('img', { src: '/img/mascot.svg', alt: '' }),
-      h('h1', {}, e.passed ? t(isExam ? 'exam.passed_title' : 'exam.test_passed_title') : t(isExam ? 'exam.failed_title' : 'exam.test_failed_title')),
-      h('div', { class: 'card' }, h('div', { class: 'big-score' }, scoreEl), h('p', { class: 'muted' }, t('exam.score_vs_pass', { score: e.score, pass: e.passPct })), h('div', { class: 'progress' + (e.passed ? '' : ' gold') }, h('i', { style: { width: e.score + '%' } }))),
-      e.passed ? h('p', { class: 'notice' }, t(isExam ? 'exam.passed_text' : 'exam.test_passed_text')) : h('p', { class: 'notice' }, t('exam.failed_text', { pass: e.passPct })),
+      h('h1', {}, e.kind === 'practice_test' ? t('exam.practice_title') : e.passed ? t(isExam ? 'exam.passed_title' : 'exam.test_passed_title') : t(isExam ? 'exam.failed_title' : 'exam.test_failed_title')),
+      h('div', { class: 'card' }, h('div', { class: 'big-score' }, scoreEl), h('p', { class: 'muted' }, e.kind === 'practice_test' ? t('exam.practice_score', { score: e.score }) : t('exam.score_vs_pass', { score: e.score, pass: e.passPct })), h('div', { class: 'progress' + (e.passed ? '' : ' gold') }, h('i', { style: { width: e.score + '%' } })),
+        e.band ? h('p', { class: 'band-estimate' }, h('b', {}, t('exam.band_estimate', { band: e.band })), h('span', { class: 'muted small' }, ' ' + t('exam.band_note'))) : null),
+      e.kind === 'practice_test' ? null : e.passed ? h('p', { class: 'notice' }, t(isExam ? 'exam.passed_text' : 'exam.test_passed_text')) : h('p', { class: 'notice' }, t('exam.failed_text', { pass: e.passPct })),
       Object.keys(e.skills).length ? h('section', { class: 'card', style: { textAlign: 'left' } }, h('h2', {}, t('exam.by_skill')), h('ul', { class: 'skill-list' }, Object.entries(e.skills).map(([k, v]) => h('li', { class: 'skill-row' }, h('div', { class: 'row between' }, h('b', {}, t('exam.skill_' + k)), h('span', { class: 'muted small' }, `${v.correct}/${v.total}`)), h('div', { class: 'progress' }, h('i', { style: { width: Math.round(100 * v.correct / v.total) + '%' } })))))) : null,
-      r.mistakes.length ? h('section', { class: 'card', style: { textAlign: 'left' } }, h('h2', {}, t('exam.review_mistakes')), h('ul', { class: 'review-list' }, r.mistakes.map((m) => h('li', {}, h('span', { class: 'muted' }, m.prompt || t('ex.type.' + m.type)), m.answer ? h('div', {}, t('lesson.answer_label') + ' ', h('b', {}, m.answer)) : null)))) : null,
+      r.mistakes.length ? h('section', { class: 'card', style: { textAlign: 'left' } }, h('h2', {}, t('exam.review_mistakes')), h('ul', { class: 'review-list' }, r.mistakes.map((m) => h('li', {}, h('span', { class: 'muted' }, m.prompt || t('ex.type.' + m.type)), m.answer ? h('div', {}, t('lesson.answer_label') + ' ', h('b', {}, m.answer)) : null, m.explanation ? h('div', { class: 'muted small' }, m.explanation) : null)))) : null,
       h('div', { class: 'stack', style: { marginTop: '18px' } },
-        e.passed ? h('a', { class: 'btn block', href: home }, t('common.continue')) : h('button', { class: 'btn block', type: 'button', onclick: () => lessonId && startAttempt(lessonId) }, t('exam.retake')),
-        e.passed ? null : h('a', { class: 'btn secondary block', href: home }, t('exam.review_lessons')))));
+        e.passed || e.kind === 'practice_test' ? h('a', { class: 'btn block', href: e.kind === 'practice_test' ? '/ielts' : home }, t('common.continue')) : h('button', { class: 'btn block', type: 'button', onclick: () => lessonId && startAttempt(lessonId) }, t('exam.retake')),
+        e.passed ? null : e.kind === 'practice_test' ? h('button', { class: 'btn secondary block', type: 'button', onclick: () => lessonId && startAttempt(lessonId) }, t('exam.practise_again')) : h('a', { class: 'btn secondary block', href: home }, t('exam.review_lessons')))));
     setTimeout(() => { countUp(scoreEl, 0, e.score, { format: (v) => v + '%' }); if (e.passed) burst(null, { kind: 'confetti' }); }, 150);
   }
 
