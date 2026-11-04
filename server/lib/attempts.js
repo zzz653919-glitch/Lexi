@@ -9,7 +9,7 @@ function studyContent(json, lang) {
   let c; try { c = JSON.parse(json || '{}'); } catch (_) { c = {}; }
   const pick = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? (v[lang] != null && v[lang] !== '' ? v[lang] : v.en != null ? v.en : v.uz) : v);
   if (!c || !Object.keys(c).length) return null;
-  return { objective: pick(c.objective) || '', explanation: pick(c.explanation) || '', tip: pick(c.tip) || '', examples: (c.examples || []).map((e) => ({ en: e.en, tr: pick(e.tr) || e.uz || '' })), vocabulary: c.vocabulary || [] };
+  return { objective: pick(c.objective) || '', explanation: pick(c.explanation) || '', tip: pick(c.tip) || '', examples: (c.examples || []).map((e) => ({ en: e.en, tr: pick(e.tr) || e.uz || '' })), vocabulary: (c.vocabulary || []).map((v) => ({ en: v.en, tr: v[lang] || v.uz || '' })) };
 }
 
 function make(db, settings, core, learning) {

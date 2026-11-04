@@ -10,8 +10,10 @@ const syncdb = require('./syncdb');
 async function startServer(opts = {}) {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'lexi-test-'));
   const dbPath = path.join(dir, 'test.sqlite');
-  const inst = createApp({ dbPath, dataDir: dir, rateLimit: false, quiet: true, settingsTtl: 0, ...opts });
+  const inst = createApp({ dbPath, dataDir: dir, rateLimit: false, quiet: true, settingsTtl: 0, seedRoadmap: !!opts.roadmap, ...opts });
   await inst.init();
+  if (!opts.roadmap) await inst.db.run("INSERT OR REPLACE INTO settings (key, value) VALUES ('default_course_slug', '\"\"')");   // the older sample course stays the default in tests
+  await inst.settings.refresh(true);
   if (opts.seed !== false) await seed.ensureSample(inst.db);
   const db = syncdb.open(dbPath);   // synchronous handle on the same file, for arranging and checking data
   const server = await new Promise((resolve) => { const s = inst.app.listen(0, '127.0.0.1', () => resolve(s)); });
@@ -57,6 +59,8 @@ function answerFor(db, state, wrong = false) {
   const seed = db.get('SELECT seed FROM lesson_attempts WHERE id = ?', state.attemptId).seed + ex.id;
   if (X.CHOICE.has(ex.type)) return (opts.find((o) => (wrong ? !o.is_correct : o.is_correct))).id;
   if (['fill_blank', 'listen_type', 'translate_type', 'fix_spelling'].includes(ex.type)) return wrong ? 'qqqzzz' : alts[0];
+  if (ex.type === 'writing') return wrong ? 'ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok ok' : row.translation;
+  if (ex.type === 'speaking') return true;
   if (ex.type === 'scramble_letters') { const ids = alts[0].split('').map((_, i) => i); return wrong ? ids.reverse() : ids; }
   if (ex.type === 'order_words') { const ids = X.tokensOf(row.sentence).map((_, i) => i); return wrong ? ids.reverse() : ids; }
   if (ex.type === 'match_pairs') { const p = permOf(opts.length, seed); return opts.map((_, i) => ({ left: i, right: wrong && i < 2 ? p.findIndex((s) => s === (i + 1) % 2) : p.findIndex((s) => s === i) })); }

@@ -18,6 +18,7 @@ const root = path.join(__dirname, '..');
         const r = await require('../server/seed').ensureSample(db);
         console.log(r.created ? `Sample content created (${r.exercises} exercises, ${r.vocabulary} words).` : 'Sample content already present.');
       }
+      if (process.env.LEXI_NO_SEED !== '1') { const rm = await require('../server/seed').ensureRoadmap(db); console.log(rm.lessons ? `Roadmap created (${rm.lessons} lessons, ${rm.exercises} exercises).` : 'Roadmap already present.'); }
       const c = await require('../server/seed').ensureAssessmentContent(db);   // placement questions, grammar, word pool (once)
       console.log(c.questions ? `Placement content created (${c.questions} questions, ${c.grammar} grammar lessons, ${c.vocabulary} words).` : 'Placement content already present.');
     } finally { await db.close(); }

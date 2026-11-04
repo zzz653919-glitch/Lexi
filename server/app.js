@@ -21,7 +21,7 @@ const PUBLIC = path.join(__dirname, '..', 'public');
 function createApp(options = {}) {
   const opts = {
     dbPath: path.join(__dirname, '..', 'data', 'lexi.sqlite'), dataDir: path.join(__dirname, '..', 'data'),
-    rateLimit: true, quiet: false, secureCookies: false, publicUrl: '', trustProxy: false, seedSample: false, settingsTtl: 15000, ...options,
+    rateLimit: true, quiet: false, secureCookies: false, publicUrl: '', trustProxy: false, seedSample: false, seedRoadmap: true, settingsTtl: 15000, ...options,
   };
   const db = dbLib.open(opts.databaseUrl || opts.dbPath, { authToken: opts.databaseAuthToken });
   const settings = settingsLib.make(db, { ttl: opts.settingsTtl });
@@ -43,6 +43,8 @@ function createApp(options = {}) {
     if (!ready) ready = (async () => {
       await dbLib.migrate(db);
       if (opts.seedSample) seeded = await seed.ensureSample(db);
+      // the roadmap lessons are large: on a hosted database they are written by the build / CLI (resumable), at start-up only on a local file
+      if (opts.seedRoadmap && db.local) { try { await seed.ensureRoadmap(db); } catch (e) { if (!opts.quiet) console.error('[seed] roadmap:', e.message); } }
       // built-in test content is optional: if it cannot be written right now the site still opens (it is retried on the next start)
       try { await seed.ensureAssessmentContent(db); } catch (e) { if (!opts.quiet) console.error('[seed] placement content:', e.message); }
       await Promise.all([settings.refresh(true), i18n.refresh(true)]);
