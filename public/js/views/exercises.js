@@ -124,8 +124,42 @@ function card(ex, ctx) {
   return { el, answer: () => true, lock() {}, focus() {} };
 }
 
+/* a writing task: the answer is checked on the server for length and the key words / phrases; a model answer is shown afterwards */
+function writing(ex, ctx) {
+  const area = h('textarea', { class: 'input writing-area', rows: 7, 'aria-label': t('ex.your_answer'), placeholder: t('ex.writing_placeholder'), spellcheck: 'true' });
+  const counter = h('div', { class: 'muted small writing-count', 'aria-live': 'polite' });
+  const words = () => (area.value.match(/[\p{L}\p{N}'’-]+/gu) || []).length;
+  const update = () => { const n = words(); counter.textContent = t('ex.writing_words', { n, min: ex.minWords || 0 }); counter.classList.toggle('ok', n >= (ex.minWords || 0)); ctx.changed(n > 0); };
+  area.addEventListener('input', update); update();
+  const el = h('div', {}, h('h1', { class: 'q-title' }, instruction(ex)), ex.passage ? h('div', { class: 'passage', lang: 'en' }, ex.passage) : null, area, counter);
+  return {
+    el, answer: () => (words() ? area.value.trim() : null), lock() { area.disabled = true; },
+    reveal(fb) {
+      const d = fb.detail; if (!d) return;
+      el.append(h('div', { class: 'writing-feedback', role: 'status' },
+        h('p', {}, t('ex.writing_result', { words: d.words, hits: d.hits, total: d.total })),
+        d.missing && d.missing.length ? h('p', { class: 'muted' }, t('ex.writing_missing') + ' ', h('b', {}, d.missing.join(', '))) : null,
+        fb.model ? h('div', { class: 'model-answer', lang: 'en' }, h('b', {}, t('ex.model_answer')), h('p', {}, fb.model)) : null));
+    },
+    focus() { area.focus(); },
+  };
+}
+
+/* a speaking task: read the prompt (and listen to the model if there is one), say the answer aloud, then confirm. Nothing is recorded. */
+function speaking(ex, ctx) {
+  const box = h('input', { type: 'checkbox', id: 'said-it' });
+  box.addEventListener('change', () => ctx.changed(box.checked));
+  const el = h('div', {}, h('h1', { class: 'q-title' }, instruction(ex)), ex.passage ? h('div', { class: 'passage', lang: 'en' }, ex.passage) : null, speakBtns(ex.audio),
+    h('p', { class: 'muted' }, t('ex.speaking_hint')), h('label', { class: 'switch field', for: 'said-it' }, box, h('span', {}, t('ex.speaking_done'))));
+  return {
+    el, answer: () => (box.checked ? true : null), lock() { box.disabled = true; },
+    reveal(fb) { if (fb.model) el.append(h('div', { class: 'model-answer', lang: 'en' }, h('b', {}, t('ex.model_answer')), h('p', {}, fb.model), h('button', { type: 'button', class: 'speak', 'aria-label': t('ex.play'), onclick: () => speak({ text: fb.model }) }, icon('volume')))); },
+    focus() { box.focus(); },
+  };
+}
+
 export const RENDERERS = {
-  card,
+  card, writing, speaking,
   multiple_choice: (ex, ctx) => choices(ex, ctx, { header: title(ex) }),
   translation_choice: (ex, ctx) => choices(ex, ctx, { header: h('div', {}, title(ex), sentenceBox(ex.sentence, ex.direction === 'uz-en' ? null : { text: ex.sentence })) }),
   reading: (ex, ctx) => choices(ex, ctx, { header: h('div', {}, h('p', { class: 'q-sub' }, t('ex.read_passage')), h('div', { class: 'passage', lang: 'en' }, ex.passage), title(ex)) }),

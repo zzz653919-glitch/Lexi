@@ -212,7 +212,7 @@ test('migration: existing accounts keep their data, are marked onboarded and kee
   const dbLib = require('../../server/lib/db');
   const db = dbLib.open(file);
   try {
-    assert.deepStrictEqual(await dbLib.migrate(db), ['004_assessment.sql']);
+    assert.deepStrictEqual(await dbLib.migrate(db), ['004_assessment.sql', '005_roadmap.sql']);
     const u = await db.get("SELECT * FROM users WHERE email = 'old@x.com'");
     assert.strictEqual(u.onboarded, 1); assert.strictEqual(u.cefr_level, 'B2'); assert.strictEqual(u.level_source, 'legacy'); assert.strictEqual(u.xp_total, 321); assert.strictEqual(u.start_level, 'B2');
   } finally { await db.close(); fs.rmSync(dir, { recursive: true, force: true }); }

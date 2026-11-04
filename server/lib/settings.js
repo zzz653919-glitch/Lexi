@@ -44,6 +44,8 @@ const DEFAULTS = {
   daily_items_normal: 18,
   daily_items_long: 26,
   xp_daily_bonus: 15,
+  topic_test_pass_pct: 70,
+  default_course_slug: 'lexio-roadmap',
 };
 
 const SCHEMA = {
@@ -69,6 +71,8 @@ const SCHEMA = {
   registration_open: { t: 'bool' },
   maintenance_mode: { t: 'bool' },
   maintenance_message: { t: 'str', max: 300 },
+  topic_test_pass_pct: { t: 'int', min: 40, max: 100 },
+  default_course_slug: { t: 'str', max: 80 },
   placement_min_questions: { t: 'int', min: 8, max: 40 },
   placement_max_questions: { t: 'int', min: 12, max: 60 },
   placement_precision: { t: 'int', min: 20, max: 90 },

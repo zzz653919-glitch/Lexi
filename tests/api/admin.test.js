@@ -118,7 +118,7 @@ test('exercise editor API: every type can be created, edited, previewed and chec
       { type: 'scramble_letters', answer: 'apple', sentence: 'olma' }, { type: 'order_words', sentence: 'I like apples.', prompt: 'Men olmani yoqtiraman.' },
       { type: 'match_pairs', options: [{ text: 'a', match_text: 'A' }, { text: 'b', match_text: 'B' }, { text: 'c', match_text: 'C' }] },
       { type: 'listen_choice', audio_text: 'cat', options: [{ text: 'cat', is_correct: true }, { text: 'cut' }] }, { type: 'listen_type', audio_text: 'cat', answer: 'cat' },
-      { type: 'reading', passage: 'The cat sat on the mat all day.', prompt: 'Where did it sit?', options: [{ text: 'On the mat', is_correct: true }, { text: 'On the bed' }] }, { type: 'fix_spelling', sentence: 'I lik tea.', answer: 'I like tea.' },
+      { type: 'reading', passage: 'The cat sat on the mat all day.', prompt: 'Where did it sit?', options: [{ text: 'On the mat', is_correct: true }, { text: 'On the bed' }] }, { type: 'writing', prompt: 'Write about your day.', answer: 'wake up|breakfast', min_words: 8, translation: 'I wake up at seven. I have breakfast and go to work.' }, { type: 'speaking', prompt: 'Say hello.', translation: 'Hello, my name is Anna.' }, { type: 'fix_spelling', sentence: 'I lik tea.', answer: 'I like tea.' },
     ];
     for (const t of T) {
       const c = await a.post(`/api/admin/lessons/${lessonId}/exercises`, t); assert.strictEqual(c.status, 201, `${t.type}: ${c.text}`);
@@ -137,7 +137,7 @@ test('exercise editor API: every type can be created, edited, previewed and chec
     const d = await a.post(`/api/admin/exercises/${ids[0]}/duplicate`); assert.strictEqual(d.status, 201);
     assert.strictEqual((await a.del(`/api/admin/exercises/${d.json.id}`, {})).status, 400);
     assert.strictEqual((await a.del(`/api/admin/exercises/${d.json.id}`, { confirm: true })).status, 200);
-    assert.strictEqual((await a.get('/api/admin/exercise-types')).json.types.length, 11);
+    assert.strictEqual((await a.get('/api/admin/exercise-types')).json.types.length, 13);
   } finally { await s.stop(); }
 });
 
