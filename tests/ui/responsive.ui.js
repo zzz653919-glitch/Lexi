@@ -4,7 +4,7 @@ const { layoutProbe, a11yProbe, contrastProbe } = require('./a11y');
 const { answer, currentState } = require('./solver');
 
 const WIDTHS = [[320, 700, 'mobile 320'], [360, 740, 'mobile 360'], [390, 844, 'mobile 390'], [430, 932, 'mobile 430'], [768, 1024, 'tablet 768'], [1024, 768, 'small desktop 1024'], [1440, 900, 'desktop 1440']];
-const LEARNER_PAGES = [['/', 'continue-card', 'home'], ['/learn', 'path', 'learning path'], ['/vocabulary', 'word', 'vocabulary'], ['/review', 'btn', 'review'], ['/leaderboard', 'card', 'leaderboard'], ['/achievements', 'ach-card', 'achievements'], ['/profile', 'avatar-grid', 'profile']];
+const LEARNER_PAGES = [['/', 'continue-card', 'home'], ['/learn', 'path', 'learning path'], ['/vocabulary', 'card.word', 'vocabulary'], ['/review', 'btn', 'review'], ['/leaderboard', 'card', 'leaderboard'], ['/achievements', 'ach-card', 'achievements'], ['/profile', 'avatar-grid', 'profile']];
 const ADMIN_PAGES = [['/admin', 'stat-grid', 'dashboard'], ['/admin/courses', 'tbl', 'courses'], ['/admin/courses/1', 'tree-level', 'course tree'], ['/admin/lessons/1', 'tbl', 'lesson editor'], ['/admin/vocabulary', 'tbl', 'vocabulary'], ['/admin/users', 'tbl', 'users'], ['/admin/users/1', 'stat-grid', 'user'], ['/admin/settings', 'card', 'settings'], ['/admin/audit', 'tbl', 'audit']];
 
 (async () => {

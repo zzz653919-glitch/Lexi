@@ -128,7 +128,7 @@ function make(db, { ttl = 2000 } = {}) {
       else if (s.t === 'langs') { const arr = Array.isArray(v) ? Array.from(new Set(v)) : null; if (!arr || !arr.length || arr.some((x) => !I18N.isSupported(x))) errors[k] = 'val.languages_list'; else values[k] = arr; }
       else if (s.t === 'list') {
         const arr = Array.isArray(v) ? v.map((x) => String(x).trim()).filter(Boolean) : null;
-        if (!arr || !arr.length || arr.length > s.max || arr.some((x) => !/^[A-Za-z0-9 _-]{1,20}$/.test(x))) errors[k] = 'val.setting_list'; else values[k] = Array.from(new Set(arr));
+        if (!arr || !arr.length || arr.length > s.max || arr.some((x) => !/^[A-Za-z0-9 +_-]{1,20}$/.test(x))) errors[k] = 'val.setting_list'; else values[k] = Array.from(new Set(arr));
       }
     }
     const lo = values.placement_min_questions !== undefined ? values.placement_min_questions : all().placement_min_questions, hi = values.placement_max_questions !== undefined ? values.placement_max_questions : all().placement_max_questions;
