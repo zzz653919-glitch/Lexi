@@ -166,6 +166,8 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
       reviewWords: (await db.get('SELECT COUNT(*) n FROM review_items WHERE user_id = ?', u.id)).n,
       achievements: (await core.achievementList(u.id)).filter((a) => a.earnedAt).map((a) => a.code),
       week: await core.weekDays(u),
+      level: { cefr: u.cefr_level, source: u.level_source },
+      exams: (await db.all(`SELECT x.kind, x.score_pct, x.pass_pct, x.passed, x.band, x.created_at, l.title FROM exam_results x JOIN lessons l ON l.id = x.lesson_id WHERE x.user_id = ? ORDER BY x.id DESC LIMIT 20`, u.id)).map((x) => ({ kind: x.kind, title: x.title, score: x.score_pct, passPct: x.pass_pct, passed: !!x.passed, band: x.band, at: x.created_at })),
       recent: await db.all(`SELECT a.id, a.kind, a.status, a.correct, a.incorrect, a.started_at, l.title lesson FROM lesson_attempts a LEFT JOIN lessons l ON l.id = a.lesson_id WHERE a.user_id = ? ORDER BY a.id DESC LIMIT 10`, u.id) });
   });
   const adminCount = async () => (await db.get("SELECT COUNT(*) n FROM users WHERE role = 'admin' AND status = 'active'")).n;

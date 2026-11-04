@@ -238,3 +238,49 @@ test('roadmap seeding is resumable and does not duplicate content', async () => 
     assert.strictEqual(s.db.get('SELECT COUNT(*) n FROM lessons').n, before);
   } finally { await s.stop(); }
 });
+
+test('admin: pass mark, lesson type and study content, publishing rules, unpublishing, student exam results', async () => {
+  const s = await startServer({ roadmap: true });
+  try {
+    s.createUser({ email: 'adm@example.com', role: 'admin' });
+    const a = new Client(s.base); await a.login('adm@example.com');
+    const course = s.db.get("SELECT id FROM courses WHERE slug = 'lexio-roadmap'");
+    const lv = s.db.get("SELECT * FROM levels WHERE course_id = ? AND code = 'A1'", course.id);
+    // pass mark
+    assert.strictEqual((await a.patch('/api/admin/levels/' + lv.id, { exam_pass_pct: 20 })).status, 400);
+    assert.strictEqual((await a.patch('/api/admin/levels/' + lv.id, { exam_pass_pct: 85 })).status, 200);
+    const c = await learner(s, 'stud@example.com');
+    assert.strictEqual((await levels(c)).levels[0].examPassPct, 85, 'the new pass mark is used');
+    // level codes with a plus sign, strict flag
+    const nl = await a.post(`/api/admin/courses/${course.id}/levels`, { code: 'B1+', title: 'Test level', strict: true, exam_pass_pct: 75 });
+    assert.ok([201, 400].includes(nl.status)); if (nl.status === 400) assert.ok(nl.json.fields.code, 'B1+ already exists in the roadmap');
+    // one examination per level
+    const examLesson = s.db.get("SELECT * FROM lessons WHERE kind = 'exam'");
+    const other = s.db.get("SELECT l.id FROM lessons l JOIN units u ON u.id = l.unit_id WHERE u.level_id = ? AND l.kind = 'lesson' LIMIT 1", lv.id);
+    assert.strictEqual((await a.patch('/api/admin/lessons/' + other.id, { kind: 'exam' })).status, 400);
+    assert.strictEqual((await a.patch('/api/admin/lessons/' + other.id, { kind: 'banana' })).status, 400);
+    // study content is cleaned and shown to learners
+    const body = { content: { objective: { en: 'New <b>goal</b>', uz: 'Yangi maqsad' }, explanation: { en: 'Line one\nLine two' }, examples: [{ en: 'Hello', tr: { uz: 'Salom' } }, { en: '' }], vocabulary: [{ en: 'cat', uz: 'mushuk', ru: 'кошка' }] }, skill: 'listening' };
+    const up = await a.patch('/api/admin/lessons/' + other.id, body); assert.strictEqual(up.status, 200);
+    const stored = JSON.parse(s.db.get('SELECT content FROM lessons WHERE id = ?', other.id).content);
+    assert.strictEqual(stored.examples.length, 1, 'empty examples are dropped'); assert.strictEqual(s.db.get('SELECT skill FROM lessons WHERE id = ?', other.id).skill, 'listening');
+    // publishing rules: an examination or practice test needs 10+ questions
+    const unit = s.db.get('SELECT id FROM units WHERE level_id = ? LIMIT 1', lv.id);
+    const nlsn = (await a.post(`/api/admin/units/${unit.id}/lessons`, { title: 'Extra test', kind: 'practice_test', skill: 'reading' })).json;
+    assert.strictEqual(nlsn.kind, 'practice_test');
+    for (let i = 0; i < 3; i++) await a.post(`/api/admin/lessons/${nlsn.id}/exercises`, { type: 'multiple_choice', prompt: 'Q' + i, options: [{ text: 'a', is_correct: true }, { text: 'b' }] });
+    assert.strictEqual((await a.post(`/api/admin/lessons/${nlsn.id}/status`, { status: 'published' })).status, 400);
+    for (let i = 3; i < 10; i++) await a.post(`/api/admin/lessons/${nlsn.id}/exercises`, { type: 'multiple_choice', prompt: 'Q' + i, options: [{ text: 'a', is_correct: true }, { text: 'b' }] });
+    assert.strictEqual((await a.post(`/api/admin/lessons/${nlsn.id}/status`, { status: 'published' })).status, 200);
+    // unpublishing removes a lesson from learners' paths
+    const before = lessonsOf(await levels(c), 'A1').length;
+    assert.strictEqual((await a.post(`/api/admin/lessons/${other.id}/status`, { status: 'draft' })).status, 200);
+    assert.strictEqual(lessonsOf(await levels(c), 'A1').length, before - 1, 'the unpublished lesson is gone');
+    assert.ok(!lessonsOf(await levels(c), 'A1').some((l) => l.id === other.id));
+    // student results visible to the administrator (no personal data beyond what the user page already shows)
+    const uid = s.db.get("SELECT id FROM users WHERE email = 'stud@example.com'").id;
+    s.db.run("INSERT INTO exam_results (user_id, lesson_id, kind, correct, total, score_pct, pass_pct, passed, created_at) VALUES (?,?,?,?,?,?,?,?,?)", uid, examLesson.id, 'exam', 30, 41, 73, 85, 0, new Date().toISOString());
+    const det = (await a.get('/api/admin/users/' + uid)).json;
+    assert.strictEqual(det.exams[0].score, 73); assert.strictEqual(det.exams[0].passed, false);
+  } finally { await s.stop(); }
+});

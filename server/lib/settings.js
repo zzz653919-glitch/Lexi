@@ -8,7 +8,7 @@ const DEFAULTS = {
   default_language: 'uz',
   default_translation_language: 'uz',
   supported_languages: ['uz', 'ru', 'en'],
-  available_levels: ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'IELTS'],
+  available_levels: ['A0', 'A1', 'A2', 'B1', 'B1+', 'B2', 'B2+', 'C1', 'C2', 'IELTS'],
   default_daily_goal_xp: 30,
   xp_per_correct: 10,
   xp_per_retry: 5,
