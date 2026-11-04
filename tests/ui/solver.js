@@ -44,10 +44,12 @@ async function answer(page, db, wrong = false, { dbl = false } = {}) {
       }
       break;
     }
+    case 'writing': await page.fill('.writing-area', wrong ? 'ok ok ok' : row.translation); break;
+    case 'speaking': await page.check('#said-it'); break;
     default: throw new Error('unknown type ' + ex.type);
   }
   if (dbl) await page.locator('.lesson-foot .btn:has-text("Check")').dblclick(); else await page.click('.lesson-foot .btn:has-text("Check")');
-  await page.waitForSelector('.lesson-foot.good, .lesson-foot.bad');
+  await page.waitForSelector('.lesson-foot.good, .lesson-foot.bad, .lesson-foot .feedback b');
   const good = await page.$('.lesson-foot.good');
   return { type: ex.type, correct: !!good };
 }
@@ -56,7 +58,9 @@ async function playLesson(page, db, { wrongEvery = 0, max = 60 } = {}) {
   const seen = [], results = [];
   for (let n = 0; n < max; n++) {
     if (await page.$('.result')) break;
+    if (await page.$('.study')) { await page.click('.lesson-foot .btn'); await page.waitForTimeout(120); continue; }
     if (await page.$('.lesson-body .q-title, .lesson-body .passage')) {
+      if (await page.$('.study')) continue;
       const wrong = wrongEvery && (n + 1) % wrongEvery === 0;
       const r = await answer(page, db, wrong); seen.push(r.type); results.push({ ...r, wrong });
       await page.click('.lesson-foot .btn:not([disabled])');
