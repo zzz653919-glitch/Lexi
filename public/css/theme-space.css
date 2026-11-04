@@ -179,3 +179,9 @@ select.input option { background: var(--space-solid); color: var(--ink); }
 /* ---------- start-up screen ---------- */
 .splash { background: #05061a !important; color: var(--ink); }
 .splash-name { color: var(--ink); letter-spacing: .3em; text-transform: uppercase; }
+
+/* ---------- accessibility fixes ---------- */
+/* a visible focus ring everywhere (the glow of buttons and chips must not replace it) */
+html :focus-visible { outline: none; box-shadow: var(--focus) !important; }
+/* the selected level tab is white: its secondary text must be dark */
+.level-tab[aria-selected="true"] .muted, .level-tab[aria-selected="true"] span { color: #3a4070; }
