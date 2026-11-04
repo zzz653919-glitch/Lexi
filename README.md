@@ -67,6 +67,8 @@ Uzbek is written in the **new Uzbek Latin alphabet**: Ŏ ŏ, Ğ ğ, Ş ş, Ç ç
 ## Animations
 A start-up screen, loading animations, page transitions and answer / lesson-completion effects (all tied to real loading and real results; can be reduced or turned off in Profile). See [docs/ANIMATIONS.md](docs/ANIMATIONS.md).
 
+The **LEXIO roadmap** (A1 → IELTS 6.5–7.0): strict level unlocking with a final examination per level (80% to pass), study pages, four skills, an IELTS Preparation Center with practice tests and estimated bands. See [docs/ROADMAP.md](docs/ROADMAP.md).
+
 A **placement test** (adaptive, 20–35 questions, Pre-A1 … C2), personalised **daily lessons**, per-skill tracking and automatic level adjustment. See [docs/ASSESSMENT.md](docs/ASSESSMENT.md).
 
 ## Rules (all calculated on the server)
