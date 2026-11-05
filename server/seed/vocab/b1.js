@@ -4,8 +4,6 @@ achieve|erishmoq|əˈtʃiːv|verb|She worked hard to achieve her goal.|accomplis
 ambition|orzu; shuhratparastlik|æmˈbɪʃn|noun|His ambition is to become a pilot.|aim|2
 attempt|urinish|əˈtempt|noun|It was my first attempt.|try|2
 courage|jasorat|ˈkʌrɪdʒ|noun|It takes courage to speak up.|bravery|2
-disappointed|ko‘ngli qolgan|ˌdɪsəˈpɔɪntɪd|adjective|I was disappointed with the result.|let down|2
-embarrassed|xijolat bo‘lgan|ɪmˈbærəst|adjective|He felt embarrassed in front of everyone.|ashamed|2
 fortunate|baxtli; omadli|ˈfɔːtʃənət|adjective|We were fortunate to find a room.|lucky|2
 grateful|minnatdor|ˈɡreɪtfl|adjective|I am grateful for your help.|thankful|2
 independent|mustaqil|ˌɪndɪˈpendənt|adjective|She became independent at eighteen.||2
@@ -21,8 +19,6 @@ fame|shuhrat|feɪm|noun|He gained fame as a singer.||2
 reputation|obro‘|ˌrepjuˈteɪʃn|noun|The school has a good reputation.||2
 memory|xotira; esdalik|ˈmeməri|noun|It is a happy memory.||2
 childhood|bolalik|ˈtʃaɪldhʊd|noun|I had a happy childhood.||2
-teenager|o‘smir|ˈtiːneɪdʒə|noun|My brother is a teenager.||2
-adult|katta yoshli|ˈædʌlt|noun|Adults must pay.||2
 generation|avlod|ˌdʒenəˈreɪʃn|noun|The older generation remembers it.||2
 celebrity|mashhur shaxs|səˈlebrəti|noun|He met a celebrity.||2
 hero|qahramon|ˈhɪərəʊ|noun|My grandfather is my hero.||2
@@ -44,7 +40,6 @@ resign|iste’foga chiqmoq|rɪˈzaɪn|verb|She resigned from her job.||2
 dismiss|ishdan bo‘shatmoq|dɪsˈmɪs|verb|He was dismissed for being late.||2
 redundant|ortiqcha (ishdan qisqartirilgan)|rɪˈdʌndənt|adjective|Fifty workers were made redundant.||3
 contract|shartnoma|ˈkɒntrækt|noun|Sign the contract.||2
-colleague|hamkasb|ˈkɒliːɡ|noun|My colleagues are friendly.||2
 supervisor|nazoratchi; rahbar|ˈsuːpəvaɪzə|noun|Ask your supervisor.||2
 department|bo‘lim|dɪˈpɑːtmənt|noun|She works in the sales department.||2
 headquarters|bosh ofis|ˌhedˈkwɔːtəz|noun|The headquarters are in London.||3
@@ -55,8 +50,6 @@ carry out|bajarmoq|ˈkæri aʊt|phrasal_verb|They carried out the plan.||3
 take on|zimmasiga olmoq|teɪk ɒn|phrasal_verb|She took on extra work.||3
 set up|tashkil etmoq|set ʌp|phrasal_verb|He set up a small company.||3
 take over|boshqaruvni olmoq|teɪk ˈəʊvə|phrasal_verb|She took over the project.||3
-work out|hal qilmoq; mashq qilmoq|wɜːk aʊt|phrasal_verb|We worked out a plan.||2
-fill in|to‘ldirmoq (anketa)|fɪl ɪn|phrasal_verb|Fill in this form.||2
 hand in|topshirmoq|hænd ɪn|phrasal_verb|Hand in your homework.||2
 meet a deadline|muddatga ulgurmoq|miːt ə ˈdedlaɪn|collocation|We must meet the deadline.||3
 make a profit|foyda ko‘rmoq|meɪk ə ˈprɒfɪt|collocation|The shop made a profit.||3
@@ -104,7 +97,6 @@ carbohydrate|uglevod|ˌkɑːbəʊˈhaɪdreɪt|noun|Bread is a carbohydrate.||3
 fat|yog‘|fæt|noun|Avoid too much fat.||2
 overweight|ortiqcha vazn|ˌəʊvəˈweɪt|adjective|He is a little overweight.||2
 fitness|jismoniy tayyorgarlik|ˈfɪtnəs|noun|Fitness is important.||2
-gym|sport zali|dʒɪm|noun|He goes to the gym.||2
 jogging|yengil yugurish|ˈdʒɒɡɪŋ|noun|I go jogging every morning.||2
 stretch|cho‘zilmoq (mashq)|stretʃ|verb|Stretch before running.||2
 muscle|mushak|ˈmʌsl|noun|Exercise builds muscle.||2
@@ -129,7 +121,6 @@ come down with|kasal bo‘lib qolmoq|kʌm daʊn wɪð|phrasal_verb|I came down w
 get over|tuzalib ketmoq|ɡet ˈəʊvə|phrasal_verb|He got over the flu.||3
 cut out|qisqartirmoq (iste’moldan)|kʌt aʊt|phrasal_verb|Cut out sugar.||3
 take up|shug‘ullana boshlamoq|teɪk ʌp|phrasal_verb|He took up swimming.||3
-catch a cold|shamollamoq|kætʃ ə kəʊld|collocation|I caught a cold.||2
 take medicine|dori ichmoq|teɪk ˈmedsn|collocation|Take medicine twice a day.||2
 keep fit|sog‘lom bo‘lib turmoq|kiːp fɪt|collocation|I swim to keep fit.||2
 get enough sleep|yetarlicha uxlamoq|ɡet ɪˈnʌf sliːp|collocation|You must get enough sleep.||2
@@ -188,27 +179,19 @@ coast|qirg‘oq|kəʊst|noun|We drove along the coast.||2
 cliff|qoya|klɪf|noun|The cliff is high.||3
 waterfall|sharshara|ˈwɔːtəfɔːl|noun|We saw a waterfall.||2
 desert|cho‘l|ˈdezət|noun|The desert is hot.||2
-set off|yo‘lga chiqmoq|set ɒf|phrasal_verb|We set off at dawn.||2
-check in|ro‘yxatdan o‘tmoq|tʃek ɪn|phrasal_verb|Check in two hours early.||2
 see off|kuzatib qo‘ymoq|siː ɒf|phrasal_verb|We saw him off at the station.||3
 get away|dam olishga ketmoq|ɡet əˈweɪ|phrasal_verb|We need to get away.||3
 book a table|stol band qilmoq|bʊk ə ˈteɪbl|collocation|I booked a table for two.||2
 @ B1 | Money and shopping | word
-bank account|bank hisobi|bæŋk əˈkaʊnt|noun|I opened a bank account.||2
 cash machine|bankomat|kæʃ məˈʃiːn|noun|Use the cash machine.||2
 interest rate|foiz stavkasi|ˈɪntrəst reɪt|noun|The interest rate fell.||3
 savings|jamg‘arma|ˈseɪvɪŋz|noun|He has some savings.||2
 debt|qarz|det|noun|He is in debt.||3
-borrow|qarz olmoq|ˈbɒrəʊ|verb|Can I borrow your pen?||2
-lend|qarz bermoq|lend|verb|Can you lend me ten dollars?||2
-owe|qarzdor bo‘lmoq|əʊ|verb|I owe him money.||3
-afford|qurbi yetmoq|əˈfɔːd|verb|I can’t afford a new car.||2
 invest|sarmoya kiritmoq|ɪnˈvest|verb|He invested in a company.||3
 pension|pensiya|ˈpenʃn|noun|She receives a pension.||3
 tax|soliq|tæks|noun|We pay tax every year.||2
 brand|brend|brænd|noun|It is a famous brand.||2
 quality|sifat|ˈkwɒləti|noun|The quality is high.||2
-fashionable|zamonaviy (modada)|ˈfæʃnəbl|adjective|These shoes are fashionable.||3
 second-hand|ishlatilgan|ˌsekənd ˈhænd|adjective|I bought a second-hand car.||3
 online shop|onlayn do‘kon|ˈɒnlaɪn ʃɒp|noun|She runs an online shop.||2
 delivery charge|yetkazib berish haqi|dɪˈlɪvəri tʃɑːdʒ|noun|The delivery charge is five dollars.||3
@@ -257,8 +240,6 @@ apologise|uzr so‘ramoq|əˈpɒlədʒaɪz|verb|He apologised for being late.||2
 support|qo‘llab-quvvatlamoq|səˈpɔːt|verb|Friends support each other.||2
 rely on|tayanmoq|rɪˈlaɪ ɒn|phrasal_verb|You can rely on me.||3
 fall in love|sevib qolmoq|fɔːl ɪn lʌv|phrase|They fell in love.||2
-engaged|unashtirilgan|ɪnˈɡeɪdʒd|adjective|They are engaged.||3
-divorced|ajrashgan|dɪˈvɔːst|adjective|His parents are divorced.||3
 single|turmush qurmagan|ˈsɪŋɡl|adjective|She is single.||2
 generous|saxiy|ˈdʒenərəs|adjective|He is a generous man.||2
 sociable|muloqotga ochiq|ˈsəʊʃəbl|adjective|She is sociable.||3
@@ -275,17 +256,11 @@ keep in touch|aloqada bo‘lmoq|kiːp ɪn tʌtʃ|collocation|Let’s keep in tou
 @ B1 | Education and learning | word
 scholarship|stipendiya|ˈskɒləʃɪp|noun|He won a scholarship.||3
 tuition|o‘qish to‘lovi|tjuˈɪʃn|noun|Tuition is expensive.||3
-lecture|ma’ruza|ˈlektʃə|noun|The lecture was boring.||2
 seminar|seminar|ˈsemɪnɑː|noun|We have a seminar today.||3
 assignment|topshiriq|əˈsaɪnmənt|noun|Hand in your assignment.||2
 deadline|muddat|ˈdedlaɪn|noun|The deadline is Friday.||2
 essay|esse|ˈeseɪ|noun|Write a short essay.||2
 research|tadqiqot|rɪˈsɜːtʃ|noun|She does research.||3
-subject|fan|ˈsʌbdʒɪkt|noun|My favourite subject is history.||2
-grade|baho|ɡreɪd|noun|He got a good grade.||2
-mark|ball|mɑːk|noun|My mark was high.||2
-fail|yiqilmoq (imtihonda)|feɪl|verb|He failed the test.||2
-revise|takrorlamoq|rɪˈvaɪz|verb|Revise for the exam.||2
 cheat|ko‘chirmoq (aldamoq)|tʃiːt|verb|Don’t cheat in exams.||2
 concentrate|diqqatni jamlamoq|ˈkɒnsntreɪt|verb|I can’t concentrate.||2
 memorise|yodlamoq|ˈmeməraɪz|verb|Memorise the words.||2
@@ -370,8 +345,6 @@ warn|ogohlantirmoq|wɔːn|verb|I warned him about the ice.||2
 @ B1 | Useful adjectives | word
 annoying|g‘ashga tegadigan|əˈnɔɪɪŋ|adjective|The noise is annoying.||3
 anxious|xavotirli|ˈæŋkʃəs|adjective|She is anxious about the test.||3
-awful|dahshatli|ˈɔːfl|adjective|The food was awful.||2
-brilliant|ajoyib; aqlli|ˈbrɪliənt|adjective|It’s a brilliant idea.||3
 complicated|murakkab|ˈkɒmplɪkeɪtɪd|adjective|The rules are complicated.||3
 confused|adashgan|kənˈfjuːzd|adjective|I am confused.||2
 curious|qiziquvchan|ˈkjʊəriəs|adjective|Children are curious.||3
@@ -381,7 +354,6 @@ efficient|samarali|ɪˈfɪʃnt|adjective|The system is efficient.||3
 enormous|ulkan|ɪˈnɔːməs|adjective|An enormous building.||3
 excellent|a’lo|ˈeksələnt|adjective|This is excellent work.||2
 exhausting|charchatuvchi|ɪɡˈzɔːstɪŋ|adjective|It was an exhausting day.||3
-fantastic|ajoyib|fænˈtæstɪk|adjective|It was a fantastic party.||2
 fascinating|maftunkor|ˈfæsɪneɪtɪŋ|adjective|The story is fascinating.||3
 frightened|qo‘rqib ketgan|ˈfraɪtnd|adjective|The child is frightened.||3
 furious|g‘azablangan|ˈfjʊəriəs|adjective|He was furious.||3
@@ -404,7 +376,6 @@ shocked|hayratga tushgan|ʃɒkt|adjective|I was shocked.||3
 silly|ahmoqona|ˈsɪli|adjective|Don’t be silly.||2
 suitable|mos|ˈsuːtəbl|adjective|Is this suitable?||3
 terrific|ajoyib|təˈrɪfɪk|adjective|A terrific idea.||3
-unusual|g‘ayrioddiy|ʌnˈjuːʒuəl|adjective|An unusual hat.||3
 useless|foydasiz|ˈjuːsləs|adjective|The map is useless.||2
 valuable|qimmatli|ˈvæljuəbl|adjective|A valuable painting.||3
 @ B1 | Everyday collocations | word
@@ -412,16 +383,12 @@ make a mistake|xato qilmoq|meɪk ə mɪˈsteɪk|collocation|I made a mistake.||2
 make progress|taraqqiy qilmoq|meɪk ˈprəʊɡres|collocation|You’re making progress.||2
 make an effort|harakat qilmoq|meɪk ən ˈefət|collocation|Make an effort to learn.||3
 make a decision|qaror qabul qilmoq|meɪk ə dɪˈsɪʒn|collocation|I made a decision.||2
-do homework|uy vazifasini qilmoq|duː ˈhəʊmwɜːk|collocation|I do homework at night.||1
 do the shopping|xarid qilmoq|duː ðə ˈʃɒpɪŋ|collocation|I do the shopping on Sunday.||2
 do a favour|yordam qilmoq|duː ə ˈfeɪvə|collocation|Can you do me a favour?||3
 take a break|tanaffus qilmoq|teɪk ə breɪk|collocation|Take a break.||2
-take a photo|suratga olmoq|teɪk ə ˈfəʊtəʊ|collocation|Take a photo of us.||2
 take a risk|xavf qilmoq|teɪk ə rɪsk|collocation|He took a risk.||3
 take care of|qarab turmoq|teɪk keər ɒv|collocation|Take care of yourself.||2
-have a look|qarab chiqmoq|hæv ə lʊk|collocation|Have a look at this.||2
 have fun|dam olmoq (zavqlanmoq)|hæv fʌn|collocation|I hope you have fun.||1
-pay attention|e’tibor bermoq|peɪ əˈtenʃn|collocation|Pay attention to the teacher.||2
 pay a visit|tashrif buyurmoq|peɪ ə ˈvɪzɪt|collocation|We paid a visit to her.||3
 give advice|maslahat bermoq|ɡɪv ədˈvaɪs|collocation|Can you give me advice?||2
 give a speech|nutq so‘zlamoq|ɡɪv ə spiːtʃ|collocation|He gave a speech.||3

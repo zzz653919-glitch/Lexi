@@ -187,7 +187,6 @@ fact-check|faktlarni tekshirmoq|ˈfækt tʃek|verb|Journalists fact-check claims
 reliable source|ishonchli manba|rɪˈlaɪəbl sɔːs|noun|Use a reliable source.||3
 objective|xolis|əbˈdʒektɪv|adjective|Try to be objective.||3
 subjective|sub’ektiv|səbˈdʒektɪv|adjective|That is a subjective opinion.||4
-audience|auditoriya|ˈɔːdiəns|noun|The audience applauded.||2
 viewer|tomoshabin|ˈvjuːə|noun|Many viewers complained online.||3
 subscriber|obunachi|səbˈskraɪbə|noun|The channel has many subscribers.||3
 advertising campaign|reklama kampaniyasi|ˈædvətaɪzɪŋ kæmˈpeɪn|noun|The advertising campaign was costly.||3

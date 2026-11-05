@@ -22,8 +22,6 @@ direction|yo‘nalish|dɪˈrekʃn|noun|Ask for directions.||2
 turn left|chapga burilmoq|tɜːn left|phrase|Turn left at the bank.||2
 straight on|to‘g‘ri|streɪt ɒn|phrase|Go straight on.||2
 cross|kesib o‘tmoq|krɒs|verb|Cross the bridge.||2
-arrive|yetib kelmoq|əˈraɪv|verb|We arrive at noon.||2
-leave|ketmoq|liːv|verb|The bus leaves at six.|depart|2
 catch|ulgurmoq|kætʃ|verb|I catch the 8 o’clock bus.||2
 miss the bus|avtobusga ulgurmaslik|mɪs ðə bʌs|phrase|I missed the bus again.||2
 get on|(transportga) chiqmoq|ɡet ɒn|phrasal_verb|Get on the bus at the corner.||2
@@ -38,12 +36,10 @@ petrol|benzin|ˈpetrəl|noun|The car needs petrol.||2
 driving licence|haydovchilik guvohnomasi|ˈdraɪvɪŋ ˈlaɪsns|noun|He lost his driving licence.||2
 pavement|yo‘lak|ˈpeɪvmənt|noun|Walk on the pavement.||2
 crossing|piyodalar o‘tish joyi|ˈkrɒsɪŋ|noun|Use the crossing.||2
-corner|burchak|ˈkɔːnə|noun|The shop is on the corner.||2
 square|maydon|skweə|noun|We met in the square.||2
 tourist attraction|diqqatga sazovor joy|ˈtʊərɪst əˈtrækʃn|noun|The castle is a tourist attraction.||2
 sightseeing tour|ko‘rikli ekskursiya|ˈsaɪtsiːɪŋ tʊə|noun|We took a sightseeing tour.||2
 abroad|chet elda|əˈbrɔːd|adverb|She studies abroad.||2
-foreign|xorijiy|ˈfɒrən|adjective|He speaks a foreign language.||2
 local|mahalliy|ˈləʊkl|adjective|We tried local food.||2
 @ A2 | Hotels and accommodation | word
 hostel|yotoqxona (arzon mehmonxona)|ˈhɒstl|noun|We stayed in a youth hostel.||2
@@ -52,12 +48,9 @@ check out|mehmonxonadan chiqmoq|tʃek aʊt|phrasal_verb|We check out at noon.||2
 key card|kalit-karta|kiː kɑːd|noun|Keep your key card.||2
 lift|lift|lɪft|noun|Take the lift to the third floor.|elevator|2
 air conditioning|konditsioner|eə kənˈdɪʃənɪŋ|noun|The room has air conditioning.||2
-towel|sochiq|ˈtaʊəl|noun|Please bring a clean towel.||2
-shower|dush|ˈʃaʊə|noun|I take a shower every day.||2
 swimming pool|suzish havzasi|ˈswɪmɪŋ puːl|noun|The hotel has a swimming pool.||2
 breakfast included|nonushta narxga kiradi|ˈbrekfəst ɪnˈkluːdɪd|phrase|Is breakfast included?||2
 noisy|shovqinli|ˈnɔɪzi|adjective|The room is noisy.||2
-quiet|tinch|ˈkwaɪət|adjective|We want a quiet room.||2
 comfortable|qulay|ˈkʌmftəbl|adjective|The bed is comfortable.||2
 view|manzara|vjuː|noun|The room has a sea view.||2
 complaint|shikoyat|kəmˈpleɪnt|noun|I want to make a complaint.||2
@@ -73,12 +66,10 @@ sneeze|aksirmoq|sniːz|verb|He sneezes a lot.||2
 allergy|allergiya|ˈælədʒi|noun|She has an allergy to nuts.||2
 injury|jarohat|ˈɪndʒəri|noun|He has a knee injury.||2
 bandage|bint|ˈbændɪdʒ|noun|Put a bandage on the cut.||2
-cut|kesilgan joy|kʌt|noun|The cut is deep.||2
 bruise|ko‘karish|bruːz|noun|I have a bruise on my arm.||2
 dentist|tish shifokori|ˈdentɪst|noun|I visit the dentist twice a year.||2
 patient|bemor|ˈpeɪʃnt|noun|The patient is waiting.||2
 ambulance|tez yordam|ˈæmbjələns|noun|Call an ambulance!||2
-rest|dam olmoq|rest|verb|You should rest today.||2
 recover|tuzalmoq|rɪˈkʌvə|verb|He recovered quickly.||2
 exercise|mashq qilmoq|ˈeksəsaɪz|verb|I exercise every morning.||2
 diet|parhez|ˈdaɪət|noun|She is on a diet.||2
@@ -114,7 +105,6 @@ experience|tajriba|ɪkˈspɪəriəns|noun|He has five years’ experience.||2
 duty|vazifa|ˈdjuːti|noun|Her duty is to answer calls.||2
 task|topshiriq|tɑːsk|noun|This task is easy.||2
 project|loyiha|ˈprɒdʒekt|noun|We finish the project in May.||2
-team|jamoa|tiːm|noun|Our team works well.||2
 report|hisobot|rɪˈpɔːt|noun|Write a report.||2
 email|elektron pochta|ˈiːmeɪl|noun|I sent you an email.||2
 office|ofis|ˈɒfɪs|noun|I work in an office.||2
@@ -130,7 +120,6 @@ scientist|olim|ˈsaɪəntɪst|noun|A scientist works in a lab.||2
 @ A2 | Shopping and money | word
 price|narx|praɪs|noun|The price is low.||2
 cost|turmoq (narx)|kɒst|verb|It costs ten dollars.||2
-pay|to‘lamoq|peɪ|verb|I pay by card.||2
 cash|naqd pul|kæʃ|noun|Do you have cash?||2
 credit card|kredit karta|ˈkredɪt kɑːd|noun|Can I use a credit card?||2
 change|qaytim|tʃeɪndʒ|noun|Keep the change.||2
@@ -143,16 +132,13 @@ customer|mijoz|ˈkʌstəmə|noun|The customer is waiting.||2
 shopping centre|savdo markazi|ˈʃɒpɪŋ ˈsentə|noun|We go to the shopping centre.||2
 receipt|chek|rɪˈsiːt|noun|Keep the receipt.||2
 refund|pulni qaytarish|ˈriːfʌnd|noun|I asked for a refund.||2
-wallet|hamyon|ˈwɒlɪt|noun|I lost my wallet.||2
 purse|ayollar hamyoni|pɜːs|noun|She keeps coins in her purse.||2
 basket|savat|ˈbɑːskɪt|noun|Put fruit in the basket.||2
 kilo|kilogramm|ˈkiːləʊ|noun|A kilo of apples, please.||2
 litre|litr|ˈliːtə|noun|Two litres of milk.||2
-bottle|shisha idish|ˈbɒtl|noun|A bottle of water.||2
 packet|paket (quti)|ˈpækɪt|noun|A packet of tea.||2
 tin|konserva|tɪn|noun|A tin of tomatoes.||2
 loaf|non (butun)|ləʊf|noun|Buy a loaf of bread.||2
-bakery|nonvoyxona|ˈbeɪkəri|noun|The bakery smells nice.||2
 butcher|qassob|ˈbʊtʃə|noun|We buy meat at the butcher’s.||2
 chemist|dorixona|ˈkemɪst|noun|The chemist is open.||2
 bookshop|kitob do‘koni|ˈbʊkʃɒp|noun|I found it in a bookshop.||2
@@ -164,12 +150,7 @@ fry|qovurmoq|fraɪ|verb|Fry the onions.||2
 bake|pechda pishirmoq|beɪk|verb|She bakes bread.||2
 roast|dudlamoq; pishirmoq|rəʊst|verb|Roast the chicken.||2
 slice|bo‘lak|slaɪs|noun|A slice of bread.||2
-spoon|qoshiq|spuːn|noun|Use a spoon.||2
-fork|vilka|fɔːk|noun|Put the fork on the left.||2
-knife|pichoq|naɪf|noun|The knife is sharp.||2
-plate|likopcha|pleɪt|noun|Put it on a plate.||2
 bowl|kosa|bəʊl|noun|A bowl of soup.||2
-cup|piyola|kʌp|noun|A cup of tea.||2
 glass|stakan|ɡlɑːs|noun|A glass of milk.||2
 pan|tova|pæn|noun|Heat the pan.||2
 oven|duxovka|ˈʌvn|noun|Put the cake in the oven.||2
@@ -178,7 +159,6 @@ order|buyurtma bermoq|ˈɔːdə|verb|I order soup.||2
 starter|birinchi taom|ˈstɑːtə|noun|The starter is a salad.||2
 dessert|shirinlik|dɪˈzɜːt|noun|We shared a dessert.||2
 spicy|achchiq|ˈspaɪsi|adjective|This soup is spicy.||2
-sweet|shirin|swiːt|adjective|The tea is too sweet.||2
 salty|sho‘r|ˈsɔːlti|adjective|The soup is salty.||2
 bitter|achchiq (taxir)|ˈbɪtə|adjective|Coffee can be bitter.||2
 raw|xom|rɔː|adjective|Do not eat raw meat.||2
@@ -238,7 +218,6 @@ link|havola|lɪŋk|noun|Click the link.||2
 screenshot|ekran surati|ˈskriːnʃɒt|noun|Send me a screenshot.||2
 social media|ijtimoiy tarmoqlar|ˈsəʊʃl ˈmiːdiə|noun|Social media is popular.||2
 video call|video qo‘ng‘iroq|ˈvɪdiəʊ kɔːl|noun|We had a video call.||2
-newspaper|gazeta|ˈnjuːzpeɪpər|noun|He reads the newspaper.||2
 magazine|jurnal|ˌmæɡəˈziːn|noun|She buys a fashion magazine.||2
 programme|dastur; ko‘rsatuv|ˈprəʊɡræm|noun|It’s my favourite programme.||2
 channel|kanal|ˈtʃænl|noun|Change the channel.||2
@@ -247,19 +226,13 @@ turn on|yoqmoq|tɜːn ɒn|phrasal_verb|Turn on the light.||2
 turn off|o‘chirmoq|tɜːn ɒf|phrasal_verb|Turn off the TV.||2
 log in|tizimga kirmoq|lɒɡ ɪn|phrasal_verb|Log in with your password.||2
 @ A2 | Feelings and character | word
-angry|jahli chiqqan|ˈæŋɡri|adjective|He is angry.||2
-afraid|qo‘rqqan|əˈfreɪd|adjective|I am afraid of dogs.|scared|2
 surprised|hayron bo‘lgan|səˈpraɪzd|adjective|She was surprised.||2
 excited|hayajonlangan|ɪkˈsaɪtɪd|adjective|We are excited about the trip.||2
-bored|zerikkan|bɔːd|adjective|I am bored.||2
-worried|xavotirli|ˈwʌrid|adjective|She is worried about the exam.||2
 nervous|asabiy|ˈnɜːvəs|adjective|I feel nervous.||2
 proud|faxrlangan|praʊd|adjective|I am proud of you.||2
 lonely|yolg‘iz|ˈləʊnli|adjective|He feels lonely.||2
 jealous|hasadgo‘y|ˈdʒeləs|adjective|She is jealous of her friend.||2
-kind|mehribon|kaɪnd|adjective|My teacher is kind.||2
 friendly|do‘stona|ˈfrendli|adjective|The people are friendly.||2
-funny|kulgili|ˈfʌni|adjective|He tells funny stories.||2
 clever|aqlli|ˈklevə|adjective|She is a clever girl.|smart|2
 honest|halol|ˈɒnɪst|adjective|He is an honest man.||2
 brave|jasur|breɪv|adjective|The firefighter is brave.||2
@@ -271,8 +244,6 @@ reliable|ishonchli|rɪˈlaɪəbl|adjective|He is a reliable friend.||2
 agree|rozi bo‘lmoq|əˈɡriː|verb|I agree with you.||2
 disagree|rozi bo‘lmaslik|ˌdɪsəˈɡriː|verb|I disagree with him.||2
 believe|ishonmoq|bɪˈliːv|verb|I believe you.||2
-remember|eslamoq|rɪˈmembə|verb|I remember his name.||2
-forget|unutmoq|fəˈɡet|verb|Don’t forget your keys.||2
 hope|umid qilmoq|həʊp|verb|I hope you win.||2
 wish|tilamoq|wɪʃ|verb|I wish you luck.||2
 imagine|tasavvur qilmoq|ɪˈmædʒɪn|verb|Imagine a big house.||2
@@ -285,17 +256,12 @@ repeat|takrorlamoq|rɪˈpiːt|verb|Repeat after me.||2
 copy|ko‘chirmoq|ˈkɒpi|verb|Copy the text.||2
 check|tekshirmoq|tʃek|verb|Check your answers.||2
 improve|yaxshilamoq|ɪmˈpruːv|verb|I want to improve my English.||2
-carry|ko‘tarib yurmoq|ˈkæri|verb|Carry this bag.||2
 throw|otmoq|θrəʊ|verb|Throw the ball.||2
-push|itarmoq|pʊʃ|verb|Push the door.||2
-pull|tortmoq|pʊl|verb|Pull the rope.||2
 climb|ko‘tarilmoq (tog‘ga)|klaɪm|verb|We climbed the hill.||2
-fall|yiqilmoq|fɔːl|verb|He fell off his bike.||2
 grow|o‘smoq|ɡrəʊ|verb|Flowers grow in spring.||2
 build|qurmoq|bɪld|verb|They build houses.||2
 break|sindirmoq|breɪk|verb|Don’t break the glass.||2
 fix|ta’mirlamoq|fɪks|verb|He fixed my bike.|repair|2
-paint|bo‘yamoq; rasm chizmoq|peɪnt|verb|She paints pictures.||2
 invite|taklif qilmoq|ɪnˈvaɪt|verb|I invited my friends.||2
 celebrate|nishonlamoq|ˈselɪbreɪt|verb|We celebrate New Year.||2
 enjoy|zavqlanmoq|ɪnˈdʒɔɪ|verb|I enjoy reading.||2
@@ -312,7 +278,6 @@ stand up|o‘rnidan turmoq|stænd ʌp|phrasal_verb|Stand up, please.||2
 come back|qaytib kelmoq|kʌm bæk|phrasal_verb|Come back soon.||2
 go out|tashqariga chiqmoq|ɡəʊ aʊt|phrasal_verb|We go out on Fridays.||2
 grow up|katta bo‘lmoq|ɡrəʊ ʌp|phrasal_verb|I grew up in a village.||2
-get up|o‘rnidan turmoq (uyqudan)|ɡet ʌp|phrasal_verb|I get up at seven.||2
 @ A2 | Adjectives and adverbs | word
 dangerous|xavfli|ˈdeɪndʒərəs|adjective|The road is dangerous.||2
 safe|xavfsiz|seɪf|adjective|The city is safe.||2
@@ -326,11 +291,9 @@ deep|chuqur|diːp|adjective|The lake is deep.||2
 shallow|sayoz|ˈʃæləʊ|adjective|The water is shallow.||2
 thick|qalin|θɪk|adjective|A thick book.||2
 thin|ingichka|θɪn|adjective|A thin line.||2
-strong|kuchli|strɒŋ|adjective|He is strong.||2
 weak|kuchsiz|wiːk|adjective|The tea is weak.||2
 rich|boy|rɪtʃ|adjective|He is a rich man.||2
 poor|kambag‘al|pɔː|adjective|The family is poor.||2
-lucky|omadli|ˈlʌki|adjective|You are lucky.||2
 careful|ehtiyotkor|ˈkeəfl|adjective|Please be careful.||2
 careless|beparvo|ˈkeələs|adjective|A careless mistake.||2
 important|muhim|ɪmˈpɔːtnt|adjective|It is an important day.||2
@@ -341,11 +304,6 @@ wonderful|ajoyib|ˈwʌndəfl|adjective|We had a wonderful day.||2
 perfect|mukammal|ˈpɜːfɪkt|adjective|The weather is perfect.||2
 possible|mumkin|ˈpɒsəbl|adjective|It is possible.||2
 impossible|mumkin emas|ɪmˈpɒsəbl|adjective|It is impossible.||2
-ready|tayyor|ˈredi|adjective|Dinner is ready.||2
-busy|band|ˈbɪzi|adjective|I am busy today.||2
-free|bo‘sh; bepul|friː|adjective|I am free on Friday.||2
-late|kech|leɪt|adverb|I am late.||2
-early|erta|ˈɜːli|adverb|I get up early.||2
 quickly|tez|ˈkwɪkli|adverb|He ran quickly.||2
 slowly|sekin|ˈsləʊli|adverb|Please speak slowly.||2
 carefully|ehtiyotkorlik bilan|ˈkeəfəli|adverb|You must drive carefully.||2

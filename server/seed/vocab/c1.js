@@ -268,7 +268,6 @@ back down|taslim bo‘lmoq|bæk daʊn|phrasal_verb|He refused to back down.||4
 bring about|sabab bo‘lmoq|brɪŋ əˈbaʊt|phrasal_verb|Reform brought about change.||4
 bring forward|oldinga surmoq|brɪŋ ˈfɔːwəd|phrasal_verb|The meeting was brought forward.||4
 call off|bekor qilmoq|kɔːl ɒf|phrasal_verb|They called off the strike.||3
-carry on|davom ettirmoq|ˈkæri ɒn|phrasal_verb|Carry on working.||3
 come up with|o‘ylab topmoq|kʌm ʌp wɪð|phrasal_verb|She came up with a plan.||3
 cut across|kesib o‘tmoq|kʌt əˈkrɒs|phrasal_verb|The issue cuts across parties.||5
 do away with|bekor qilmoq|duː əˈweɪ wɪð|phrasal_verb|They did away with fees.||5
