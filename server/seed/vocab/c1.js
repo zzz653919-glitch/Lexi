@@ -6,7 +6,6 @@ bureaucracy|byurokratiya|bjʊəˈrɒkrəsi|noun|Bureaucracy slows decisions.||4
 complexity|murakkablik|kəmˈpleksəti|noun|The complexity of the task surprised us.||4
 consensus|umumiy kelishuv|kənˈsensəs|noun|They reached a consensus quickly.|agreement|4
 controversy|bahs-munozara|ˈkɒntrəvɜːsi|noun|The decision caused controversy.|dispute|4
-criterion|mezon|kraɪˈtɪəriən|noun|Cost is one criterion.|standard|4
 discrepancy|nomuvofiqlik|dɪˈskrepənsi|noun|There is a discrepancy in the figures.|inconsistency|5
 disparity|tengsizlik (farq)|dɪˈspærəti|noun|There is a disparity in wages.|gap|5
 dilemma|dilemma|dɪˈlemə|noun|She faced a moral dilemma.||4
@@ -17,8 +16,6 @@ hypocrisy|ikkiyuzlamachilik|hɪˈpɒkrəsi|noun|His hypocrisy annoyed everyone.|
 integrity|halollik|ɪnˈteɡrəti|noun|He is a man of integrity.|honesty|4
 paradox|paradoks|ˈpærədɒks|noun|It is a paradox that wealth brings worry.||5
 paradigm|paradigma|ˈpærədaɪm|noun|The discovery changed the paradigm.||5
-phenomenon|hodisa|fɪˈnɒmɪnən|noun|Climate change is a global phenomenon.||4
-priority|ustuvorlik|praɪˈɒrəti|noun|Safety is our priority.||3
 rationale|asoslash|ˌræʃəˈnɑːl|noun|Explain the rationale for the plan.||5
 reluctance|istamaslik|rɪˈlʌktəns|noun|He showed reluctance to speak.||4
 resilience|chidamlilik|rɪˈzɪliəns|noun|The town showed resilience.||4
@@ -33,12 +30,10 @@ vulnerability|zaiflik|ˌvʌlnərəˈbɪləti|noun|The report exposed vulnerabili
 advocate|himoya qilmoq|ˈædvəkeɪt|verb|She advocates reform.|support|4
 allocate|ajratmoq|ˈæləkeɪt|verb|Funds were allocated to schools.|assign|4
 amend|o‘zgartirmoq (hujjat)|əˈmend|verb|They amended the contract.|revise|4
-assert|qat’iy ta’kidlamoq|əˈsɜːt|verb|He asserted his innocence.|claim|4
 attribute|bog‘lamoq (sabab)|əˈtrɪbjuːt|verb|He attributes his success to luck.|ascribe|4
 augment|ko‘paytirmoq|ɔːɡˈment|verb|She augmented her income.|increase|5
 bolster|mustahkamlamoq|ˈbəʊlstə|verb|The data bolster the claim.|strengthen|5
 circumvent|chetlab o‘tmoq|ˌsɜːkəmˈvent|verb|They circumvented the rules.|bypass|5
-compile|tuzmoq (to‘plab)|kəmˈpaɪl|verb|She compiled a report.|collect|4
 comply|rioya qilmoq|kəmˈplaɪ|verb|All firms must comply.|obey|4
 comprise|tarkibiga kirmoq|kəmˈpraɪz|verb|The team comprises ten members.|consist of|5
 constitute|tashkil etmoq|ˈkɒnstɪtjuːt|verb|Women constitute half the staff.|form|5
@@ -95,7 +90,6 @@ comprehensive|keng qamrovli|ˌkɒmprɪˈhensɪv|adjective|A comprehensive review
 conspicuous|ko‘zga tashlanadigan|kənˈspɪkjuəs|adjective|A conspicuous mistake.|obvious|5
 contemporary|zamonaviy; zamondosh|kənˈtemprəri|adjective|Contemporary art is popular.|modern|4
 crucial|hal qiluvchi|ˈkruːʃl|adjective|A crucial decision.|vital|4
-dubious|shubhali|ˈdjuːbiəs|adjective|A dubious claim.|doubtful|5
 elaborate|murakkab; puxta|ɪˈlæbərət|adjective|An elaborate plan.|detailed|5
 elusive|qo‘lga tushmas|ɪˈluːsɪv|adjective|Success proved elusive.||5
 eminent|taniqli|ˈemɪnənt|adjective|An eminent scientist.|distinguished|5
@@ -115,12 +109,10 @@ intricate|murakkab (nozik)|ˈɪntrɪkət|adjective|An intricate pattern.|complex
 invaluable|bebaho|ɪnˈvæljuəbl|adjective|She gave me invaluable advice.||5
 lucrative|daromadli|ˈluːkrətɪv|adjective|A lucrative deal.|profitable|5
 meticulous|puxta (sinchkov)|məˈtɪkjələs|adjective|A meticulous worker.|careful|5
-notorious|shuhrati yomon|nəʊˈtɔːriəs|adjective|A notorious criminal.||5
 pragmatic|amaliy|præɡˈmætɪk|adjective|A pragmatic approach.|practical|5
 prevalent|keng tarqalgan|ˈprevələnt|adjective|Flu is prevalent in winter.|widespread|5
 profound|chuqur|prəˈfaʊnd|adjective|A profound effect.|deep|4
 prolific|serunum|prəˈlɪfɪk|adjective|A prolific writer.|productive|5
-rigid|qat’iy; qattiq|ˈrɪdʒɪd|adjective|Rigid rules limit growth.|inflexible|4
 robust|mustahkam|rəʊˈbʌst|adjective|A robust economy.|strong|4
 scrupulous|vijdonli|ˈskruːpjələs|adjective|A scrupulous accountant.||5
 sceptical|shubhali (shubhalanuvchi)|ˈskeptɪkl|adjective|I am sceptical about it.|doubtful|4
@@ -128,18 +120,15 @@ spontaneous|o‘z-o‘zidan|spɒnˈteɪniəs|adjective|A spontaneous reaction.|u
 sporadic|vaqti-vaqti bilan|spəˈrædɪk|adjective|We heard sporadic gunfire at night.|occasional|5
 stringent|qat’iy (qoidalar)|ˈstrɪndʒənt|adjective|Stringent rules apply.|strict|5
 superficial|yuzaki|ˌsuːpəˈfɪʃl|adjective|A superficial analysis.|shallow|4
-tangible|aniq (sezilarli)|ˈtændʒəbl|adjective|The project brings tangible benefits.|concrete|5
 tedious|zerikarli|ˈtiːdiəs|adjective|A tedious task.|boring|4
 tentative|sinov tariqasidagi|ˈtentətɪv|adjective|A tentative agreement.|provisional|5
 unprecedented|misli ko‘rilmagan|ʌnˈpresɪdentɪd|adjective|An unprecedented crisis.||5
 versatile|ko‘p qirrali|ˈvɜːsətaɪl|adjective|A versatile tool.|flexible|4
 volatile|beqaror|ˈvɒlətaɪl|adjective|A volatile market.|unstable|5
 @ C1 | Advanced adverbs and linkers | word
-accordingly|shunga mos ravishda|əˈkɔːdɪŋli|adverb|Read the rules and act accordingly.||4
 admittedly|tan olish kerakki|ədˈmɪtɪdli|adverb|Admittedly, it is costly.||4
 arguably|ehtimol|ˈɑːɡjuəbli|adverb|He is arguably the best.||4
 chiefly|asosan|ˈtʃiːfli|adverb|It is chiefly a matter of cost.||4
-consequently|natijada|ˈkɒnsɪkwəntli|adverb|Consequently, prices rose.||4
 conversely|aksincha|ˈkɒnvɜːsli|adverb|Conversely, sales fell.||4
 decidedly|shubhasiz|dɪˈsaɪdɪdli|adverb|Decidedly odd behaviour.||5
 inevitably|muqarrar ravishda|ɪnˈevɪtəbli|adverb|Inevitably, prices rise.||4
@@ -192,7 +181,6 @@ bias|xolislik yo‘qligi|ˈbaɪəs|noun|Researchers avoid bias.||4
 catalyst|katalizator|ˈkætəlɪst|noun|The crisis was a catalyst for change.||5
 coefficient|koeffitsiyent|ˌkəʊɪˈfɪʃnt|noun|The coefficient is 0.8.||5
 conjecture|taxmin|kənˈdʒektʃə|noun|It is mere conjecture.||5
-controversial|munozarali|ˌkɒntrəˈvɜːʃl|adjective|A controversial theory.||4
 correlate|bog‘liq bo‘lmoq|ˈkɒrəleɪt|verb|Height correlates with weight.||5
 cumulative|to‘planib boruvchi|ˈkjuːmjələtɪv|adjective|The effect is cumulative.||5
 data set|ma’lumotlar to‘plami|ˈdeɪtə set|noun|The data set is large.||4
@@ -281,16 +269,13 @@ hold back|ushlab qolmoq|həʊld bæk|phrasal_verb|Fear holds him back.||4
 iron out|hal qilmoq (kamchilik)|ˈaɪən aʊt|phrasal_verb|Iron out the problems.||5
 knuckle down|astoydil kirishmoq|ˈnʌkl daʊn|phrasal_verb|He knuckled down to study.||5
 lay out|tartiblab qo‘ymoq|leɪ aʊt|phrasal_verb|Lay out the plan.||4
-look into|tekshirmoq|lʊk ˈɪntuː|phrasal_verb|Police are looking into it.||4
 make up for|o‘rnini to‘ldirmoq|meɪk ʌp fɔː|phrasal_verb|He made up for lost time.||4
 opt out|chetlashmoq|ɒpt aʊt|phrasal_verb|You may opt out.||5
 pan out|natija bermoq|pæn aʊt|phrasal_verb|Things panned out well.||5
 phase in|asta-sekin joriy etmoq|feɪz ɪn|phrasal_verb|They will phase in the rule.||5
 pull off|uddalamoq|pʊl ɒf|phrasal_verb|She pulled off a win.||5
 put forward|taklif qilmoq|pʊt ˈfɔːwəd|phrasal_verb|He put forward an idea.||4
-run into|duch kelmoq|rʌn ˈɪntuː|phrasal_verb|We ran into difficulties.||4
 set out|yo‘lga chiqmoq; belgilamoq|set aʊt|phrasal_verb|They set out their aims.||4
-shed light on|oydinlashtirmoq|ʃed laɪt ɒn|phrasal_verb|Research sheds light on it.||5
 sift through|ko‘zdan kechirmoq|sɪft θruː|phrasal_verb|Sift through the data.||5
 single out|alohida ajratmoq|ˈsɪŋɡl aʊt|phrasal_verb|He was singled out for praise.||5
 step down|iste’foga chiqmoq|step daʊn|phrasal_verb|The chairman stepped down.||4

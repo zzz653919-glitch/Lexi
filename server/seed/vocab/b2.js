@@ -86,8 +86,6 @@ adapt|moslashmoq|əˈdæpt|verb|Children adapt quickly.||3
 trait|xususiyat|treɪt|noun|Honesty is a good trait.||4
 temperament|temperament|ˈtemprəmənt|noun|He has a calm temperament.||5
 extrovert|ekstravert|ˈekstrəvɜːt|noun|An extrovert loves parties.||4
-optimistic|optimist|ˌɒptɪˈmɪstɪk|adjective|She is optimistic.||3
-pessimistic|pessimist|ˌpesɪˈmɪstɪk|adjective|He is pessimistic about the future.||3
 impulsive|shoshqaloq|ɪmˈpʌlsɪv|adjective|An impulsive decision.||4
 cautious|ehtiyotkor|ˈkɔːʃəs|adjective|Be cautious with money.||3
 assertive|qat’iy (o‘z fikrini bildiruvchi)|əˈsɜːtɪv|adjective|Be assertive, not rude.||4
@@ -218,7 +216,6 @@ sea level|dengiz sathi|siː ˈlevl|noun|The sea level is rising.||3
 ice cap|muzlik qoplami|aɪs kæp|noun|The ice caps are melting.||4
 overfishing|haddan ortiq baliq ovlash|ˌəʊvəˈfɪʃɪŋ|noun|Overfishing empties the seas.||4
 pesticide|pestitsid|ˈpestɪsaɪd|noun|Pesticides harm bees.||4
-organic|organik|ɔːˈɡænɪk|adjective|Organic food is expensive.||3
 landfill site|chiqindi poligoni|ˈlændfɪl saɪt|noun|The landfill site is full.||4
 compost|kompost|ˈkɒmpɒst|noun|Garden waste becomes compost.||3
 single-use|bir martalik|ˌsɪŋɡl ˈjuːs|adjective|Ban single-use plastic.||3
@@ -258,9 +255,7 @@ fairness|adolat|ˈfeənəs|noun|Fairness is important.||3
 honesty|halollik|ˈɒnəsti|noun|Honesty is the best policy.||3
 bribery|poraxo‘rlik|ˈbraɪbəri|noun|Bribery is a crime.||4
 corruption|korrupsiya|kəˈrʌpʃn|noun|Corruption harms trust.||4
-fraud|firibgarlik|frɔːd|noun|He was jailed for fraud.||4
 embezzle|o‘zlashtirmoq (pul)|ɪmˈbezl|verb|He embezzled funds.||5
-witness|guvoh|ˈwɪtnəs|noun|A witness saw the crime.||3
 jury|hay’at|ˈdʒʊəri|noun|The jury was fair.||3
 innocent|aybsiz|ˈɪnəsnt|adjective|He is innocent.||3
 guilty|aybdor|ˈɡɪlti|adjective|The jury found him guilty.||3

@@ -1,7 +1,5 @@
 module.exports = `
 @ IELTS | Task 1: describing data | academic
-illustrate|ko‘rsatmoq (grafik)|ˈɪləstreɪt|verb|The graph illustrates energy use.|show|3
-fluctuate|tebranmoq|ˈflʌktʃueɪt|verb|Prices fluctuated over the period.|vary|4
 soar|keskin oshmoq|sɔː|verb|Sales soared in 2019.|rocket|4
 surge|keskin ko‘tarilmoq|sɜːdʒ|verb|Demand surged in winter.||5
 rocket|shiddat bilan oshmoq|ˈrɒkɪt|verb|Prices rocketed last year.||4
@@ -11,7 +9,6 @@ level off|barqarorlashmoq|ˈlevl ɒf|phrasal_verb|The figure levelled off at 20%
 peak|cho‘qqiga chiqmoq|piːk|verb|Sales peaked in July.||3
 bottom out|eng past nuqtaga tushmoq|ˈbɒtəm aʊt|phrasal_verb|Prices bottomed out in March.||5
 remain stable|barqaror qolmoq|rɪˈmeɪn ˈsteɪbl|collocation|Unemployment remained stable.||4
-make up|tashkil qilmoq|meɪk ʌp|phrasal_verb|Women make up 40% of staff.||4
 significant|sezilarli|sɪɡˈnɪfɪkənt|adjective|A significant rise occurred.||3
 substantial|katta (miqdor)|səbˈstænʃl|adjective|A substantial increase.||4
 slight|ozgina|slaɪt|adjective|A slight decline.||3
@@ -112,7 +109,6 @@ on balance|umuman olganda|ɒn ˈbæləns|phrase|On balance, I agree.||4
 to a large extent|katta darajada|tuː ə lɑːdʒ ɪkˈstent|phrase|I agree to a large extent.||4
 to some degree|ma’lum darajada|tuː sʌm dɪˈɡriː|phrase|To some degree, this is true.||4
 by and large|asosan|baɪ ənd lɑːdʒ|phrase|By and large, schools improved.||5
-in the long run|uzoq muddatda|ɪn ðə lɒŋ rʌn|phrase|In the long run, it pays.||4
 in the short term|qisqa muddatda|ɪn ðə ʃɔːt tɜːm|phrase|In the short term, costs rise.||4
 for instance|masalan|fɔːr ˈɪnstəns|phrase|For instance, many cities do this.||3
 in particular|ayniqsa|ɪn pəˈtɪkjələ|phrase|Teenagers, in particular, are affected.||4
@@ -122,7 +118,6 @@ a growing number of|ortib borayotgan|ə ˈɡrəʊɪŋ ˈnʌmbə əv|phrase|A gro
 detrimental|zararli|ˌdetrɪˈmentl|adjective|Noise is detrimental to health.||5
 beneficial|foydali|ˌbenɪˈfɪʃl|adjective|Exercise is beneficial.||3
 feasible|amalga oshirsa bo‘ladigan|ˈfiːzəbl|adjective|The plan is feasible.||4
-inevitable|muqarrar|ɪnˈevɪtəbl|adjective|Change is inevitable.||4
 @ IELTS | Speaking Part 1 and 2 topics | word
 accommodation|turar joy|əˌkɒməˈdeɪʃn|noun|My accommodation is near campus.||2
 hometown|tug‘ilgan shahar|ˈhəʊmtaʊn|noun|My hometown is Bukhara.||2
@@ -184,7 +179,6 @@ coherence|izchillik|kəʊˈhɪərəns|noun|Coherence helps readers.||5
 firstly|birinchidan|ˈfɜːstli|adverb|Firstly, costs are high.||2
 secondly|ikkinchidan|ˈsekəndli|adverb|Secondly, time is limited.||2
 finally|nihoyat|ˈfaɪnəli|adverb|Finally, safety matters.||2
-whereas|holbuki|weərˈæz|conjunction|Some agree, whereas others disagree.||4
 as a consequence|oqibatda|æz ə ˈkɒnsɪkwəns|phrase|As a consequence, prices rose.||4
 for this reason|shu sababli|fɔː ðɪs ˈriːzn|phrase|For this reason, I agree.||3
 to sum up|xulosa qilib|tə sʌm ʌp|phrase|To sum up, I disagree.||3
@@ -214,8 +208,6 @@ let me think|bir o‘ylab ko‘ray|let miː θɪŋk|phrase|Let me think about th
 to put it another way|boshqacha aytganda|tə pʊt ɪt əˈnʌðə weɪ|phrase|To put it another way, it’s costly.||4
 @ IELTS | Common academic words | academic
 abandon|tark etmoq|əˈbændən|verb|They abandoned the project.||3
-accumulate|to‘plamoq|əˈkjuːmjəleɪt|verb|Dust accumulates quickly.||4
-adequate|yetarli|ˈædɪkwət|adjective|Funds are adequate.||4
 albeit|garchi|ɔːlˈbiːɪt|conjunction|A good, albeit costly, plan.||5
 ambiguous|noaniq|æmˈbɪɡjuəs|adjective|The answer was ambiguous.||5
 anticipate|kutmoq|ænˈtɪsɪpeɪt|verb|We anticipate growth.||4
@@ -224,16 +216,12 @@ approach|yondashuv|əˈprəʊtʃ|noun|A new approach is needed.||3
 aspect|jihat|ˈæspekt|noun|An important aspect of life.||3
 assume|taxmin qilmoq|əˈsjuːm|verb|Let’s assume it is true.||4
 assess|baholamoq|əˈses|verb|Assess the risks.||4
-capacity|sig‘im; qobiliyat|kəˈpæsəti|noun|The hall has a capacity of 500.||3
 categorise|toifalarga ajratmoq|ˈkætəɡəraɪz|verb|Categorise the words.||5
-clarify|aniqlashtirmoq|ˈklærəfaɪ|verb|Please clarify your point.||4
 compensate|qoplamoq|ˈkɒmpenseɪt|verb|Pay to compensate losses.||4
 conceive|tasavvur qilmoq|kənˈsiːv|verb|I can’t conceive of it.||5
 contradict|zid bo‘lmoq|ˌkɒntrəˈdɪkt|verb|The data contradict the claim.||4
-contrast|farq|ˈkɒntrɑːst|noun|There is a contrast in styles.||3
 denote|bildirmoq|dɪˈnəʊt|verb|Red denotes danger.||5
 deviate|chetga chiqmoq|ˈdiːvieɪt|verb|Don’t deviate from the topic.||5
-dimension|o‘lcham; jihat|daɪˈmenʃn|noun|A new dimension.||4
 displace|siqib chiqarmoq|dɪsˈpleɪs|verb|Machines displace workers.||5
 distinct|alohida|dɪˈstɪŋkt|adjective|Two distinct groups.||4
 diverse|xilma-xil|daɪˈvɜːs|adjective|A diverse population.||4
@@ -252,9 +240,7 @@ immense|ulkan|ɪˈmens|adjective|An immense effort.||4
 impose|majburlamoq|ɪmˈpəʊz|verb|Governments impose taxes.||4
 inclined|moyil|ɪnˈklaɪnd|adjective|I am inclined to agree.||4
 inhabit|yashamoq (hudud)|ɪnˈhæbɪt|verb|Birds inhabit the island.||5
-initiative|tashabbus|ɪˈnɪʃətɪv|noun|A new initiative started.||4
 innovative|innovatsion|ˈɪnəveɪtɪv|adjective|An innovative design.||4
-insight|chuqur tushuncha|ˈɪnsaɪt|noun|The study gave insight.||4
 integral|ajralmas|ˈɪntɪɡrəl|adjective|An integral part.||5
 interpret|talqin qilmoq|ɪnˈtɜːprɪt|verb|Interpret the graph.||4
 isolate|ajratib qo‘ymoq|ˈaɪsəleɪt|verb|Isolate the problem.||4
@@ -263,12 +249,8 @@ maintain|saqlab qolmoq|meɪnˈteɪn|verb|Maintain good habits.||3
 minimise|minimal darajaga tushirmoq|ˈmɪnɪmaɪz|verb|Minimise the risk.||4
 modify|o‘zgartirmoq|ˈmɒdɪfaɪ|verb|Modify the plan.||4
 monitor|kuzatmoq|ˈmɒnɪtə|verb|Teachers monitor progress closely.||4
-neglect|e’tiborsiz qoldirmoq|nɪˈɡlekt|verb|Don’t neglect your health.||4
 norm|me’yor|nɔːm|noun|It is the social norm.||4
 notion|tushuncha|ˈnəʊʃn|noun|The notion is outdated.||4
-portion|ulush|ˈpɔːʃn|noun|A large portion of income.||3
-potential|imkoniyat|pəˈtenʃl|noun|He has great potential.||3
-predict|bashorat qilmoq|prɪˈdɪkt|verb|Predict the result.||3
 primary|asosiy|ˈpraɪməri|adjective|The primary cause.||3
 principle|tamoyil|ˈprɪnsəpl|noun|A basic principle.||3
 refine|takomillashtirmoq|rɪˈfaɪn|verb|Refine your skills.||4
@@ -279,7 +261,6 @@ shift|o‘zgarish|ʃɪft|noun|A shift in opinion.||3
 sphere|soha|sfɪə|noun|In the political sphere.||5
 stable|barqaror|ˈsteɪbl|adjective|A stable economy.||3
 sustain|davom ettirmoq|səˈsteɪn|verb|Policies can sustain growth.||4
-tendency|moyillik|ˈtendənsi|noun|A tendency to overspend.||4
 transform|o‘zgartirmoq (tubdan)|trænsˈfɔːm|verb|Technology transforms lives.||4
 ultimate|oxirgi; asosiy|ˈʌltɪmət|adjective|The ultimate goal.||4
 unique|yagona|juˈniːk|adjective|A unique opportunity.||3
