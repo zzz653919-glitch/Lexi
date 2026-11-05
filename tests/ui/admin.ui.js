@@ -38,7 +38,7 @@ const { check, withBrowser, openPage, summary, loginUI, startServer, Client } = 
     check((await page.locator('.adm-side nav a[data-nav]').count()) === 9, 'administrator sees all 9 sections');
 
     /* ---------- course -> level -> unit -> lesson -> exercise ---------- */
-    await page.click('.adm-side a:has-text("Courses")'); await page.waitForSelector('.tbl');
+    await page.click('.adm-side a:has-text("Courses")'); await page.waitForSelector('h1:has-text("Courses")'); await page.waitForSelector('.tbl');
     check((await page.locator('.tbl tbody tr').count()) === 2, 'course list shows the two sample courses');
     await page.click('button:has-text("New course")'); await page.waitForSelector('dialog');
     page.expectedStatuses.add(400);
@@ -120,13 +120,13 @@ const { check, withBrowser, openPage, summary, loginUI, startServer, Client } = 
     check(s.db.get("SELECT COUNT(*) n FROM vocabulary WHERE en = 'meeting' COLLATE NOCASE").n >= 1, 'a word was added');
     await page.click('button:has-text("Add word")'); await page.fill('dialog input[name=en]', 'meeting'); await page.fill('dialog input[name=uz]', 'yig‘ilish'); await page.click('dialog button[type=submit]');
     await page.waitForSelector('dialog .form-error:not([hidden])'); check(true, 'duplicate words are rejected'); await page.click('dialog button:has-text("Cancel")');
-    await page.click('button:has-text("Import")'); await page.selectOption('dialog select[name=format]', 'csv'); await page.fill('dialog textarea[name=content]', 'en,uz,pos,cefr\nlibrary,kutubxona,noun,A2\nbridge,ko‘prik,noun,B1'); await page.click('dialog button[type=submit]');
-    await page.waitForSelector('.toast'); check(s.db.get("SELECT COUNT(*) n FROM vocabulary WHERE en IN ('library','bridge')").n === 2, 'CSV vocabulary import works');
-    await page.fill('input[type=search]', 'library'); await page.waitForFunction(() => document.querySelectorAll('.tbl tbody tr').length === 1);
-    await page.check('input[aria-label="Select library"]'); await page.click('button:has-text("Set archived")'); await page.waitForSelector('.toast');
-    check(s.db.get("SELECT status n FROM vocabulary WHERE en = 'library'").n === 'archived', 'bulk status change works');
-    await page.click('button[aria-label="Edit library"]'); await page.waitForSelector('dialog input[name=uz]'); await page.fill('dialog input[name=ru]', 'библиотека'); await page.click('dialog button[type=submit]'); await page.waitForSelector('.toast');
-    check(JSON.parse(s.db.get("SELECT translations n FROM vocabulary WHERE en = 'library'").n).ru === 'библиотека', 'translations in other languages are stored');
+    await page.click('button:has-text("Import")'); await page.selectOption('dialog select[name=format]', 'csv'); await page.fill('dialog textarea[name=content]', 'en,uz,pos,cefr\nlanternfish,chiroqbaliq,noun,A2\ndriftwood,oqib kelgan yog‘och,noun,B1'); await page.click('dialog button[type=submit]');
+    await page.waitForSelector('.toast'); check(s.db.get("SELECT COUNT(*) n FROM vocabulary WHERE en IN ('lanternfish','driftwood')").n === 2, 'CSV vocabulary import works');
+    for (let k = 0; k < 4; k++) { await page.fill('input[type=search]', ''); await page.fill('input[type=search]', 'lanternfish'); try { await page.waitForSelector('.tbl tbody tr:has-text("lanternfish")', { timeout: 4000 }); break; } catch (_) { /* the list was reloading: type again */ } } await page.waitForSelector('.tbl tbody tr:has-text("lanternfish")'); await page.waitForFunction(() => document.querySelectorAll('.tbl tbody tr').length === 1);
+    await page.check('input[aria-label="Select lanternfish"]'); await page.click('button:has-text("Set archived")'); await page.waitForSelector('.toast');
+    check(s.db.get("SELECT status n FROM vocabulary WHERE en = 'lanternfish'").n === 'archived', 'bulk status change works');
+    await page.click('button[aria-label="Edit lanternfish"]'); await page.waitForSelector('dialog input[name=uz]'); await page.fill('dialog input[name=ru]', 'библиотека'); await page.click('dialog button[type=submit]'); await page.waitForSelector('.toast');
+    check(JSON.parse(s.db.get("SELECT translations n FROM vocabulary WHERE en = 'lanternfish'").n).ru === 'библиотека', 'translations in other languages are stored');
 
     /* ---------- users ---------- */
     await page.click('.adm-side a:has-text("Users")'); await page.waitForSelector('.tbl');
