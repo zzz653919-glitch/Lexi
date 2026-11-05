@@ -70,7 +70,6 @@ conquer|zabt etmoq|ˈkɒŋkə|verb|They conquered the region.||4
 cognition|bilish jarayoni|kɒɡˈnɪʃn|noun|Cognition develops in childhood.||5
 behavioural|xulq-atvorga oid|bɪˈheɪvjərəl|adjective|Behavioural change takes time.||5
 conditioning|shartlantirish|kənˈdɪʃənɪŋ|noun|Conditioning shapes habits.||5
-bilingualism|ikki tillilik|baɪˈlɪŋɡwəlɪzəm|noun|Bilingualism helps memory.||5
 mindfulness|onglilik (mindfulness)|ˈmaɪndflnəs|noun|Mindfulness reduces stress.||4
 well-being|farovonlik|ˌwel ˈbiːɪŋ|noun|Sleep affects well-being.||3
 sedentary|harakatsiz|ˈsedntri|adjective|A sedentary job.||5
@@ -78,7 +77,6 @@ obesity|semizlik|əʊˈbiːsəti|noun|Obesity is rising.||4
 immune system|immun tizimi|ɪˈmjuːn ˈsɪstəm|noun|Sleep boosts the immune system.||4
 vaccinate|emlamoq|ˈvæksɪneɪt|verb|Vaccinate children early.||4
 life span|umr uzunligi|laɪf spæn|noun|The average life span rose.||4
-demographic|demografik|ˌdeməˈɡræfɪk|adjective|A demographic shift.||5
 poverty|qashshoqlik|ˈpɒvəti|noun|Poverty limits education.||3
 volunteering|ko‘ngillilik|ˌvɒlənˈtɪərɪŋ|noun|Volunteering builds skills.||3
 social cohesion|ijtimoiy birdamlik|ˈsəʊʃl kəʊˈhiːʒn|noun|Sport builds social cohesion.||5

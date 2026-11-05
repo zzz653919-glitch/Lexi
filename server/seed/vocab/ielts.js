@@ -169,7 +169,6 @@ introduction|kirish|ˌɪntrəˈdʌkʃn|noun|Write a short introduction.||2
 conclusion|xulosa|kənˈkluːʒn|noun|End with a conclusion.||2
 topic sentence|mavzu gap|ˈtɒpɪk ˈsentəns|noun|Start with a topic sentence.||3
 supporting detail|qo‘llab-quvvatlovchi tafsilot|səˈpɔːtɪŋ ˈdiːteɪl|noun|Add a supporting detail.||4
-cohesion|bog‘liqlik|kəʊˈhiːʒn|noun|Cohesion links ideas.||5
 coherence|izchillik|kəʊˈhɪərəns|noun|Coherence helps readers.||5
 firstly|birinchidan|ˈfɜːstli|adverb|Firstly, costs are high.||2
 secondly|ikkinchidan|ˈsekəndli|adverb|Secondly, time is limited.||2
