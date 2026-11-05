@@ -42,7 +42,6 @@ assumption|taxmin|əˈsʌmpʃn|noun|It is a false assumption.||4
 authority|hokimiyat; vakolat|ɔːˈθɒrəti|noun|Local authorities responded.||3
 capacity|sig‘im; qobiliyat|kəˈpæsəti|noun|The hall has a capacity of 500.||3
 commitment|sadoqat; majburiyat|kəˈmɪtmənt|noun|Show your commitment.||4
-consequence|oqibat|ˈkɒnsɪkwəns|noun|The consequences were serious.||3
 contrast|farq|ˈkɒntrɑːst|noun|There is a sharp contrast.||3
 criterion|mezon|kraɪˈtɪəriən|noun|One criterion is cost.||4
 dimension|jihat|daɪˈmenʃn|noun|A moral dimension.||4
@@ -50,12 +49,10 @@ diversity|xilma-xillik|daɪˈvɜːsəti|noun|Cultural diversity enriches us.||4
 emphasis|ta’kid|ˈemfəsɪs|noun|The emphasis is on skills.||3
 expansion|kengayish|ɪkˈspænʃn|noun|The expansion of cities.||3
 fundamental|asosiy|ˌfʌndəˈmentl|adjective|A fundamental right.||4
-impact|ta’sir|ˈɪmpækt|noun|Social media has a huge impact.||3
 implication|oqibat; ma’no|ˌɪmplɪˈkeɪʃn|noun|The implications are serious.||4
 incentive|rag‘bat|ɪnˈsentɪv|noun|Tax cuts are an incentive.||4
 initiative|tashabbus|ɪˈnɪʃətɪv|noun|A new initiative began.||4
 insight|chuqur tushuncha|ˈɪnsaɪt|noun|The book gives insight.||4
-issue|masala|ˈɪʃuː|noun|It is a serious issue.||2
 mindset|fikrlash tarzi|ˈmaɪndset|noun|Develop a growth mindset.||4
 momentum|harakat kuchi|məʊˈmentəm|noun|The campaign gained momentum.||4
 obstacle|to‘siq|ˈɒbstəkl|noun|There are many obstacles.||3
@@ -110,7 +107,6 @@ get away with|jazosiz qolmoq|ɡet əˈweɪ wɪð|phrasal_verb|He got away with i
 get through|o‘tib ketmoq; uddalamoq|ɡet θruː|phrasal_verb|We got through the crisis.||4
 give in|taslim bo‘lmoq|ɡɪv ɪn|phrasal_verb|Don’t give in.||3
 go through|boshdan kechirmoq|ɡəʊ θruː|phrasal_verb|She went through hard times.||4
-hold up|kechiktirmoq|həʊld ʌp|phrasal_verb|Traffic held us up.||3
 keep up with|hamqadam bo‘lmoq|kiːp ʌp wɪð|phrasal_verb|Keep up with the news.||4
 lead to|olib kelmoq|liːd tuː|phrasal_verb|Stress leads to illness.||3
 live on|tirikchilik qilmoq|lɪv ɒn|phrasal_verb|They live on rice.||4

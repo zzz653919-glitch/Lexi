@@ -29,7 +29,6 @@ audience|tomoshabinlar|ˈɔːdiəns|noun|The audience clapped.||2
 ticket office|chipta kassasi|ˈtɪkɪt ˈɒfɪs|noun|The ticket office opens at nine.||2
 board game|stol o‘yini|bɔːd ɡeɪm|noun|We play a board game.||2
 collect|yig‘moq (kolleksiya)|kəˈlekt|verb|He collects stamps.||2
-stamp|marka|stæmp|noun|I collect old stamps.||2
 knit|to‘qimoq|nɪt|verb|Grandma knits socks.||2
 sew|tikmoq|səʊ|verb|She sews her own dresses.||2
 fishing|baliq ovlash|ˈfɪʃɪŋ|noun|My uncle likes fishing.||2

@@ -253,7 +253,6 @@ do away with|bekor qilmoq|duː əˈweɪ wɪð|phrasal_verb|They did away with fe
 draw up|tuzmoq (hujjat)|drɔː ʌp|phrasal_verb|Draw up a contract.||4
 fall back on|tayanmoq|fɔːl bæk ɒn|phrasal_verb|I can fall back on savings.||5
 filter out|saralab tashlamoq|ˈfɪltər aʊt|phrasal_verb|Filter out the noise.||4
-get across|tushuntirmoq (yetkazmoq)|ɡet əˈkrɒs|phrasal_verb|Get your message across.||4
 get round to|vaqt topmoq|ɡet raʊnd tuː|phrasal_verb|I never got round to it.||5
 go into|chuqur kirishmoq|ɡəʊ ˈɪntuː|phrasal_verb|Don’t go into detail.||4
 hold back|ushlab qolmoq|həʊld bæk|phrasal_verb|Fear holds him back.||4

@@ -21,7 +21,6 @@ memory|xotira; esdalik|ˈmeməri|noun|It is a happy memory.||2
 childhood|bolalik|ˈtʃaɪldhʊd|noun|I had a happy childhood.||2
 generation|avlod|ˌdʒenəˈreɪʃn|noun|The older generation remembers it.||2
 celebrity|mashhur shaxs|səˈlebrəti|noun|He met a celebrity.||2
-hero|qahramon|ˈhɪərəʊ|noun|My grandfather is my hero.||2
 role model|o‘rnak (namuna)|rəʊl ˈmɒdl|noun|She is a role model for girls.||2
 lifetime|umr|ˈlaɪftaɪm|noun|It is a once-in-a-lifetime chance.||2
 anniversary|yubiley|ˌænɪˈvɜːsəri|noun|It is our wedding anniversary.||2
@@ -62,7 +61,6 @@ environment|atrof-muhit|ɪnˈvaɪrənmənt|noun|We must protect the environment.
 pollute|ifloslantirmoq|pəˈluːt|verb|Factories pollute the river.||2
 litter|axlat (ko‘chada)|ˈlɪtə|noun|Don’t drop litter.||2
 landfill|chiqindi poligoni|ˈlændfɪl|noun|Waste goes to landfill.||3
-plastic|plastik|ˈplæstɪk|noun|Plastic harms the sea.||2
 recyclable|qayta ishlanadigan|riːˈsaɪkləbl|adjective|Is this bottle recyclable?||3
 solar|quyosh (energiyasi)|ˈsəʊlə|adjective|Solar panels are cheap now.||2
 wind power|shamol energiyasi|wɪnd ˈpaʊə|noun|Wind power is clean.||2
@@ -105,7 +103,6 @@ virus|virus|ˈvaɪrəs|noun|The virus spreads fast.||2
 vaccine|vaksina|ˈvæksiːn|noun|Children get a vaccine.||3
 treatment|davolash|ˈtriːtmənt|noun|The treatment worked.||2
 disease|kasallik|dɪˈziːz|noun|It is a serious disease.||2
-pain|og‘riq|peɪn|noun|I feel pain in my leg.||2
 dizzy|boshi aylangan|ˈdɪzi|adjective|I feel dizzy.||2
 nausea|ko‘ngil aynishi|ˈnɔːziə|noun|She felt nausea.||3
 addiction|qaramlik (odat)|əˈdɪkʃn|noun|Phone addiction is common.||3
@@ -122,7 +119,6 @@ take medicine|dori ichmoq|teɪk ˈmedsn|collocation|Take medicine twice a day.||
 keep fit|sog‘lom bo‘lib turmoq|kiːp fɪt|collocation|I swim to keep fit.||2
 get enough sleep|yetarlicha uxlamoq|ɡet ɪˈnʌf sliːp|collocation|You must get enough sleep.||2
 @ B1 | Culture and traditions | word
-tradition|an’ana|trəˈdɪʃn|noun|It is an old tradition.||2
 ceremony|marosim|ˈserəməni|noun|The wedding ceremony was long.||2
 religion|din|rɪˈlɪdʒən|noun|Religion is important to many.||2
 belief|e’tiqod|bɪˈliːf|noun|It is a common belief.||2
@@ -144,7 +140,6 @@ legend|rivoyat|ˈledʒənd|noun|There is a legend about the lake.||2
 proverb|maqol|ˈprɒvɜːb|noun|A proverb teaches wisdom.||3
 dialect|lahja|ˈdaɪəlekt|noun|They speak a local dialect.||3
 customary|odatiy (an’anaviy)|ˈkʌstəməri|adjective|It is customary to take off shoes.||3
-polite|xushmuomala|pəˈlaɪt|adjective|It is polite to say thank you.||2
 etiquette|odob qoidalari|ˈetɪket|noun|Learn local etiquette.||3
 elder|keksa kishi|ˈeldə|noun|Respect your elders.||3
 bride|kelin|braɪd|noun|The bride wore white.||2
@@ -186,13 +181,11 @@ invest|sarmoya kiritmoq|ɪnˈvest|verb|He invested in a company.||3
 pension|pensiya|ˈpenʃn|noun|She receives a pension.||3
 tax|soliq|tæks|noun|We pay tax every year.||2
 brand|brend|brænd|noun|It is a famous brand.||2
-quality|sifat|ˈkwɒləti|noun|The quality is high.||2
 second-hand|ishlatilgan|ˌsekənd ˈhænd|adjective|I bought a second-hand car.||3
 online shop|onlayn do‘kon|ˈɒnlaɪn ʃɒp|noun|She runs an online shop.||2
 delivery charge|yetkazib berish haqi|dɪˈlɪvəri tʃɑːdʒ|noun|The delivery charge is five dollars.||3
 guarantee|kafolat|ˌɡærənˈtiː|noun|The phone has a guarantee.||3
 exchange|almashtirmoq|ɪksˈtʃeɪndʒ|verb|Can I exchange this shirt?||2
-complain|shikoyat qilmoq|kəmˈpleɪn|verb|I complained about the service.||2
 spend money on|pul sarflamoq|spend ˈmʌni ɒn|collocation|He spends money on books.||2
 save up|yig‘moq|seɪv ʌp|phrasal_verb|I’m saving up for a laptop.||3
 pay back|qaytarib bermoq|peɪ bæk|phrasal_verb|I’ll pay you back tomorrow.||3
@@ -215,7 +208,6 @@ gadget|qurilma (kichik)|ˈɡædʒɪt|noun|She loves new gadgets.||2
 smartwatch|aqlli soat|ˈsmɑːtwɒtʃ|noun|He wears a smartwatch.||3
 online|onlayn|ˌɒnˈlaɪn|adjective|Online shopping is easy.||2
 offline|oflayn|ˌɒfˈlaɪn|adjective|The app works offline.||3
-blog|blog|blɒɡ|noun|She writes a travel blog.||2
 influencer|influenser|ˈɪnfluənsə|noun|The influencer posts daily.||3
 follower|obunachi|ˈfɒləʊə|noun|She has many followers.||2
 hashtag|heshteg|ˈhæʃtæɡ|noun|Use a hashtag.||3
@@ -229,14 +221,11 @@ sign up|ro‘yxatdan o‘tmoq|saɪn ʌp|phrasal_verb|Sign up for the course.||2
 relationship|munosabat|rɪˈleɪʃnʃɪp|noun|They have a good relationship.||2
 trust|ishonch|trʌst|noun|Trust is important.||2
 respect|hurmat|rɪˈspekt|noun|Show respect to elders.||2
-argument|tortishuv|ˈɑːɡjumənt|noun|They had an argument.||2
 quarrel|janjal|ˈkwɒrəl|noun|A small quarrel ended quickly.||3
-apologise|uzr so‘ramoq|əˈpɒlədʒaɪz|verb|He apologised for being late.||2
 support|qo‘llab-quvvatlamoq|səˈpɔːt|verb|Friends support each other.||2
 rely on|tayanmoq|rɪˈlaɪ ɒn|phrasal_verb|You can rely on me.||3
 fall in love|sevib qolmoq|fɔːl ɪn lʌv|phrase|They fell in love.||2
 single|turmush qurmagan|ˈsɪŋɡl|adjective|She is single.||2
-generous|saxiy|ˈdʒenərəs|adjective|He is a generous man.||2
 sociable|muloqotga ochiq|ˈsəʊʃəbl|adjective|She is sociable.||3
 reserved|ichiga yopiq|rɪˈzɜːvd|adjective|He is a reserved person.||3
 easy-going|xotirjam|ˌiːzi ˈɡəʊɪŋ|adjective|My boss is easy-going.||3
@@ -260,7 +249,6 @@ cheat|ko‘chirmoq (aldamoq)|tʃiːt|verb|Don’t cheat in exams.||2
 concentrate|diqqatni jamlamoq|ˈkɒnsntreɪt|verb|I can’t concentrate.||2
 memorise|yodlamoq|ˈmeməraɪz|verb|Memorise the words.||2
 skill|ko‘nikma|skɪl|noun|Reading is a skill.||2
-knowledge|bilim|ˈnɒlɪdʒ|noun|Knowledge is power.||2
 talent|iste’dod|ˈtælənt|noun|She has a talent for music.||2
 curriculum|o‘quv dasturi|kəˈrɪkjələm|noun|The curriculum is new.||3
 catch up|yetib olmoq|kætʃ ʌp|phrasal_verb|I need to catch up.||3
@@ -306,28 +294,20 @@ continue|davom etmoq|kənˈtɪnjuː|verb|Please continue with the story.||2
 contain|o‘z ichiga olmoq|kənˈteɪn|verb|The box contains books.||3
 create|yaratmoq|kriˈeɪt|verb|He creates new designs.||2
 deliver|yetkazmoq|dɪˈlɪvə|verb|They deliver pizza.||2
-depend|bog‘liq bo‘lmoq|dɪˈpend|verb|It depends on the weather.||2
-discover|kashf etmoq|dɪˈskʌvə|verb|They discovered a cave.||2
 discuss|muhokama qilmoq|dɪˈskʌs|verb|Let’s discuss the plan.||2
-encourage|rag‘batlantirmoq|ɪnˈkʌrɪdʒ|verb|Teachers encourage students.||3
 express|ifodalamoq|ɪkˈspres|verb|Express your opinion.||3
-guess|taxmin qilmoq|ɡes|verb|Guess the answer.||2
 happen|sodir bo‘lmoq|ˈhæpən|verb|What happened to your phone?||2
 include|o‘z ichiga olmoq|ɪnˈkluːd|verb|Breakfast is included.||2
 increase|oshmoq|ɪnˈkriːs|verb|Prices increase every year.||2
 decrease|kamaymoq|dɪˈkriːs|verb|The number decreased.||3
 influence|ta’sir qilmoq|ˈɪnfluəns|verb|Friends influence us.||3
-manage|uddalamoq|ˈmænɪdʒ|verb|She managed to finish.||2
-notice|sezmoq|ˈnəʊtɪs|verb|I noticed a mistake.||2
 obtain|qo‘lga kiritmoq|əbˈteɪn|verb|He obtained a visa.||3
 occur|yuz bermoq|əˈkɜː|verb|Accidents occur daily.||3
 organise|tashkil qilmoq|ˈɔːɡənaɪz|verb|We organised a party.||2
 persuade|ko‘ndirmoq|pəˈsweɪd|verb|I persuaded him to come.||3
-prefer|afzal ko‘rmoq|prɪˈfɜː|verb|I prefer tea to coffee.||2
 prevent|oldini olmoq (to‘sqinlik)|prɪˈvent|verb|Vaccines prevent disease.||3
 produce|ishlab chiqarmoq|prəˈdjuːs|verb|The farm produces milk.||2
 provide|ta’minlamoq|prəˈvaɪd|verb|The hotel provides breakfast.||2
-realise|anglab yetmoq|ˈrɪəlaɪz|verb|I realised I was wrong.||2
 reduce|kamaytirmoq|rɪˈdjuːs|verb|Reduce the cost.||2
 refuse|rad etmoq|rɪˈfjuːz|verb|He refused to help.||2
 remind|eslatmoq|rɪˈmaɪnd|verb|Remind me to call.||2
@@ -341,7 +321,6 @@ annoying|g‘ashga tegadigan|əˈnɔɪɪŋ|adjective|The noise is annoying.||3
 anxious|xavotirli|ˈæŋkʃəs|adjective|She is anxious about the test.||3
 complicated|murakkab|ˈkɒmplɪkeɪtɪd|adjective|The rules are complicated.||3
 confused|adashgan|kənˈfjuːzd|adjective|I am confused.||2
-curious|qiziquvchan|ˈkjʊəriəs|adjective|Children are curious.||3
 delighted|juda xursand|dɪˈlaɪtɪd|adjective|I’m delighted to meet you.||3
 disgusting|jirkanch|dɪsˈɡʌstɪŋ|adjective|The smell is disgusting.||3
 efficient|samarali|ɪˈfɪʃnt|adjective|The system is efficient.||3
@@ -352,7 +331,6 @@ fascinating|maftunkor|ˈfæsɪneɪtɪŋ|adjective|The story is fascinating.||3
 frightened|qo‘rqib ketgan|ˈfraɪtnd|adjective|The child is frightened.||3
 furious|g‘azablangan|ˈfjʊəriəs|adjective|He was furious.||3
 harmful|zararli|ˈhɑːmfl|adjective|Smoking is harmful.||3
-helpful|yordamchan|ˈhelpfl|adjective|She is very helpful.||2
 hopeless|umidsiz|ˈhəʊpləs|adjective|I’m hopeless at maths.||3
 impressive|ta’sirli|ɪmˈpresɪv|adjective|His speech was impressive.||3
 informal|norasmiy|ɪnˈfɔːml|adjective|It was an informal meeting.||3
@@ -360,17 +338,14 @@ junior|kichik (lavozim)|ˈdʒuːniə|adjective|He is a junior employee.||3
 senior|katta (lavozim)|ˈsiːniə|adjective|She is a senior manager.||3
 mad|aqldan ozgan; jahldor|mæd|adjective|He is mad at me.||3
 mysterious|sirli|mɪˈstɪəriəs|adjective|A mysterious noise.||3
-ordinary|oddiy|ˈɔːdnri|adjective|It’s an ordinary day.||3
 pleasant|yoqimli|ˈpleznt|adjective|A pleasant surprise.||2
 reasonable|asosli; oqilona|ˈriːznəbl|adjective|The price is reasonable.||3
 relaxed|xotirjam|rɪˈlækst|adjective|I feel relaxed.||2
 ridiculous|kulgili (bema’ni)|rɪˈdɪkjələs|adjective|That idea is ridiculous.||3
-serious|jiddiy|ˈsɪəriəs|adjective|It’s a serious problem.||2
 shocked|hayratga tushgan|ʃɒkt|adjective|I was shocked.||3
 silly|ahmoqona|ˈsɪli|adjective|Don’t be silly.||2
 suitable|mos|ˈsuːtəbl|adjective|Is this suitable?||3
 terrific|ajoyib|təˈrɪfɪk|adjective|A terrific idea.||3
-useless|foydasiz|ˈjuːsləs|adjective|The map is useless.||2
 valuable|qimmatli|ˈvæljuəbl|adjective|A valuable painting.||3
 @ B1 | Everyday collocations | word
 make a mistake|xato qilmoq|meɪk ə mɪˈsteɪk|collocation|I made a mistake.||2

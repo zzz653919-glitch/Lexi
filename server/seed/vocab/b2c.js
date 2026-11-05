@@ -32,7 +32,6 @@ circuit|elektr zanjiri|ˈsɜːkɪt|noun|A short circuit.||4
 conductor|o‘tkazgich|kənˈdʌktə|noun|Copper is a conductor.||5
 data mining|ma’lumotlarni qazish|ˈdeɪtə ˈmaɪnɪŋ|noun|Data mining finds patterns.||5
 diagnostic|diagnostik|ˌdaɪəɡˈnɒstɪk|adjective|A diagnostic test.||5
-engine|dvigatel|ˈendʒɪn|noun|The engine is powerful.||3
 fibre optic|optik tolali|ˈfaɪbər ˈɒptɪk|adjective|Fibre optic cables.||5
 interface|interfeys|ˈɪntəfeɪs|noun|The interface is simple.||5
 laser|lazer|ˈleɪzə|noun|A laser beam.||4

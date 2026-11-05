@@ -5,11 +5,9 @@ welfare|ijtimoiy ta’minot|ˈwelfeə|noun|The state provides welfare.||3
 homelessness|uy-joysizlik|ˈhəʊmləsnəs|noun|Homelessness is rising in big cities.||3
 discrimination|kamsitish|dɪˌskrɪmɪˈneɪʃn|noun|Discrimination is illegal.||3
 prejudice|noxolis qarash|ˈpredʒədɪs|noun|Prejudice affects hiring.||3
-equality|tenglik|ɪˈkwɒləti|noun|Gender equality is a goal.||3
 minority|ozchilik|maɪˈnɒrəti|noun|A small minority disagreed.||3
 majority|ko‘pchilik|məˈdʒɒrəti|noun|The majority voted yes.||3
 migrant|migrant|ˈmaɪɡrənt|noun|Migrants send money home.||3
-border|chegara|ˈbɔːdə|noun|The border is closed.||3
 citizenship|fuqarolik|ˈsɪtɪznʃɪp|noun|She applied for citizenship.||3
 humanitarian|insonparvarlik|hjuːˌmænɪˈteəriən|adjective|They sent humanitarian aid.||4
 famine|ocharchilik|ˈfæmɪn|noun|Famine hit the region.||4
@@ -63,7 +61,6 @@ glitch|nosozlik|ɡlɪtʃ|noun|A glitch stopped the site.||4
 crash|ishdan chiqmoq|kræʃ|verb|The program crashed.||3
 @ B2 | Psychology and behaviour | word
 behaviour|xatti-harakat|bɪˈheɪvjə|noun|His behaviour changed.||3
-attitude|munosabat|ˈætɪtjuːd|noun|She has a positive attitude.||3
 emotion|his-tuyg‘u|ɪˈməʊʃn|noun|He hid his emotions.||3
 instinct|instinkt|ˈɪnstɪŋkt|noun|Trust your instincts.||4
 subconscious|ong osti|ˌsʌbˈkɒnʃəs|adjective|It is a subconscious habit.||5
@@ -132,7 +129,6 @@ tariff|bojxona to‘lovi|ˈtærɪf|noun|A tariff was imposed.||5
 monopoly|monopoliya|məˈnɒpəli|noun|The firm has a monopoly.||5
 competitor|raqobatchi|kəmˈpetɪtə|noun|Our competitors cut prices.||3
 consumer|iste’molchi|kənˈsjuːmə|noun|Consumers want lower prices.||3
-demand|talab|dɪˈmɑːnd|noun|Demand is rising.||3
 supply|taklif|səˈplaɪ|noun|Supply cannot meet demand.||3
 production|ishlab chiqarish|prəˈdʌkʃn|noun|Production fell last month.||3
 manufacturing|ishlab chiqarish (sanoat)|ˌmænjuˈfæktʃərɪŋ|noun|Manufacturing creates jobs.||4
@@ -249,7 +245,6 @@ ethics|axloq|ˈeθɪks|noun|Medical ethics matters.||4
 moral|axloqiy|ˈmɒrəl|adjective|It is a moral issue.||3
 immoral|axloqsiz|ɪˈmɒrəl|adjective|Lying can be immoral.||4
 fairness|adolat|ˈfeənəs|noun|Fairness is important.||3
-honesty|halollik|ˈɒnəsti|noun|Honesty is the best policy.||3
 bribery|poraxo‘rlik|ˈbraɪbəri|noun|Bribery is a crime.||4
 corruption|korrupsiya|kəˈrʌpʃn|noun|Corruption harms trust.||4
 embezzle|o‘zlashtirmoq (pul)|ɪmˈbezl|verb|He embezzled funds.||5

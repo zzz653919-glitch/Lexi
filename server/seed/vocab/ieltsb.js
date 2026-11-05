@@ -16,7 +16,6 @@ booking reference|band qilish raqami|ˈbʊkɪŋ ˈrefrəns|noun|Quote your booki
 departure lounge|jo‘nab ketish zali|dɪˈpɑːtʃə laʊndʒ|noun|Wait in the departure lounge.||4
 baggage allowance|bagaj me’yori|ˈbæɡɪdʒ əˈlaʊəns|noun|Check your baggage allowance.||4
 return fare|borib-kelish narxi|rɪˈtɜːn feə|noun|The return fare is cheap.||3
-car park|avtoturargoh|kɑː pɑːk|noun|The car park is free.||2
 opening hours|ish vaqti|ˈəʊpnɪŋ ˈaʊəz|noun|Check opening hours.||2
 admission|kirish (to‘lov)|ədˈmɪʃn|noun|Admission is free.||3
 guided tour|gid bilan ekskursiya|ˌɡaɪdɪd ˈtʊə|noun|Join the guided tour.||3
@@ -41,7 +40,6 @@ crop|ekin|krɒp|noun|Drought damaged crops.||2
 irrigation|sug‘orish|ˌɪrɪˈɡeɪʃn|noun|Irrigation feeds fields.||4
 fertile|unumdor|ˈfɜːtaɪl|adjective|Fertile soil helps farmers a lot.||4
 glacier|muzlik|ˈɡlæsiə|noun|The glacier is retreating.||3
-atmosphere|atmosfera|ˈætməsfɪə|noun|The atmosphere protects Earth.||3
 orbit|orbita|ˈɔːbɪt|noun|The satellite is in orbit.||4
 galaxy|galaktika|ˈɡæləksi|noun|Our galaxy is the Milky Way.||4
 telescope|teleskop|ˈtelɪskəʊp|noun|He looked through a telescope.||3
@@ -99,7 +97,6 @@ state-of-the-art|eng zamonaviy|ˌsteɪt əv ði ˈɑːt|adjective|A state-of-the
 wedding|to‘y|ˈwedɪŋ|noun|I went to a wedding.||2
 gathering|yig‘ilish|ˈɡæðərɪŋ|noun|A family gathering.||3
 reunion|uchrashuv (qayta)|riːˈjuːniən|noun|A school reunion.||4
-celebration|nishonlash|ˌselɪˈbreɪʃn|noun|A New Year celebration.||3
 @ IELTS | Writing Task 2 topics: work, crime, media, travel | academic
 telecommuting|masofadan ishlash|ˌtelɪkəˈmjuːtɪŋ|noun|Telecommuting saves time.||5
 flexible hours|moslashuvchan ish soatlari|ˈfleksəbl ˈaʊəz|noun|Flexible hours help parents.||3

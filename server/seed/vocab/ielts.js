@@ -120,7 +120,6 @@ hometown|tug‘ilgan shahar|ˈhəʊmtaʊn|noun|My hometown is Bukhara.||2
 commute|qatnamoq|kəˈmjuːt|verb|I commute by bus.||3
 routine|kun tartibi|ruːˈtiːn|noun|My morning routine is simple.||2
 pastime|vaqt o‘tkazish usuli|ˈpɑːstaɪm|noun|Reading is my favourite pastime.||3
-hang out|vaqt o‘tkazmoq (do‘stlar bilan)|hæŋ aʊt|phrasal_verb|We hang out at weekends.||3
 socialise|muloqot qilmoq|ˈsəʊʃəlaɪz|verb|I socialise with friends.||3
 get together|yig‘ilmoq|ɡet təˈɡeðə|phrasal_verb|We get together on Fridays.||3
 take part in|qatnashmoq|teɪk pɑːt ɪn|phrasal_verb|I take part in contests.||3
@@ -190,7 +189,6 @@ consumerism|iste’molchilik|kənˈsjuːmərɪzəm|noun|Consumerism drives waste
 materialistic|moddiyatparast|məˌtɪəriəˈlɪstɪk|adjective|Society is materialistic.||5
 lifestyle|turmush tarzi|ˈlaɪfstaɪl|noun|A healthy lifestyle matters.||3
 awareness|xabardorlik|əˈweənəs|noun|Raise awareness of health.||3
-responsibility|mas’uliyat|rɪˌspɒnsəˈbɪləti|noun|Parents bear responsibility.||3
 challenge|qiyinchilik|ˈtʃælɪndʒ|noun|Change is a challenge.||3
 generalise|umumlashtirmoq|ˈdʒenrəlaɪz|verb|It’s hard to generalise.||4
 speculate|taxmin qilmoq|ˈspekjuleɪt|verb|I can only speculate.||5
@@ -245,7 +243,6 @@ monitor|kuzatmoq|ˈmɒnɪtə|verb|Teachers monitor progress closely.||4
 norm|me’yor|nɔːm|noun|It is the social norm.||4
 notion|tushuncha|ˈnəʊʃn|noun|The notion is outdated.||4
 primary|asosiy|ˈpraɪməri|adjective|The primary cause.||3
-principle|tamoyil|ˈprɪnsəpl|noun|A basic principle.||3
 rely|tayanmoq|rɪˈlaɪ|verb|Many rely on phones.||3
 retain|saqlab qolmoq|rɪˈteɪn|verb|Retain key facts.||4
 shift|o‘zgarish|ʃɪft|noun|A shift in opinion.||3

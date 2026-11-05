@@ -1,13 +1,10 @@
 module.exports = `
 @ B1 | Crime and safety | word
-crime|jinoyat|kraɪm|noun|Crime has fallen in our city.||2
 criminal|jinoyatchi|ˈkrɪmɪnl|noun|The police caught the criminal.||2
-thief|o‘g‘ri|θiːf|noun|A thief stole my bike.||2
 burglar|uy o‘g‘risi|ˈbɜːɡlə|noun|A burglar broke into the house.||3
 robbery|talonchilik|ˈrɒbəri|noun|The bank robbery shocked everyone.||3
 murder|qotillik|ˈmɜːdə|noun|The murder happened last night.||3
 arrest|hibsga olmoq|əˈrest|verb|They arrested two men.||3
-punish|jazolamoq|ˈpʌnɪʃ|verb|Don’t punish him unfairly.||2
 prison|qamoqxona|ˈprɪzn|noun|He spent a year in prison.||2
 suspect|gumon qilinuvchi|ˈsʌspekt|noun|The suspect was questioned.||3
 evidence|dalil|ˈevɪdəns|noun|There is no evidence.||3
@@ -26,7 +23,6 @@ furnished|mebelli|ˈfɜːnɪʃt|adjective|The flat is furnished.||3
 spacious|keng|ˈspeɪʃəs|adjective|The living room is spacious.||2
 cramped|tor (siqiq)|kræmpt|adjective|The room is cramped.||3
 suburbs|shahar atrofi|ˈsʌbɜːbz|noun|They live in the suburbs.||2
-noise|shovqin|nɔɪz|noun|The noise keeps me awake.||2
 pollution|ifloslanish|pəˈluːʃn|noun|Pollution is a problem.||2
 crowded|gavjum|ˈkraʊdɪd|adjective|The metro is crowded.||2
 heating|isitish|ˈhiːtɪŋ|noun|The heating is broken.||2
@@ -47,7 +43,6 @@ tornado|qaymoq (tornado)|tɔːˈneɪdəʊ|noun|The tornado destroyed houses.||3
 landslide|ko‘chki|ˈlændslaɪd|noun|A landslide blocked the road.||3
 avalanche|qor ko‘chkisi|ˈævəlɑːntʃ|noun|The avalanche buried a hut.||3
 tsunami|sunami|tsuːˈnɑːmi|noun|The tsunami hit the coast.||3
-emergency|favqulodda holat|ɪˈmɜːdʒənsi|noun|Call 103 in an emergency.||2
 evacuate|evakuatsiya qilmoq|ɪˈvækjueɪt|verb|They evacuated the village.||3
 damage|zarar|ˈdæmɪdʒ|noun|The storm caused damage.||2
 @ B1 | Food, shopping and services | word
@@ -66,18 +61,13 @@ service charge|xizmat haqi|ˈsɜːvɪs tʃɑːdʒ|noun|The service charge is 10%
 queue up|navbatga turmoq|kjuː ʌp|phrasal_verb|People queue up for bread.||3
 hairdresser|sartarosh|ˈheədresə|noun|I go to the hairdresser.||2
 dry cleaner|kimyoviy tozalash|draɪ ˈkliːnə|noun|Take it to the dry cleaner.||3
-laundry|kir yuvish|ˈlɔːndri|noun|I do the laundry on Sunday.||2
 @ B1 | Verbs of communication and thought | word
-argue|tortishmoq|ˈɑːɡjuː|verb|They argue about money.||2
 convince|ishontirmoq|kənˈvɪns|verb|He convinced me to go.||3
 doubt|shubhalanmoq|daʊt|verb|I doubt it will work.||3
-expect|kutmoq|ɪkˈspekt|verb|I expect a reply.||2
 hesitate|ikkilanmoq|ˈhezɪteɪt|verb|Don’t hesitate to ask.||3
 insist|turib olmoq|ɪnˈsɪst|verb|He insists on paying.||3
 mention|eslatib o‘tmoq|ˈmenʃn|verb|She mentioned your name.||2
-offer|taklif qilmoq|ˈɒfə|verb|He offered me a job.||2
 predict|bashorat qilmoq|prɪˈdɪkt|verb|Nobody can predict the future.||3
-promise|va’da bermoq|ˈprɒmɪs|verb|I promise to call.||2
 propose|taklif qilmoq|prəˈpəʊz|verb|He proposed a new plan.||3
 recommend|tavsiya qilmoq|ˌrekəˈmend|verb|I recommend this book.||2
 suppose|taxmin qilmoq|səˈpəʊz|verb|I suppose you are right.||3
@@ -100,9 +90,7 @@ modest|kamtar|ˈmɒdɪst|adjective|He is modest about his success.||3
 moody|kayfiyati o‘zgaruvchan|ˈmuːdi|adjective|Teenagers can be moody.||3
 optimistic|optimist|ˌɒptɪˈmɪstɪk|adjective|I am optimistic.||3
 pessimistic|pessimist|ˌpesɪˈmɪstɪk|adjective|He is pessimistic.||3
-sensible|oqilona|ˈsensəbl|adjective|A sensible decision.||3
 talkative|gapdon|ˈtɔːkətɪv|adjective|She is very talkative.||3
-tidy|saranjom|ˈtaɪdi|adjective|His room is tidy.||2
 untidy|tartibsiz|ʌnˈtaɪdi|adjective|My desk is untidy.||2
 trustworthy|ishonchli|ˈtrʌstwɜːði|adjective|He is trustworthy.||3
 @ B1 | Phrasal verbs 2 | phrasal_verb

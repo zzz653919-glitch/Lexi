@@ -14,7 +14,6 @@ room service|xonaga xizmat|ruːm ˈsɜːvɪs|noun|We ordered room service.||3
 wake-up call|uyg‘otish qo‘ng‘irog‘i|ˈweɪk ʌp kɔːl|noun|I asked for a wake-up call.||3
 vacancy|bo‘sh xona|ˈveɪkənsi|noun|The hotel has no vacancies.||3
 fully booked|to‘liq band|ˈfʊli bʊkt|adjective|The hotel is fully booked.||3
-special|kunning taomi|ˈspeʃl|noun|Today’s special is fish.||3
 side dish|garnir|saɪd dɪʃ|noun|Rice is a side dish.||3
 appetiser|yengil gazak|ˈæpɪtaɪzə|noun|We ordered an appetiser.||3
 booking|band qilish|ˈbʊkɪŋ|noun|I made a booking online.||2
@@ -35,7 +34,6 @@ cotton|paxta|ˈkɒtn|noun|Cotton is comfortable.||2
 silk|ipak|sɪlk|noun|Silk is expensive.||2
 wool|jun|wʊl|noun|A wool sweater.||2
 zip|molniya|zɪp|noun|The zip is broken.||3
-button|tugma|ˈbʌtn|noun|A button fell off.||2
 stylish|zamonaviy (chiroyli)|ˈstaɪlɪʃ|adjective|A stylish coat.||3
 @ B1 | Work and office life | word
 meeting room|yig‘ilish xonasi|ˈmiːtɪŋ ruːm|noun|The meeting room is free.||3
@@ -74,7 +72,6 @@ equation|tenglama|ɪˈkweɪʒn|noun|Solve the equation.||3
 microscope|mikroskop|ˈmaɪkrəskəʊp|noun|Look through the microscope.||3
 planet|sayyora|ˈplænɪt|noun|Mars is a planet.||2
 gravity|tortishish kuchi|ˈɡrævəti|noun|Gravity pulls us down.||3
-energy|energiya|ˈenədʒi|noun|Solar energy is clean.||2
 @ B1 | City services and community | word
 council|kengash|ˈkaʊnsl|noun|The council built a park.||3
 mayor|shahar hokimi|meə|noun|The mayor opened the bridge.||3
@@ -100,7 +97,6 @@ astonished|hayratda qolgan|əˈstɒnɪʃt|adjective|He was astonished.||3
 cautious|ehtiyotkor|ˈkɔːʃəs|adjective|Please be cautious on the ice.||3
 charming|maftunkor|ˈtʃɑːmɪŋ|adjective|A charming man.||3
 content|mamnun|kənˈtent|adjective|She is content with life.||3
-dull|zerikarli|dʌl|adjective|The lecture was dull.||3
 eager|ishtiyoqmand|ˈiːɡə|adjective|He is eager to learn.||3
 envious|hasad qiluvchi|ˈenviəs|adjective|She felt envious.||3
 fascinated|maftun bo‘lgan|ˈfæsɪneɪtɪd|adjective|I’m fascinated by space.||3
@@ -124,7 +120,6 @@ collapse|qulab tushmoq|kəˈlæps|verb|The bridge collapsed.||3
 crawl|emaklamoq|krɔːl|verb|The baby crawls.||3
 dig|qazimoq|dɪɡ|verb|They dug a hole.||3
 drag|sudramoq|dræɡ|verb|Drag the box.||3
-escape|qochmoq|ɪˈskeɪp|verb|The prisoner escaped.||3
 explode|portlamoq|ɪkˈspləʊd|verb|The bomb exploded.||3
 float|suzib yurmoq|fləʊt|verb|The boat floats.||3
 hide|yashirmoq|haɪd|verb|Hide the gift.||3

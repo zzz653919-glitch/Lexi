@@ -133,14 +133,12 @@ tin|konserva|tɪn|noun|A tin of tomatoes.||2
 loaf|non (butun)|ləʊf|noun|Buy a loaf of bread.||2
 butcher|qassob|ˈbʊtʃə|noun|We buy meat at the butcher’s.||2
 chemist|dorixona|ˈkemɪst|noun|The chemist is open.||2
-bookshop|kitob do‘koni|ˈbʊkʃɒp|noun|I found it in a bookshop.||2
 grocery|oziq-ovqat do‘koni|ˈɡrəʊsəri|noun|She works in a grocery.||2
 @ A2 | Food and cooking | word
 recipe|retsept|ˈresəpi|noun|This is my grandma’s recipe.||2
 fry|qovurmoq|fraɪ|verb|Fry the onions.||2
 roast|dudlamoq; pishirmoq|rəʊst|verb|Roast the chicken.||2
 slice|bo‘lak|slaɪs|noun|A slice of bread.||2
-glass|stakan|ɡlɑːs|noun|A glass of milk.||2
 pan|tova|pæn|noun|Heat the pan.||2
 oven|duxovka|ˈʌvn|noun|Put the cake in the oven.||2
 menu|menyu|ˈmenjuː|noun|Can I see the menu?||2
@@ -159,13 +157,6 @@ beans|loviya|biːnz|noun|We eat beans for lunch.||2
 peas|no‘xat|piːz|noun|Peas are green.||2
 @ A2 | Weather and nature | word
 weather|ob-havo|ˈweðə|noun|What is the weather like?||2
-sunny|quyoshli|ˈsʌni|adjective|It is sunny today.||2
-cloudy|bulutli|ˈklaʊdi|adjective|The sky is cloudy.||2
-rainy|yomg‘irli|ˈreɪni|adjective|It is a rainy day.||2
-windy|shamolli|ˈwɪndi|adjective|It is windy outside.||2
-foggy|tumanli|ˈfɒɡi|adjective|It was foggy this morning.||2
-stormy|bo‘ronli|ˈstɔːmi|adjective|The sea is stormy.||2
-snowy|qorli|ˈsnəʊi|adjective|A snowy morning.||2
 freezing|juda sovuq|ˈfriːzɪŋ|adjective|It is freezing today.||2
 degree|daraja (harorat)|dɪˈɡriː|noun|It is thirty degrees.||2
 forecast|bashorat|ˈfɔːkɑːst|noun|The forecast says rain.||2
