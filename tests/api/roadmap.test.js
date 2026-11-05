@@ -297,3 +297,19 @@ test('admin: pass mark, lesson type and study content, publishing rules, unpubli
     assert.strictEqual(det.exams[0].score, 73); assert.strictEqual(det.exams[0].passed, false);
   } finally { await s.stop(); }
 });
+
+test('vocabulary database: complete entries (IPA, part of speech, example, level, topic), no duplicate headwords, importable and visible', async () => {
+  const V = require('../../server/seed/vocab');
+  const { rows, problems, dupes } = V.parse();
+  assert.deepStrictEqual(problems, []); assert.deepStrictEqual(dupes, [], 'no headword is authored twice');
+  for (const r of rows) {
+    assert.ok(r.ipa && r.pos && r.example && r.uz && r.level && r.topic, `complete entry: ${r.en}`);
+    assert.ok(r.example.split(/\s+/).length >= 3, `the example is a real sentence: ${r.en}`);
+  }
+  const s = await startServer({ roadmap: true });
+  try {
+    const n = s.db.get("SELECT COUNT(*) n FROM vocabulary WHERE ipa != '' AND status = 'published'").n;
+    assert.ok(n >= rows.length * 0.5, 'the vocabulary database is seeded with the roadmap');
+    assert.strictEqual(s.db.get("SELECT COUNT(*) n FROM (SELECT lower(en) e FROM vocabulary WHERE lesson_id IS NULL AND topic != '' GROUP BY lower(en) HAVING COUNT(*) > 1)").n, 0, 'one entry per headword in the vocabulary database');
+  } finally { await s.stop(); }
+});
