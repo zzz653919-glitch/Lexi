@@ -5,6 +5,7 @@ const { toNewUz: uzConv, wordsIn } = require('./uzfix');
 const { LEVELS: CURRICULUM } = require('./curriculum');
 const { mc } = require('./helpers');
 const IELTS = require('./ielts');
+const IELTS_EXAM = require('./ielts-exam');
 
 const SPECS = {};
 for (const code of ['A1', 'A2', 'B1', 'B2', 'C1']) { try { SPECS[code] = require('./' + code.toLowerCase()); } catch (e) { if (e.code !== 'MODULE_NOT_FOUND' || !String(e.message).includes('/' + code.toLowerCase())) throw e; } }
@@ -38,6 +39,7 @@ function content(base) {
       exam: topics.every((t) => t.lessons.length === 4) && spec.topics.length === 10 ? { content: examContent(code, base), items: topics.flatMap((t) => (t.exam || []).map((q) => mc(q[0], q[1], q[2], q[3], q[4]))).concat(spec.extras || []) } : undefined };
   }
   levels.IELTS = { topics: CURRICULUM.find((l) => l.code === 'IELTS').topics.map((tp) => ({ title: tp.title[0], test: false, lessons: IELTS.lessons.filter((L) => tp.lessons.some((x) => x[0] === L.t[0])) })) };
+  levels.IELTS.exam = { content: examContent('IELTS', base), items: IELTS_EXAM };
   return { levels };
 }
 module.exports = { content };

@@ -94,7 +94,7 @@ const UNITS = [
 
 /* the authored IELTS lessons, with their Uzbek texts converted to the new alphabet, as lesson specs of the roadmap's IELTS level */
 const { toNewUz } = require('./uzfix');
-const lessons = UNITS.flatMap((u) => u.lessons).map((L) => {
+const lessons = UNITS.flatMap((u) => u.lessons).concat(require('./ielts2').lessons).map((L) => {
   const c = JSON.parse(JSON.stringify(L.content));
   for (const f of ['objective', 'explanation', 'tip']) if (c[f] && c[f].uz) c[f].uz = toNewUz(c[f].uz);
   return { t: [L.title[0], toNewUz(L.title[1]), L.title[2]], kind: L.kind, skill: L.skill, content: c, exercises: L.exercises, xp: L.xp || 25, unlock: 'open' };

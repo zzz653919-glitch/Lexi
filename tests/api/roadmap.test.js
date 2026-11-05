@@ -42,7 +42,7 @@ test('roadmap content: six levels, 240 lessons in 60 topics, A1 complete with te
         for (const t of ['translation_choice', 'match_pairs', 'listen_choice', 'reading', 'multiple_choice', 'writing', 'speaking']) assert.ok(types.has(t), `${x.title}: ${t}`);
       }
     }
-    assert.strictEqual(s.db.get("SELECT COUNT(*) n FROM lessons WHERE kind = 'exam'").n, 5);
+    assert.strictEqual(s.db.get("SELECT COUNT(*) n FROM lessons WHERE kind = 'exam'").n, 6);
     const exam = s.db.get("SELECT l.* FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels v ON v.id = u.level_id WHERE l.kind = 'exam' AND v.code = 'A1'");
     const exQ = s.db.all('SELECT * FROM exercises WHERE lesson_id = ?', exam.id);
     assert.ok(exQ.length >= 35); for (const m of ['grammar', 'vocabulary', 'listening', 'reading', 'writing']) assert.ok(exQ.some((e) => e.module === m), 'exam covers ' + m);
