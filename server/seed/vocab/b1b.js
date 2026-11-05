@@ -41,7 +41,6 @@ frost|qirov|frɒst|noun|Frost covered the grass.||2
 breeze|yengil shamol|briːz|noun|A cool breeze blew.||3
 fog|tuman|fɒɡ|noun|Thick fog delayed flights.||2
 damp|nam|dæmp|adjective|The cellar is damp.||3
-dry|quruq|draɪ|adjective|The summer was dry.||2
 mild|mo‘tadil|maɪld|adjective|We had a mild winter.||3
 chilly|salqin|ˈtʃɪli|adjective|It’s chilly tonight.||3
 tornado|qaymoq (tornado)|tɔːˈneɪdəʊ|noun|The tornado destroyed houses.||3
@@ -176,5 +175,4 @@ illness|kasallik|ˈɪlnəs|noun|Illness kept him home.||2
 difficulty|qiyinchilik|ˈdɪfɪkəlti|noun|I have difficulty with maths.||3
 decision|qaror|dɪˈsɪʒn|noun|It was a hard decision.||2
 information|axborot|ˌɪnfəˈmeɪʃn|noun|I need more information.||2
-discussion|muhokama|dɪˈskʌʃn|noun|We had a long discussion.||2
 `;

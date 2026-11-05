@@ -11,7 +11,6 @@ pass|o‘tmoq (imtihon)|pɑːs|verb|I passed the test.||2
 fail|yiqilmoq|feɪl|verb|He failed the exam.||2
 revise|takrorlamoq|rɪˈvaɪz|verb|Revise for the test.||2
 mistake|xato|mɪˈsteɪk|noun|I made a mistake.||2
-correct|to‘g‘rilamoq|kəˈrekt|verb|Correct your mistakes.||2
 translate|tarjima qilmoq|trænzˈleɪt|verb|Translate this sentence.||2
 pronounce|talaffuz qilmoq|prəˈnaʊns|verb|How do you pronounce it?||2
 grammar|grammatika|ˈɡræmə|noun|English grammar is hard.||2
@@ -24,7 +23,6 @@ festival|bayram; festival|ˈfestɪvl|noun|We went to a music festival.||2
 exhibition|ko‘rgazma|ˌeksɪˈbɪʃn|noun|We saw an art exhibition.||2
 comedy|komediya|ˈkɒmədi|noun|I like a good comedy.||2
 horror|dahshatli film|ˈhɒrə|noun|I don’t like horror films.||2
-actor|aktyor|ˈæktə|noun|He is a famous actor.||2
 actress|aktrisa|ˈæktrəs|noun|She is a young actress.||2
 director|rejissyor|dəˈrektə|noun|The director won a prize.||2
 audience|tomoshabinlar|ˈɔːdiəns|noun|The audience clapped.||2
@@ -83,7 +81,6 @@ beard|soqol|bɪəd|noun|He has a short beard.||2
 moustache|mo‘ylov|məˈstɑːʃ|noun|My uncle has a moustache.||2
 bald|kal|bɔːld|adjective|He is bald.||2
 fair|och sochli; adolatli|feə|adjective|She has fair hair.||2
-dark|qora (soch/teri)|dɑːk|adjective|He has dark hair.||2
 @ A2 | City life | word
 pedestrian|piyoda|pəˈdestriən|noun|Pedestrians cross here.||2
 skyscraper|osmono‘par bino|ˈskaɪskreɪpə|noun|The skyscraper is 50 floors high.||2

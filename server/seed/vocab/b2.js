@@ -193,7 +193,6 @@ brand image|brend imidji|brænd ˈɪmɪdʒ|noun|Brand image attracts buyers.||4
 publicity|oshkoralik; reklama|pʌbˈlɪsəti|noun|The event got publicity.||4
 slogan|shior|ˈsləʊɡən|noun|The slogan is catchy.||3
 interview|intervyu bermoq|ˈɪntəvjuː|verb|They interviewed the mayor.||2
-broadcast|translyatsiya|ˈbrɔːdkɑːst|noun|The broadcast was live.||3
 press conference|matbuot anjumani|pres ˈkɒnfərəns|noun|The mayor held a press conference.||3
 go viral|tez tarqalmoq|ɡəʊ ˈvaɪrəl|collocation|The video went viral.||3
 @ B2 | Environment and energy | word
@@ -223,7 +222,6 @@ carbon neutral|uglerod neytral|ˌkɑːbən ˈnjuːtrəl|adjective|The city aims 
 raise awareness|xabardorlikni oshirmoq|reɪz əˈweənəs|collocation|Raise awareness of recycling.||3
 @ B2 | History and heritage | word
 civilisation|tamaddun|ˌsɪvəlaɪˈzeɪʃn|noun|An ancient civilisation lived here.||4
-century|asr|ˈsentʃəri|noun|It was built in the 15th century.||2
 medieval|o‘rta asrlarga oid|ˌmediˈiːvl|adjective|A medieval castle stands there.||4
 ruins|xarobalar|ˈruːɪnz|noun|We explored the ruins.||3
 excavation|qazish ishlari|ˌekskəˈveɪʃn|noun|The excavation found coins.||5

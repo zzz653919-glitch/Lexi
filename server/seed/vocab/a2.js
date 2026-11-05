@@ -7,7 +7,6 @@ suitcase|chemodan|ˈsuːtkeɪs|noun|My suitcase is heavy.|case|2
 passport|pasport|ˈpɑːspɔːt|noun|Show your passport.||2
 visa|viza|ˈviːzə|noun|You need a visa to go there.||2
 flight|reys; parvoz|flaɪt|noun|The flight was on time.||2
-gate|chiqish eshigi (aeroportda)|ɡeɪt|noun|Go to gate five.||2
 customs|bojxona|ˈkʌstəmz|noun|We passed customs quickly.||2
 platform|platforma|ˈplætfɔːm|noun|The train leaves from platform two.||2
 timetable|jadval|ˈtaɪmteɪbl|noun|Check the bus timetable.|schedule|2
@@ -22,7 +21,6 @@ direction|yo‘nalish|dɪˈrekʃn|noun|Ask for directions.||2
 turn left|chapga burilmoq|tɜːn left|phrase|Turn left at the bank.||2
 straight on|to‘g‘ri|streɪt ɒn|phrase|Go straight on.||2
 cross|kesib o‘tmoq|krɒs|verb|Cross the bridge.||2
-catch|ulgurmoq|kætʃ|verb|I catch the 8 o’clock bus.||2
 miss the bus|avtobusga ulgurmaslik|mɪs ðə bʌs|phrase|I missed the bus again.||2
 get on|(transportga) chiqmoq|ɡet ɒn|phrasal_verb|Get on the bus at the corner.||2
 get off|(transportdan) tushmoq|ɡet ɒf|phrasal_verb|Get off at the next stop.||2
@@ -67,14 +65,12 @@ allergy|allergiya|ˈælədʒi|noun|She has an allergy to nuts.||2
 injury|jarohat|ˈɪndʒəri|noun|He has a knee injury.||2
 bandage|bint|ˈbændɪdʒ|noun|Put a bandage on the cut.||2
 bruise|ko‘karish|bruːz|noun|I have a bruise on my arm.||2
-dentist|tish shifokori|ˈdentɪst|noun|I visit the dentist twice a year.||2
 patient|bemor|ˈpeɪʃnt|noun|The patient is waiting.||2
 ambulance|tez yordam|ˈæmbjələns|noun|Call an ambulance!||2
 recover|tuzalmoq|rɪˈkʌvə|verb|He recovered quickly.||2
 exercise|mashq qilmoq|ˈeksəsaɪz|verb|I exercise every morning.||2
 diet|parhez|ˈdaɪət|noun|She is on a diet.||2
 vitamin|vitamin|ˈvɪtəmɪn|noun|Fruit has vitamins.||2
-fresh|yangi; toza|freʃ|adjective|Eat fresh vegetables.||2
 heart|yurak|hɑːt|noun|Exercise is good for the heart.||2
 skin|teri|skɪn|noun|Use cream for dry skin.||2
 bone|suyak|bəʊn|noun|He broke a bone.||2
@@ -109,14 +105,10 @@ report|hisobot|rɪˈpɔːt|noun|Write a report.||2
 email|elektron pochta|ˈiːmeɪl|noun|I sent you an email.||2
 office|ofis|ˈɒfɪs|noun|I work in an office.||2
 factory worker|zavod ishchisi|ˈfæktri ˈwɜːkə|noun|He is a factory worker.||2
-mechanic|mexanik|məˈkænɪk|noun|The mechanic fixed my car.||2
 electrician|elektrik|ɪˌlekˈtrɪʃn|noun|Call an electrician.||2
-lawyer|advokat|ˈlɔːjə|noun|My uncle is a lawyer.||2
 journalist|jurnalist|ˈdʒɜːnəlɪst|noun|She is a journalist.||2
 accountant|buxgalter|əˈkaʊntənt|noun|An accountant checks the money.||2
-pilot|uchuvchi|ˈpaɪlət|noun|The pilot is calm.||2
 architect|me’mor|ˈɑːkɪtekt|noun|The architect designed the school.||2
-scientist|olim|ˈsaɪəntɪst|noun|A scientist works in a lab.||2
 @ A2 | Shopping and money | word
 price|narx|praɪs|noun|The price is low.||2
 cost|turmoq (narx)|kɒst|verb|It costs ten dollars.||2
@@ -145,12 +137,9 @@ bookshop|kitob do‘koni|ˈbʊkʃɒp|noun|I found it in a bookshop.||2
 grocery|oziq-ovqat do‘koni|ˈɡrəʊsəri|noun|She works in a grocery.||2
 @ A2 | Food and cooking | word
 recipe|retsept|ˈresəpi|noun|This is my grandma’s recipe.||2
-boil|qaynatmoq|bɔɪl|verb|Boil the water.||2
 fry|qovurmoq|fraɪ|verb|Fry the onions.||2
-bake|pechda pishirmoq|beɪk|verb|She bakes bread.||2
 roast|dudlamoq; pishirmoq|rəʊst|verb|Roast the chicken.||2
 slice|bo‘lak|slaɪs|noun|A slice of bread.||2
-bowl|kosa|bəʊl|noun|A bowl of soup.||2
 glass|stakan|ɡlɑːs|noun|A glass of milk.||2
 pan|tova|pæn|noun|Heat the pan.||2
 oven|duxovka|ˈʌvn|noun|Put the cake in the oven.||2
@@ -159,25 +148,15 @@ order|buyurtma bermoq|ˈɔːdə|verb|I order soup.||2
 starter|birinchi taom|ˈstɑːtə|noun|The starter is a salad.||2
 dessert|shirinlik|dɪˈzɜːt|noun|We shared a dessert.||2
 spicy|achchiq|ˈspaɪsi|adjective|This soup is spicy.||2
-salty|sho‘r|ˈsɔːlti|adjective|The soup is salty.||2
 bitter|achchiq (taxir)|ˈbɪtə|adjective|Coffee can be bitter.||2
 raw|xom|rɔː|adjective|Do not eat raw meat.||2
 fried|qovurilgan|fraɪd|adjective|I like fried eggs.||2
 grilled|panjara ustida pishirilgan|ɡrɪld|adjective|He ordered grilled fish.||2
 vegetable|sabzavot|ˈvedʒtəbl|noun|Eat more vegetables.||2
 fruit|meva|fruːt|noun|Fruit is healthy.||2
-pepper|qalampir|ˈpepə|noun|Add some pepper.||2
-garlic|sarimsoq|ˈɡɑːlɪk|noun|Garlic smells strong.||2
-cucumber|bodring|ˈkjuːkʌmbə|noun|Add cucumber to the salad.||2
-cabbage|karam|ˈkæbɪdʒ|noun|Cabbage soup is cheap.||2
 mushroom|qo‘ziqorin|ˈmʌʃruːm|noun|I like mushroom soup.||2
 beans|loviya|biːnz|noun|We eat beans for lunch.||2
 peas|no‘xat|piːz|noun|Peas are green.||2
-nuts|yong‘oq; yong‘oqlar|nʌts|noun|He eats nuts.||2
-honey|asal|ˈhʌni|noun|I put honey in my tea.||2
-jam|murabbo|dʒæm|noun|Bread with jam.||2
-flour|un|ˈflaʊə|noun|Add flour and water.||2
-oil|yog‘|ɔɪl|noun|Heat some oil.||2
 @ A2 | Weather and nature | word
 weather|ob-havo|ˈweðə|noun|What is the weather like?||2
 sunny|quyoshli|ˈsʌni|adjective|It is sunny today.||2
@@ -192,24 +171,17 @@ degree|daraja (harorat)|dɪˈɡriː|noun|It is thirty degrees.||2
 forecast|bashorat|ˈfɔːkɑːst|noun|The forecast says rain.||2
 thunder|momaqaldiroq|ˈθʌndə|noun|I hear thunder.||2
 lightning|chaqmoq|ˈlaɪtnɪŋ|noun|Lightning lit up the sky.||2
-lake|ko‘l|leɪk|noun|We swim in the lake.||2
-forest|o‘rmon|ˈfɒrɪst|noun|We walked in the forest.||2
 hill|tepalik|hɪl|noun|The village is on a hill.||2
 valley|vodiy|ˈvæli|noun|The valley is green.||2
-beach|plyaj|biːtʃ|noun|We lay on the beach.||2
-island|orol|ˈaɪlənd|noun|They live on an island.||2
-field|dala|fiːld|noun|Wheat grows in the field.||2
 wave|to‘lqin|weɪv|noun|The waves are big.||2
 rock|tosh; qoya|rɒk|noun|He sat on a rock.||2
 sand|qum|sænd|noun|The sand is hot.||2
-leaf|barg|liːf|noun|A leaf fell.||2
 seed|urug‘|siːd|noun|Plant the seed.||2
 @ A2 | Technology and media | word
 mobile phone|mobil telefon|ˈməʊbaɪl fəʊn|noun|My mobile phone is new.||2
 smartphone|smartfon|ˈsmɑːtfəʊn|noun|He bought a smartphone.||2
 tablet|planshet|ˈtæblət|noun|She reads on a tablet.||2
 keyboard|klaviatura|ˈkiːbɔːd|noun|The keyboard is wireless.||2
-mouse|kompyuter sichqonchasi|maʊs|noun|Click the mouse.||2
 printer|printer|ˈprɪntə|noun|The printer is out of paper.||2
 app|ilova|æp|noun|This app is free.||2
 file|fayl|faɪl|noun|Save the file.||2
@@ -233,7 +205,6 @@ proud|faxrlangan|praʊd|adjective|I am proud of you.||2
 lonely|yolg‘iz|ˈləʊnli|adjective|He feels lonely.||2
 jealous|hasadgo‘y|ˈdʒeləs|adjective|She is jealous of her friend.||2
 friendly|do‘stona|ˈfrendli|adjective|The people are friendly.||2
-clever|aqlli|ˈklevə|adjective|She is a clever girl.|smart|2
 honest|halol|ˈɒnɪst|adjective|He is an honest man.||2
 brave|jasur|breɪv|adjective|The firefighter is brave.||2
 rude|qo‘pol|ruːd|adjective|Don’t be rude.||2
@@ -254,18 +225,12 @@ spell|harflab aytmoq|spel|verb|How do you spell it?||2
 practise|mashq qilmoq|ˈpræktɪs|verb|Practise every day.||2
 repeat|takrorlamoq|rɪˈpiːt|verb|Repeat after me.||2
 copy|ko‘chirmoq|ˈkɒpi|verb|Copy the text.||2
-check|tekshirmoq|tʃek|verb|Check your answers.||2
 improve|yaxshilamoq|ɪmˈpruːv|verb|I want to improve my English.||2
 throw|otmoq|θrəʊ|verb|Throw the ball.||2
-climb|ko‘tarilmoq (tog‘ga)|klaɪm|verb|We climbed the hill.||2
-grow|o‘smoq|ɡrəʊ|verb|Flowers grow in spring.||2
 build|qurmoq|bɪld|verb|They build houses.||2
 break|sindirmoq|breɪk|verb|Don’t break the glass.||2
-fix|ta’mirlamoq|fɪks|verb|He fixed my bike.|repair|2
 invite|taklif qilmoq|ɪnˈvaɪt|verb|I invited my friends.||2
 celebrate|nishonlamoq|ˈselɪbreɪt|verb|We celebrate New Year.||2
-enjoy|zavqlanmoq|ɪnˈdʒɔɪ|verb|I enjoy reading.||2
-join|qo‘shilmoq|dʒɔɪn|verb|Please join us today.||2
 look for|qidirmoq|lʊk fɔː|phrasal_verb|I am looking for my keys.||2
 look after|qarab turmoq|lʊk ˈɑːftə|phrasal_verb|She looks after her brother.||2
 look forward to|intiqlik bilan kutmoq|lʊk ˈfɔːwəd tuː|phrasal_verb|I look forward to the holiday.||2
@@ -292,14 +257,11 @@ shallow|sayoz|ˈʃæləʊ|adjective|The water is shallow.||2
 thick|qalin|θɪk|adjective|A thick book.||2
 thin|ingichka|θɪn|adjective|A thin line.||2
 weak|kuchsiz|wiːk|adjective|The tea is weak.||2
-rich|boy|rɪtʃ|adjective|He is a rich man.||2
-poor|kambag‘al|pɔː|adjective|The family is poor.||2
 careful|ehtiyotkor|ˈkeəfl|adjective|Please be careful.||2
 careless|beparvo|ˈkeələs|adjective|A careless mistake.||2
 important|muhim|ɪmˈpɔːtnt|adjective|It is an important day.||2
 interesting|qiziqarli|ˈɪntrəstɪŋ|adjective|The book is interesting.||2
 boring|zerikarli|ˈbɔːrɪŋ|adjective|The film is boring.||2
-terrible|dahshatli|ˈterəbl|adjective|The weather is terrible.||2
 wonderful|ajoyib|ˈwʌndəfl|adjective|We had a wonderful day.||2
 perfect|mukammal|ˈpɜːfɪkt|adjective|The weather is perfect.||2
 possible|mumkin|ˈpɒsəbl|adjective|It is possible.||2
@@ -323,16 +285,9 @@ nowhere|hech qayerda|ˈnəʊweə|adverb|There is nowhere to sit.||2
 neighbourhood|mahalla|ˈneɪbəhʊd|noun|It is a quiet neighbourhood.||2
 apartment block|ko‘p qavatli uy|əˈpɑːtmənt blɒk|noun|We live in an apartment block.||2
 cottage|kottej|ˈkɒtɪdʒ|noun|They have a cottage by the lake.||2
-yard|hovli|jɑːd|noun|Children play in the yard.||2
 fence|panjara; devor|fens|noun|The fence is white.||2
-basement|yerto‘la|ˈbeɪsmənt|noun|The basement is cold.||2
 attic|cherdak|ˈætɪk|noun|Old toys are in the attic.||2
-curtain|parda|ˈkɜːtn|noun|Close the curtains.||2
-shelf|javon|ʃelf|noun|The book is on the shelf.||2
-drawer|tortma|drɔː|noun|Keys are in the drawer.||2
 cushion|yostiq (bezak)|ˈkʊʃn|noun|A soft cushion.||2
-pillow|yostiq|ˈpɪləʊ|noun|I need another pillow.||2
-blanket|ko‘rpa|ˈblæŋkɪt|noun|Use a warm blanket.||2
 washing machine|kir yuvish mashinasi|ˈwɒʃɪŋ məˈʃiːn|noun|The washing machine is new.||2
 dishwasher|idish yuvish mashinasi|ˈdɪʃwɒʃə|noun|Put the cups in the dishwasher.||2
 vacuum cleaner|changyutgich|ˈvækjuːm ˈkliːnə|noun|Use the vacuum cleaner.||2

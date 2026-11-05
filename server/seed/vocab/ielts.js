@@ -14,7 +14,6 @@ substantial|katta (miqdor)|səbˈstænʃl|adjective|A substantial increase.||4
 slight|ozgina|slaɪt|adjective|A slight decline.||3
 steady|barqaror o‘sish|ˈstedi|adjective|A steady rise in sales.||3
 gradual|asta-sekin|ˈɡrædʒuəl|adjective|A gradual fall.||4
-sharp|keskin|ʃɑːp|adjective|A sharp drop in prices.||3
 dramatic|keskin (ko‘zga tashlanadigan)|drəˈmætɪk|adjective|A dramatic increase.||4
 marginal|ahamiyatsiz kichik|ˈmɑːdʒɪnl|adjective|A marginal change.||5
 roughly|taxminan|ˈrʌfli|adverb|Roughly half of the sample.||3

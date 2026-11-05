@@ -185,8 +185,6 @@ with regard to|… ga kelsak|wɪð rɪˈɡɑːd tuː|phrase|With regard to cost,
 spectator|tomoshabin (sport)|spekˈteɪtə|noun|Spectators filled the stadium.||3
 tournament|turnir|ˈtʊənəmənt|noun|He won the tournament.||3
 opponent|raqib|əˈpəʊnənt|noun|Her opponent was strong.||3
-referee|hakam|ˌrefəˈriː|noun|The referee blew the whistle.||3
-champion|chempion|ˈtʃæmpiən|noun|He is a world champion.||3
 training session|mashg‘ulot|ˈtreɪnɪŋ ˈseʃn|noun|We have a training session.||3
 endurance|chidamlilik (jismoniy)|ɪnˈdjʊərəns|noun|Marathons need endurance.||4
 sponsorship|homiylik|ˈspɒnsəʃɪp|noun|Sponsorship funds clubs.||4

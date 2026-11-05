@@ -80,7 +80,6 @@ wildlife|yovvoyi tabiat|ˈwaɪldlaɪf|noun|We protect wildlife.||2
 natural resources|tabiiy resurslar|ˈnætʃrəl rɪˈzɔːsɪz|noun|Water is a natural resource.||3
 shortage|yetishmovchilik|ˈʃɔːtɪdʒ|noun|There is a water shortage.||2
 harvest|hosil|ˈhɑːvɪst|noun|The harvest was good.||2
-earthquake|zilzila|ˈɜːθkweɪk|noun|The earthquake damaged houses.||2
 volcano|vulqon|vɒlˈkeɪnəʊ|noun|The volcano erupted.||2
 hurricane|bo‘ron (dovul)|ˈhʌrɪkən|noun|The hurricane hit the coast.||3
 rescue|qutqarmoq|ˈreskjuː|verb|They rescued the child.||3
@@ -105,10 +104,8 @@ infection|infeksiya|ɪnˈfekʃn|noun|The wound has an infection.||3
 virus|virus|ˈvaɪrəs|noun|The virus spreads fast.||2
 vaccine|vaksina|ˈvæksiːn|noun|Children get a vaccine.||3
 treatment|davolash|ˈtriːtmənt|noun|The treatment worked.||2
-cure|davolamoq|kjʊə|verb|Doctors cured the disease.||3
 disease|kasallik|dɪˈziːz|noun|It is a serious disease.||2
 pain|og‘riq|peɪn|noun|I feel pain in my leg.||2
-swollen|shishgan|ˈswəʊlən|adjective|My ankle is swollen.||3
 dizzy|boshi aylangan|ˈdɪzi|adjective|I feel dizzy.||2
 nausea|ko‘ngil aynishi|ˈnɔːziə|noun|She felt nausea.||3
 addiction|qaramlik (odat)|əˈdɪkʃn|noun|Phone addiction is common.||3
@@ -159,7 +156,6 @@ destination|boriladigan manzil|ˌdestɪˈneɪʃn|noun|Paris is a popular destina
 itinerary|sayohat rejasi|aɪˈtɪnərəri|noun|Our itinerary is full.||3
 excursion|ekskursiya|ɪkˈskɜːʃn|noun|We went on an excursion.||3
 package holiday|paket sayohat|ˈpækɪdʒ ˈhɒlədeɪ|noun|They bought a package holiday.||3
-souvenir|esdalik sovg‘a|ˌsuːvəˈnɪə|noun|I bought a souvenir.||2
 currency|valyuta|ˈkʌrənsi|noun|Change your currency at the bank.||3
 exchange rate|valyuta kursi|ɪksˈtʃeɪndʒ reɪt|noun|The exchange rate is good.||3
 insurance|sug‘urta|ɪnˈʃʊərəns|noun|Buy travel insurance.||3
@@ -178,7 +174,6 @@ backpacker|sayyoh-yo‘lovchi (ryukzakli)|ˈbækpækə|noun|Backpackers sleep in
 coast|qirg‘oq|kəʊst|noun|We drove along the coast.||2
 cliff|qoya|klɪf|noun|The cliff is high.||3
 waterfall|sharshara|ˈwɔːtəfɔːl|noun|We saw a waterfall.||2
-desert|cho‘l|ˈdezət|noun|The desert is hot.||2
 see off|kuzatib qo‘ymoq|siː ɒf|phrasal_verb|We saw him off at the station.||3
 get away|dam olishga ketmoq|ɡet əˈweɪ|phrasal_verb|We need to get away.||3
 book a table|stol band qilmoq|bʊk ə ˈteɪbl|collocation|I booked a table for two.||2
@@ -306,7 +301,6 @@ announce|e’lon qilmoq|əˈnaʊns|verb|They announced the winner.||3
 appear|paydo bo‘lmoq|əˈpɪə|verb|A man appeared at the door.||2
 avoid|oldini olmoq|əˈvɔɪd|verb|Avoid fast food.||2
 belong|tegishli bo‘lmoq|bɪˈlɒŋ|verb|This book belongs to me.||2
-choose|tanlamoq|tʃuːz|verb|Choose a colour.||2
 consider|ko‘rib chiqmoq|kənˈsɪdə|verb|Consider the offer.||3
 continue|davom etmoq|kənˈtɪnjuː|verb|Please continue with the story.||2
 contain|o‘z ichiga olmoq|kənˈteɪn|verb|The box contains books.||3
