@@ -49,19 +49,16 @@ elicit|aytib berishga undamoq|ɪˈlɪsɪt|verb|The question elicited a strong re
 elucidate|oydinlashtirmoq|ɪˈluːsɪdeɪt|verb|Please elucidate the point.|clarify|5
 embody|timsol bo‘lmoq|ɪmˈbɒdi|verb|She embodies courage.|represent|5
 encompass|qamrab olmoq|ɪnˈkʌmpəs|verb|The course encompasses many topics.|include|5
-enhance|kuchaytirmoq|ɪnˈhɑːns|verb|Training enhances skills.|improve|4
 exacerbate|og‘irlashtirmoq|ɪɡˈzæsəbeɪt|verb|Stress exacerbates illness.|worsen|5
 exemplify|misol bo‘lmoq|ɪɡˈzemplɪfaɪ|verb|This case exemplifies the problem.|illustrate|5
 exert|ta’sir o‘tkazmoq|ɪɡˈzɜːt|verb|Parents exert influence.|apply|5
 extrapolate|ekstrapolyatsiya qilmoq|ɪkˈstræpəleɪt|verb|We extrapolated from the data.||5
 foster|rivojlantirmoq (qo‘llab)|ˈfɒstə|verb|Schools foster creativity.|encourage|4
-hinder|to‘sqinlik qilmoq|ˈhɪndə|verb|Noise hinders learning.|obstruct|4
 impede|xalaqit bermoq|ɪmˈpiːd|verb|Snow impeded traffic.|hinder|5
 implement|joriy etmoq|ˈɪmplɪment|verb|They implemented the policy.|carry out|4
 incorporate|o‘z ichiga qo‘shmoq|ɪnˈkɔːpəreɪt|verb|The design incorporates solar panels.|include|4
 instigate|qo‘zg‘atmoq|ˈɪnstɪɡeɪt|verb|He instigated the investigation.|initiate|5
 integrate|birlashtirmoq|ˈɪntɪɡreɪt|verb|Integrate the two systems.|combine|4
-mitigate|yumshatmoq|ˈmɪtɪɡeɪt|verb|Trees mitigate heat.|reduce|5
 perpetuate|davom ettirmoq (salbiy)|pəˈpetʃueɪt|verb|Media perpetuate stereotypes.|prolong|5
 pertain|tegishli bo‘lmoq|pəˈteɪn|verb|The rules pertain to all.|relate|5
 preclude|oldini olmoq|prɪˈkluːd|verb|Illness precluded travel.|prevent|5
@@ -73,7 +70,6 @@ relinquish|voz kechmoq|rɪˈlɪŋkwɪʃ|verb|He relinquished power.|give up|5
 scrutinise|sinchiklab tekshirmoq|ˈskruːtənaɪz|verb|Auditors scrutinise accounts.|examine|5
 substantiate|isbotlamoq|səbˈstænʃieɪt|verb|Claims must be substantiated.|prove|5
 supersede|o‘rnini egallamoq|ˌsuːpəˈsiːd|verb|New rules supersede old ones.|replace|5
-undermine|putur yetkazmoq|ˌʌndəˈmaɪn|verb|Scandals undermine trust.|weaken|4
 underpin|asos bo‘lmoq|ˌʌndəˈpɪn|verb|Research underpins the theory.|support|5
 utilise|foydalanmoq|ˈjuːtəlaɪz|verb|Utilise every resource.|use|4
 validate|tasdiqlamoq|ˈvælɪdeɪt|verb|Results validate the model.|confirm|4
@@ -99,7 +95,6 @@ explicit|aniq|ɪkˈsplɪsɪt|adjective|Give explicit instructions.|clear|4
 flawed|nuqsonli|flɔːd|adjective|The argument is flawed.|faulty|4
 formidable|dahshatli (kuchli)|ˈfɔːmɪdəbl|adjective|A formidable opponent.||5
 futile|befoyda|ˈfjuːtaɪl|adjective|It was a futile attempt.|pointless|5
-gullible|ishonuvchan|ˈɡʌləbl|adjective|Gullible people believe rumours.||5
 imminent|yaqinlashib kelgan|ˈɪmɪnənt|adjective|Danger is imminent.|impending|5
 impartial|xolis|ɪmˈpɑːʃl|adjective|A judge must be impartial.|neutral|4
 implicit|yashirin (nazarda tutilgan)|ɪmˈplɪsɪt|adjective|There was implicit criticism.|implied|5
@@ -198,7 +193,6 @@ quantify|miqdoriy baholamoq|ˈkwɒntɪfaɪ|verb|It is hard to quantify.||5
 randomised|tasodifiy tanlangan|ˈrændəmaɪzd|adjective|A randomised trial.||5
 reproducible|takrorlanadigan|ˌriːprəˈdjuːsəbl|adjective|The results are reproducible.||5
 significance|ahamiyat|sɪɡˈnɪfɪkəns|noun|Statistical significance matters.||4
-simulation|simulyatsiya|ˌsɪmjuˈleɪʃn|noun|A computer simulation.||4
 spectrum|spektr|ˈspektrəm|noun|The spectrum is wide.||5
 subset|qism to‘plam|ˈsʌbset|noun|A subset of the group.||5
 trajectory|yo‘nalish (traektoriya)|trəˈdʒektəri|noun|The career trajectory is upward.||5
@@ -216,7 +210,6 @@ eloquent|notiq|ˈeləkwənt|adjective|An eloquent speech.||5
 genre|janr|ˈʒɒnrə|noun|Which genre do you like?||3
 imagery|obrazlilik|ˈɪmɪdʒri|noun|The poem uses rich imagery.||5
 irony|kinoya|ˈaɪrəni|noun|The irony is clear.||4
-masterpiece|durdona|ˈmɑːstəpiːs|noun|The painting is a masterpiece.||4
 metaphor|metafora|ˈmetəfɔː|noun|Life is a journey is a metaphor.||4
 narrative|rivoyat|ˈnærətɪv|noun|The narrative is gripping.||4
 nostalgia|sog‘inch (o‘tmishga)|nɒˈstældʒə|noun|He felt nostalgia for childhood.||5
@@ -235,7 +228,6 @@ slang|sleng|slæŋ|noun|Teenagers use slang.||3
 acquisition|sotib olish (kompaniya)|ˌækwɪˈzɪʃn|noun|The acquisition cost billions.||5
 assets|aktivlar|ˈæsets|noun|The firm sold its assets.||4
 liabilities|majburiyatlar|ˌlaɪəˈbɪlətiz|noun|Liabilities exceeded assets.||5
-turnover|aylanma|ˈtɜːnəʊvə|noun|Annual turnover rose.||4
 revenue stream|daromad manbai|ˈrevənjuː striːm|noun|They found a new revenue stream.||5
 stakeholder|manfaatdor tomon|ˈsteɪkhəʊldə|noun|Consult every stakeholder.||4
 shareholder value|aksiyador qiymati|ˈʃeəhəʊldə ˈvæljuː|noun|They focus on shareholder value.||5
@@ -247,7 +239,6 @@ leverage|ta’sir vositasi|ˈliːvərɪdʒ|noun|They have leverage in talks.||5
 overhead|doimiy xarajatlar|ˈəʊvəhed|noun|Overheads are high.||5
 outsourcing|ishni tashqariga berish|ˈaʊtsɔːsɪŋ|noun|Outsourcing cut costs.||4
 scalable|kengaytiriladigan|ˈskeɪləbl|adjective|The model is scalable.||5
-streamline|soddalashtirmoq|ˈstriːmlaɪn|verb|Streamline the process.||5
 diversify|turlantirmoq|daɪˈvɜːsɪfaɪ|verb|Diversify your investments.||5
 foster growth|o‘sishni qo‘llab-quvvatlamoq|ˈfɒstə ɡrəʊθ|collocation|Policies foster growth.||5
 @ C1 | Advanced phrasal verbs | phrasal_verb

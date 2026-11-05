@@ -63,7 +63,6 @@ outcome|natija|ˈaʊtkʌm|noun|The outcome was clear.||3
 perspective|nuqtai nazar|pəˈspektɪv|noun|See it from my perspective.||3
 phenomenon|hodisa|fɪˈnɒmɪnən|noun|A global phenomenon.||4
 potential|salohiyat|pəˈtenʃl|noun|She has great potential.||3
-priority|ustuvorlik|praɪˈɒrəti|noun|Health is a priority.||3
 prospect|istiqbol|ˈprɒspekt|noun|The prospects are good.||4
 ratio|nisbat|ˈreɪʃiəʊ|noun|The ratio is two to one.||4
 scope|doira|skəʊp|noun|The scope is wide.||4

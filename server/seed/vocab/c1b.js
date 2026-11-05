@@ -11,11 +11,9 @@ avert|oldini olmoq|əˈvɜːt|verb|Talks averted a strike.|prevent|5
 bestow|in’om etmoq|bɪˈstəʊ|verb|The title was bestowed on him.|grant|5
 castigate|qattiq tanqid qilmoq|ˈkæstɪɡeɪt|verb|He castigated the minister.||5
 coerce|majburlamoq|kəʊˈɜːs|verb|They were coerced into signing.|force|5
-curb|jilovlamoq|kɜːb|verb|Curb your spending.|restrain|4
 debunk|yolg‘onligini fosh qilmoq|diːˈbʌŋk|verb|Scientists debunked the myth.||5
 defy|e’tiborsiz qoldirmoq (qarshi chiqmoq)|dɪˈfaɪ|verb|He defied orders.||4
 discern|farqlab olmoq|dɪˈsɜːn|verb|It is hard to discern the truth.||5
-dwindle|kamayib bormoq|ˈdwɪndl|verb|Food supplies slowly dwindled.|shrink|5
 eclipse|soya solmoq; ustun kelmoq|ɪˈklɪps|verb|His fame eclipsed hers.||5
 endeavour|intilmoq|ɪnˈdevə|verb|We endeavour to help.|strive|5
 engender|keltirib chiqarmoq|ɪnˈdʒendə|verb|Fear engenders distrust.||5
@@ -197,11 +195,9 @@ encryption key|shifrlash kaliti|ɪnˈkrɪpʃn kiː|noun|Keep the encryption key 
 data breach|ma’lumot sizib chiqishi|ˈdeɪtə briːtʃ|noun|A data breach exposed users.||4
 cybercrime|kiberjinoyat|ˈsaɪbəkraɪm|noun|Cybercrime is rising.||4
 quantum|kvant|ˈkwɒntəm|adjective|Quantum computing is advancing fast.||5
-nanotechnology|nanotexnologiya|ˌnænəʊtekˈnɒlədʒi|noun|Nanotechnology is advancing.||5
 autonomous|avtonom|ɔːˈtɒnəməs|adjective|Autonomous vehicles are being tested.||5
 plaintiff|da’vogar|ˈpleɪntɪf|noun|The plaintiff won the case.||5
 litigation|sud jarayoni|ˌlɪtɪˈɡeɪʃn|noun|Litigation can be costly.||5
-liability|javobgarlik|ˌlaɪəˈbɪləti|noun|Liability lies with the owner.||5
 negligence|beparvolik|ˈneɡlɪdʒəns|noun|He was sued for negligence.||5
 arbitration|hakamlik sudi|ˌɑːbɪˈtreɪʃn|noun|They went to arbitration.||5
 `;

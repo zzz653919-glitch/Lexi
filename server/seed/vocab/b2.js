@@ -87,7 +87,6 @@ trait|xususiyat|treɪt|noun|Honesty is a good trait.||4
 temperament|temperament|ˈtemprəmənt|noun|He has a calm temperament.||5
 extrovert|ekstravert|ˈekstrəvɜːt|noun|An extrovert loves parties.||4
 impulsive|shoshqaloq|ɪmˈpʌlsɪv|adjective|An impulsive decision.||4
-cautious|ehtiyotkor|ˈkɔːʃəs|adjective|Be cautious with money.||3
 assertive|qat’iy (o‘z fikrini bildiruvchi)|əˈsɜːtɪv|adjective|Be assertive, not rude.||4
 empathy|hamdardlik|ˈempəθi|noun|Empathy builds trust.||4
 @ B2 | Education and academic life | word
@@ -256,7 +255,6 @@ corruption|korrupsiya|kəˈrʌpʃn|noun|Corruption harms trust.||4
 embezzle|o‘zlashtirmoq (pul)|ɪmˈbezl|verb|He embezzled funds.||5
 jury|hay’at|ˈdʒʊəri|noun|The jury was fair.||3
 innocent|aybsiz|ˈɪnəsnt|adjective|He is innocent.||3
-guilty|aybdor|ˈɡɪlti|adjective|The jury found him guilty.||3
 trial|sud jarayoni|ˈtraɪəl|noun|The trial lasted a week.||3
 lawsuit|da’vo (sud)|ˈlɔːsuːt|noun|They filed a lawsuit.||4
 rights|huquqlar|raɪts|noun|Human rights are universal.||3

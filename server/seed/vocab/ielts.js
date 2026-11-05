@@ -81,7 +81,6 @@ wildlife conservation|yovvoyi tabiatni muhofaza qilish|ˈwaɪldlaɪf ˌkɒnsəˈ
 carbon tax|uglerod solig‘i|ˈkɑːbən tæks|noun|A carbon tax cuts emissions.||4
 eco-tourism|ekoturizm|ˈiːkəʊ ˈtʊərɪzəm|noun|Eco-tourism protects nature.||4
 technological advance|texnologik taraqqiyot|ˌteknəˈlɒdʒɪkl ədˈvɑːns|noun|Technological advances save lives.||4
-automation|avtomatlashtirish|ˌɔːtəˈmeɪʃn|noun|Automation replaces labour.||4
 cyber attack|kiberhujum|ˈsaɪbər əˈtæk|noun|A cyber attack hit banks.||4
 online privacy|onlayn maxfiylik|ˌɒnlaɪn ˈprɪvəsi|noun|Online privacy is at risk.||4
 screen time|ekran vaqti|skriːn taɪm|noun|Limit children’s screen time.||3
@@ -135,7 +134,6 @@ scenery|manzara|ˈsiːnəri|noun|The scenery was stunning.||3
 breathtaking|nafas to‘xtatuvchi|ˈbreθteɪkɪŋ|adjective|A breathtaking view.||4
 memorable|esda qoladigan|ˈmemərəbl|adjective|A memorable trip.||3
 overwhelmed|bosilib ketgan|ˌəʊvəˈwelmd|adjective|I felt overwhelmed.||4
-thrilled|juda xursand|θrɪld|adjective|I was thrilled to win.||3
 stunning|ajoyib (go‘zal)|ˈstʌnɪŋ|adjective|A stunning building.||3
 hectic|shoshilinch (band)|ˈhektɪk|adjective|A hectic week.||4
 laid-back|xotirjam|ˌleɪd ˈbæk|adjective|He is laid-back.||4
@@ -234,7 +232,6 @@ fluctuation|tebranish|ˌflʌktʃuˈeɪʃn|noun|Price fluctuation is common.||5
 hence|shu sababli|hens|adverb|Costs rose; hence prices rose.||4
 identical|bir xil|aɪˈdentɪkl|adjective|Two identical twins.||3
 immense|ulkan|ɪˈmens|adjective|An immense effort.||4
-impose|majburlamoq|ɪmˈpəʊz|verb|Governments impose taxes.||4
 inclined|moyil|ɪnˈklaɪnd|adjective|I am inclined to agree.||4
 inhabit|yashamoq (hudud)|ɪnˈhæbɪt|verb|Birds inhabit the island.||5
 innovative|innovatsion|ˈɪnəveɪtɪv|adjective|An innovative design.||4
@@ -250,9 +247,7 @@ norm|me’yor|nɔːm|noun|It is the social norm.||4
 notion|tushuncha|ˈnəʊʃn|noun|The notion is outdated.||4
 primary|asosiy|ˈpraɪməri|adjective|The primary cause.||3
 principle|tamoyil|ˈprɪnsəpl|noun|A basic principle.||3
-refine|takomillashtirmoq|rɪˈfaɪn|verb|Refine your skills.||4
 rely|tayanmoq|rɪˈlaɪ|verb|Many rely on phones.||3
-restrict|cheklamoq|rɪˈstrɪkt|verb|Laws restrict speed.||4
 retain|saqlab qolmoq|rɪˈteɪn|verb|Retain key facts.||4
 shift|o‘zgarish|ʃɪft|noun|A shift in opinion.||3
 sphere|soha|sfɪə|noun|In the political sphere.||5

@@ -69,7 +69,6 @@ conquer|zabt etmoq|ˈkɒŋkə|verb|They conquered the region.||4
 @ IELTS | Reading topics: psychology, health, society | academic
 cognition|bilish jarayoni|kɒɡˈnɪʃn|noun|Cognition develops in childhood.||5
 behavioural|xulq-atvorga oid|bɪˈheɪvjərəl|adjective|Behavioural change takes time.||5
-stimulus|rag‘bat (qo‘zg‘atuvchi)|ˈstɪmjələs|noun|A stimulus causes a reaction.||5
 conditioning|shartlantirish|kənˈdɪʃənɪŋ|noun|Conditioning shapes habits.||5
 bilingualism|ikki tillilik|baɪˈlɪŋɡwəlɪzəm|noun|Bilingualism helps memory.||5
 mindfulness|onglilik (mindfulness)|ˈmaɪndflnəs|noun|Mindfulness reduces stress.||4
@@ -88,7 +87,6 @@ resemble|o‘xshamoq|rɪˈzembl|verb|He resembles his father.||4
 outgoing|ochiq (muloqotchan)|ˌaʊtˈɡəʊɪŋ|adjective|She is outgoing.||3
 hospitable|mehmondo‘st|hɒˈspɪtəbl|adjective|Uzbeks are hospitable.||4
 inspiring|ilhomlantiruvchi|ɪnˈspaɪərɪŋ|adjective|An inspiring teacher.||4
-charming|maftunkor|ˈtʃɑːmɪŋ|adjective|A charming town.||3
 vibrant|jonli (rang-barang)|ˈvaɪbrənt|adjective|A vibrant city.||4
 tranquil|sokin|ˈtræŋkwɪl|adjective|A tranquil lake.||4
 bustling|gavjum|ˈbʌslɪŋ|adjective|A bustling market.||4
