@@ -3,6 +3,7 @@
 const { now } = require('../../lib/util');
 const X = require('../../lib/exercises');
 const { LEVELS } = require('./curriculum');
+const IPA = require('./ipa-a1');
 const UZ = require('../../../shared/uz-alphabet');
 
 const opts = (correct, wrong) => [{ text: correct, is_correct: true }].concat(wrong.map((text) => ({ text, is_correct: false })));
@@ -56,26 +57,35 @@ async function nextId(db, table) { const ids = idCache.get(db) || idCache.set(db
 const tr3 = (arr, f1 = 'title') => JSON.stringify({ uz: { [f1]: arr[1] }, ru: { [f1]: arr[2] } });
 const trNav = (title, desc) => JSON.stringify({ uz: { title: title[1], description: desc ? desc[1] : '' }, ru: { title: title[2], description: desc ? desc[2] : '' } });
 
-/* statements for one lesson (with its exercises, options and vocabulary) */
-async function lessonStatements(db, { unlock = 'sequential', unitId, position, kind, skill, title, desc, descs, content, exercises, words, levelId, courseId, cefr, xp, t }) {
-  const st = [], lid = await nextId(db, 'lessons');
-  st.push({ sql: 'INSERT INTO lessons (id, unit_id, title, description, position, status, unlock_rule, xp_reward, created_at, updated_at, translations, kind, skill, content) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-    args: [lid, unitId, title[0], desc || '', position, 'published', unlock, xp, t, t, trNav(title, descs || null), kind, skill || null, JSON.stringify(content || {})] });
-  for (const w of words || []) st.push({ sql: 'INSERT OR IGNORE INTO vocabulary (course_id, level_id, unit_id, lesson_id, en, uz, translations, pos, example, example_uz, cefr, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-    args: [courseId, levelId, unitId, lid, w[0], w[1], JSON.stringify({ ru: w[2] || '', ru_example: '' }), w[3] || '', w[4] || '', w[5] || '', cefr, 'published', t, t] });
+/* the exercise + option inserts of one lesson */
+async function exerciseStatements(db, { lessonId, exercises, words, title, t }) {
+  const st = [];
   for (const [pos, e] of exercises.entries()) {
-    const n = check(e, title[0]);
+    const n = check(e, title);
     const eid = await nextId(db, 'exercises');
     const vocab = e.vocabIdx != null && words && words[e.vocabIdx] ? words[e.vocabIdx] : null;
     st.push({ sql: `INSERT INTO exercises (id, lesson_id, type, position, difficulty, prompt, answer, sentence, passage, audio_text, audio_url, translation, explanation, hint, direction, status, vocabulary_id, translations, skill, min_words, module, created_at, updated_at)
       VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,${vocab ? '(SELECT id FROM vocabulary WHERE en = ? COLLATE NOCASE AND uz = ? COLLATE NOCASE)' : 'NULL'},?,?,?,?,?,?)`,
-      args: [eid, lid, n.type, pos, n.difficulty, n.prompt, n.answer, n.sentence, n.passage, n.audio_text, '', n.translation, n.explanation, n.hint, n.direction, 'published'].concat(vocab ? [vocab[0], vocab[1]] : []).concat([JSON.stringify(n.translations || {}), n.skill || null, n.min_words || 0, e.module || null, t, t]) });
+      args: [eid, lessonId, n.type, pos, n.difficulty, n.prompt, n.answer, n.sentence, n.passage, n.audio_text, '', n.translation, n.explanation, n.hint, n.direction, 'published'].concat(vocab ? [vocab[0], vocab[1]] : []).concat([JSON.stringify(n.translations || {}), n.skill || null, n.min_words || 0, e.module || null, t, t]) });
     for (const [i, o] of n.options.filter((o) => o.text).entries()) st.push({ sql: 'INSERT INTO exercise_options (exercise_id, text, match_text, is_correct, position) VALUES (?,?,?,?,?)', args: [eid, o.text, o.match_text, o.is_correct ? 1 : 0, i] });
   }
   return st;
 }
 
-/* creates the roadmap course, its levels and topics (units); then the lessons of every topic that has authored content (resumable) */
+/* statements for one NEW lesson (with its exercises, options and vocabulary) */
+async function lessonStatements(db, { unlock = 'sequential', unitId, position, kind, skill, title, desc, descs, content, exercises, words, levelId, courseId, cefr, xp, t }) {
+  const st = [], lid = await nextId(db, 'lessons');
+  st.push({ sql: 'INSERT INTO lessons (id, unit_id, title, description, position, status, unlock_rule, xp_reward, created_at, updated_at, translations, kind, skill, content) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+    args: [lid, unitId, title[0], desc || '', position, 'published', unlock, xp, t, t, trNav(title, descs || null), kind, skill || null, JSON.stringify(content || {})] });
+  for (const w of words || []) st.push({ sql: 'INSERT OR IGNORE INTO vocabulary (course_id, level_id, unit_id, lesson_id, en, uz, translations, pos, example, example_uz, cefr, status, created_at, updated_at, ipa) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+    args: [courseId, levelId, unitId, lid, w[0], w[1], JSON.stringify({ ru: w[2] || '', ru_example: '' }), w[3] || '', w[4] || '', w[5] || '', cefr, 'published', t, t, ipaOf(w)] });
+  st.push(...await exerciseStatements(db, { lessonId: lid, exercises, words, title: title[0], t }));
+  return st;
+}
+
+/* Creates the roadmap course, its levels and topics, and all 240 lesson rows of the curriculum (lessons without content stay drafts, hidden from
+   learners). Then every lesson that has authored content is filled in: study page, exercises, vocabulary. Topic tests and level examinations are
+   added when all the lessons they cover have content. Every step is atomic, resumable and never duplicates. */
 async function ensureRoadmap(db, content) {
   const t = now(), made = { lessons: 0, exercises: 0 };
   let course = await db.get("SELECT id FROM courses WHERE slug = 'lexio-roadmap'");
@@ -83,44 +93,61 @@ async function ensureRoadmap(db, content) {
     const id = await nextId(db, 'courses');
     const pos = (await db.get('SELECT COALESCE(MAX(position), -1) + 1 p FROM courses')).p;
     const st = [{ sql: 'INSERT INTO courses (id, slug, title, description, track, status, position, created_at, updated_at, translations) VALUES (?,?,?,?,?,?,?,?,?,?)',
-      args: [id, 'lexio-roadmap', 'LEXIO English Roadmap', 'From A1 Beginner to IELTS Band 6.5–7.0: levels you unlock one by one by passing the level examination.', 'general', 'published', pos, t, t,
-        JSON.stringify({ uz: { title: 'LEXIO ingliz tili yo‘li', description: UZ.toNew('A1 boshlang‘ichdan IELTS 6.5–7.0 gachaligi: har bir darajani imtihondan o‘tib birin-ketin ochasiz.') }, ru: { title: 'Дорожная карта LEXIO', description: 'От A1 до IELTS 6.5–7.0: уровни открываются по одному после сдачи экзамена.' } })] }];
+      args: [id, 'lexio-roadmap', 'LEXIO English Roadmap', 'From A1 Beginner to IELTS Band 6.5–7.0: 240 lessons in six levels. Each level opens when you pass the examination of the level before.', 'general', 'published', pos, t, t,
+        JSON.stringify({ uz: { title: 'LEXIO ingliz tili yo‘li', description: UZ.toNew('A1 boshlang‘ichdan IELTS 6.5–7.0 gacha: oltita darajada 240 ta dars. Har bir daraja oldingi daraja imtihonidan o‘tgandan keyin ochiladi.') }, ru: { title: 'Дорожная карта LEXIO', description: 'От A1 до IELTS 6.5–7.0: 240 уроков в шести уровнях. Каждый уровень открывается после экзамена предыдущего.' } })] }];
     for (const [li, lv] of LEVELS.entries()) {
       const lid = await nextId(db, 'levels');
       st.push({ sql: 'INSERT INTO levels (id, course_id, code, title, description, position, unlock_rule, unlock_threshold_pct, translations, exam_pass_pct, strict) VALUES (?,?,?,?,?,?,?,?,?,?,?)', args: [lid, id, lv.code, lv.title[0], lv.description[0], li, 'sequential', 80, trNav(lv.title, lv.description), 80, 1] });
-      for (const [ui, name] of lv.topics.entries()) { const uid = await nextId(db, 'units'); st.push({ sql: 'INSERT INTO units (id, level_id, title, description, position, translations) VALUES (?,?,?,?,?,?)', args: [uid, lid, name, '', ui, JSON.stringify({ uz: { title: (content.topicTitles[lv.code] || {})[name] ? content.topicTitles[lv.code][name][0] : name }, ru: { title: (content.topicTitles[lv.code] || {})[name] ? content.topicTitles[lv.code][name][1] : name } })] }); }
+      for (const [ui, topic] of lv.topics.entries()) { const uid = await nextId(db, 'units'); st.push({ sql: 'INSERT INTO units (id, level_id, title, description, position, translations) VALUES (?,?,?,?,?,?)', args: [uid, lid, topic.title[0], '', ui, JSON.stringify({ uz: { title: topic.title[1] }, ru: { title: topic.title[2] } })] }); }
     }
     await db.batch(st);
     course = { id };
   }
-  // lessons per topic, one atomic batch per topic; a topic that already has lessons is skipped (so an interrupted run resumes)
   for (const lv of LEVELS) {
     const level = await db.get('SELECT * FROM levels WHERE course_id = ? AND code = ?', course.id, lv.code);
-    const spec = content.levels[lv.code]; if (!spec || !level) continue;
-    for (const topic of spec.topics) {
-      const unit = await db.get('SELECT id FROM units WHERE level_id = ? AND title = ?', level.id, topic.title);
-      if (!unit || (await db.get('SELECT COUNT(*) n FROM lessons WHERE unit_id = ?', unit.id)).n) continue;
+    if (!level) continue;
+    const spec = (content.levels || {})[lv.code] || { topics: [] };
+    let complete = true;
+    for (const topic of lv.topics) {
+      const unit = await db.get('SELECT id FROM units WHERE level_id = ? AND title = ?', level.id, topic.title[0]);
+      if (!unit) { complete = false; continue; }
+      const tspec = spec.topics.find((x) => x.title === topic.title[0]) || { lessons: [] };
       const st = [];
-      let pos = 0;
-      for (const L of topic.lessons) {
-        const ex = lessonExercises(L);
-        st.push(...await lessonStatements(db, { unitId: unit.id, position: pos++, kind: 'lesson', skill: 'mixed', title: L.t, desc: L.obj[1], descs: [L.obj[1], L.obj[0], L.obj[2]], content: lessonContent(L), exercises: ex, words: L.w, levelId: level.id, courseId: course.id, cefr: lv.code, xp: 20, t }));
-        made.lessons++; made.exercises += ex.length;
+      let allDone = true, ids = null;
+      for (const [i, [en, uz]] of topic.lessons.entries()) {
+        let row = await db.get('SELECT id, status FROM lessons WHERE unit_id = ? AND title = ?', unit.id, en);
+        const L = tspec.lessons.find((x) => x.t[0] === en);
+        if (!row) {
+          const lid = await nextId(db, 'lessons');
+          st.push({ sql: 'INSERT INTO lessons (id, unit_id, title, description, position, status, unlock_rule, xp_reward, created_at, updated_at, translations, kind, skill, content) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)', args: [lid, unit.id, en, '', i, L ? 'draft' : 'draft', 'sequential', 20, t, t, JSON.stringify({ uz: { title: uz } }), 'lesson', null, '{}'] });
+          row = { id: lid, status: 'draft', fresh: true };
+        }
+        if (L && row.status === 'draft' && !(await db.get('SELECT 1 x FROM exercises WHERE lesson_id = ?', row.id))) {
+          const ex = L.exercises || lessonExercises(L);
+          st.push(...await fillLesson(db, { lessonId: row.id, unitId: unit.id, levelId: level.id, courseId: course.id, spec: L, exercises: ex, cefr: lv.code === 'IELTS' ? '' : lv.code, topic: topic.title[0], t }));
+          made.lessons++; made.exercises += ex.length;
+        }
+        if (!L) allDone = false;
       }
-      const tests = topic.lessons.flatMap((L) => L.ts.map((q) => mcq(q, 'grammar')));
-      st.push(...await lessonStatements(db, { unitId: unit.id, position: pos++, kind: 'topic_test', skill: 'mixed', title: [topic.title + ' — test', topic.testUz || UZ.toNew('Mavzu testi'), topic.testRu || 'Тест по теме'], desc: '', content: topicTestContent(topic), exercises: tests, words: [], levelId: level.id, courseId: course.id, cefr: lv.code, xp: 30, t }));
-      made.lessons++; made.exercises += tests.length;
-      await db.batch(st);
+      if (st.length) await db.batch(st);
+      if (!allDone) { complete = false; continue; }
+      // the topic test, once all four lessons have content
+      const withTest = tspec.test !== false && tspec.lessons.every((L) => L.ts && L.ts.length);
+      if (withTest && !(await db.get("SELECT 1 x FROM lessons WHERE unit_id = ? AND kind = 'topic_test'", unit.id))) {
+        const items = tspec.lessons.flatMap((L) => L.ts.map((q) => mcq(q, 'grammar')));
+        const pos = (await db.get('SELECT COALESCE(MAX(position), -1) + 1 p FROM lessons WHERE unit_id = ?', unit.id)).p;
+        await db.batch(await lessonStatements(db, { unitId: unit.id, position: pos, kind: 'topic_test', skill: 'mixed', title: [topic.title[0] + ' — test', UZ.toNew('Mavzu testi'), 'Тест по теме'], desc: '', content: topicTestContent(topic), exercises: items, words: [], levelId: level.id, courseId: course.id, cefr: lv.code, xp: 30, t }));
+        made.lessons++; made.exercises += items.length;
+      }
     }
-    // the final examination of the level goes into its last topic
-    const ex = spec.exam;
-    if (ex) {
-      const lastTopic = spec.topics[spec.topics.length - 1];
-      const unit = await db.get('SELECT id FROM units WHERE level_id = ? AND title = ?', level.id, lastTopic.title);
+    // the final examination of the level, in its last topic, once every topic of the level is complete
+    if (complete && spec.exam) {
+      const lastTopic = lv.topics[lv.topics.length - 1];
+      const unit = await db.get('SELECT id FROM units WHERE level_id = ? AND title = ?', level.id, lastTopic.title[0]);
       if (unit && !(await db.get("SELECT 1 x FROM lessons WHERE unit_id = ? AND kind = 'exam'", unit.id))) {
         const pos = (await db.get('SELECT COALESCE(MAX(position), -1) + 1 p FROM lessons WHERE unit_id = ?', unit.id)).p;
-        const items = ex.items.map((q) => (q.type ? q : mcq(q, 'grammar')));
-        await db.batch(await lessonStatements(db, { unitId: unit.id, position: pos, kind: 'exam', skill: 'mixed', title: [`${lv.code} final examination`, `${lv.code} yakuniy imtihoni`, `Итоговый экзамен ${lv.code}`], desc: '', content: ex.content, exercises: items, words: [], levelId: level.id, courseId: course.id, cefr: lv.code, xp: 100, t }));
+        const items = spec.exam.items.map((q) => (q.type ? q : mcq(q, 'grammar')));
+        await db.batch(await lessonStatements(db, { unitId: unit.id, position: pos, kind: 'exam', skill: 'mixed', title: [`${lv.code} final examination`, `${lv.code} yakuniy imtihoni`, `Итоговый экзамен ${lv.code}`], desc: '', content: spec.exam.content, exercises: items, words: [], levelId: level.id, courseId: course.id, cefr: lv.code, xp: 100, t }));
         made.lessons++; made.exercises += items.length;
       }
     }
@@ -128,8 +155,24 @@ async function ensureRoadmap(db, content) {
   return made;
 }
 
+/* fills an existing (draft) lesson row: publishes it with its study page, vocabulary and exercises */
+async function fillLesson(db, { lessonId, unitId, levelId, courseId, spec, exercises, cefr, topic, t }) {
+  const st = [];
+  const words = spec.w || [];
+  const content = spec.content || lessonContent(spec);
+  const o = content.objective || {};
+  st.push({ sql: "UPDATE lessons SET status = 'published', description = ?, translations = ?, kind = ?, skill = ?, content = ?, xp_reward = ?, unlock_rule = ?, updated_at = ? WHERE id = ?",
+    args: [o.en || '', trNav(spec.t, [o.en || '', o.uz || '', o.ru || o.en || '']), spec.kind || 'lesson', spec.skill || 'mixed', JSON.stringify(content), spec.xp || 20, spec.unlock || 'sequential', t, lessonId] });
+  for (const w of words) st.push({ sql: 'INSERT OR IGNORE INTO vocabulary (course_id, level_id, unit_id, lesson_id, en, uz, translations, pos, example, example_uz, cefr, status, created_at, updated_at, ipa, topic, kind, difficulty) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+    args: [courseId, levelId, unitId, lessonId, w[0], w[1], JSON.stringify({ ru: w[2] || '', ru_example: '' }), w[3] || '', w[4] || '', w[5] || '', cefr, 'published', t, t, ipaOf(w), topic, 'word', DIFFICULTY[cefr] || 1] });
+  st.push(...await exerciseStatements(db, { lessonId, exercises, words, title: spec.t[0], t }));
+  return st;
+}
+const DIFFICULTY = { A1: 1, A2: 2, B1: 3, B2: 4, C1: 5, C2: 6 };
+const ipaOf = (w) => w[6] || IPA[w[0]] || '';
+
 const lessonContent = (L) => ({ objective: { uz: L.obj[0], en: L.obj[1], ru: L.obj[2] }, explanation: { uz: L.ex[0], en: L.ex[1], ru: L.ex[2] }, tip: L.tip ? { uz: L.tip[0], en: L.tip[1] } : undefined,
-  examples: L.eg.map((e) => ({ en: e[0], tr: { uz: e[1], ru: e[2] } })), vocabulary: L.w.map((w) => ({ en: w[0], uz: w[1], ru: w[2] })) });
+  examples: L.eg.map((e) => ({ en: e[0], tr: { uz: e[1], ru: e[2] } })), vocabulary: L.w.map((w) => ({ en: w[0], uz: w[1], ru: w[2], ipa: ipaOf(w) })) });
 const topicTestContent = (topic) => ({ objective: { uz: UZ.toNew('Mavzu bo‘yicha bilimingizni tekshiring. Har bir savolga bir marta javob berasiz; o‘tish bali 70%.'), en: 'Check what you learned in this topic. Each question has one try; the pass mark is 70%.' }, explanation: { en: '', uz: '' }, examples: [], vocabulary: [] });
 
 module.exports = { ensureRoadmap, lessonExercises, mcq, check, lessonStatements, nextId, trNav };

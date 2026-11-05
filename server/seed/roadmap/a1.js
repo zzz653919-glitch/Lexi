@@ -1,9 +1,12 @@
 /* A1 — Beginner: ten topics (two lessons and a topic test each) and the final examination. */
 const { convertText } = require('../../lib/uz-convert');
+const IELTS = require('./ielts');
+const { LEVELS: CURRICULUM } = require('./curriculum');
 const part1 = require('./a1-part1');
 const part2 = require('./a1-part2');
+const part3 = require('./a1-part3');
 
-const topics = part1.concat(part2);
+const topics = part1.concat(part2).map((t) => ({ ...t, lessons: t.lessons.concat(part3[t.title] || []) }));
 const opts = (c, w) => [{ text: c, is_correct: true }].concat(w.map((text) => ({ text, is_correct: false })));
 const mc = (q, c, w1, w2, module) => ({ type: 'multiple_choice', status: 'published', difficulty: 2, module, prompt: q, options: opts(c, [w1, w2]) });
 const listen = (text, q, c, w1, w2) => ({ type: 'listen_choice', status: 'published', difficulty: 2, module: 'listening', prompt: q, audio_text: text, options: opts(c, [w1, w2]) });
@@ -55,6 +58,7 @@ function content(baseKeep) {
   return {
     topicTitles,
     levels: {
+      IELTS: { topics: CURRICULUM.find((l) => l.code === 'IELTS').topics.map((tp) => ({ title: tp.title[0], test: false, lessons: IELTS.lessons.filter((L) => tp.lessons.some((x) => x[0] === L.t[0])) })) },
       A1: {
         topics: conv.map((t) => ({ title: t.title, lessons: t.lessons })),
         exam: {

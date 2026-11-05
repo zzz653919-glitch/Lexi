@@ -11,20 +11,27 @@ async function learner(s, email) {
 const levels = async (c) => (await c.get('/api/path')).json;
 const lessonsOf = (p, code, kinds) => p.levels.find((l) => l.code === code).units.flatMap((u) => u.lessons).filter((l) => !kinds || kinds.includes(l.kind));
 
-test('roadmap content: eight levels, A1 complete with ten topics, tests and an examination; no duplicate or empty exercises', async () => {
+test('roadmap content: six levels, 240 lessons in 60 topics, A1 complete with tests and an examination; no duplicate or empty published exercises', async () => {
   const s = await startServer({ roadmap: true });
   try {
     const course = s.db.get("SELECT * FROM courses WHERE slug = 'lexio-roadmap'");
     const lv = s.db.all('SELECT * FROM levels WHERE course_id = ? ORDER BY position', course.id);
-    assert.deepStrictEqual(lv.map((l) => l.code), ['A1', 'A2', 'B1', 'B1+', 'B2', 'B2+', 'C1', 'IELTS']);
+    assert.deepStrictEqual(lv.map((l) => l.code), ['A1', 'A2', 'B1', 'B2', 'C1', 'IELTS']);
     assert.ok(lv.every((l) => l.strict === 1 && l.exam_pass_pct === 80), 'strict levels with an 80% pass mark');
-    for (const l of lv) assert.ok(s.db.get('SELECT COUNT(*) n FROM units WHERE level_id = ?', l.id).n >= 10, l.code + ' has 10+ topics');
+    for (const l of lv) {
+      assert.strictEqual(s.db.get('SELECT COUNT(*) n FROM units WHERE level_id = ?', l.id).n, 10, l.code + ' has 10 topics');
+      assert.strictEqual(s.db.get("SELECT COUNT(*) n FROM lessons x JOIN units u ON u.id = x.unit_id WHERE u.level_id = ? AND x.kind IN ('lesson', 'practice_test')", l.id).n, 40, l.code + ' has 40 lessons');
+    }
+    assert.strictEqual(s.db.get("SELECT COUNT(*) n FROM lessons x JOIN units u ON u.id = x.unit_id JOIN levels v ON v.id = u.level_id WHERE v.course_id = ? AND x.kind IN ('lesson', 'practice_test')", course.id).n, 240, '240 lessons in the curriculum');
+    // a lesson that learners can see always has real content: no published lesson without exercises, none without a study page
+    assert.strictEqual(s.db.get("SELECT COUNT(*) n FROM lessons x JOIN units u ON u.id = x.unit_id JOIN levels v ON v.id = u.level_id WHERE v.course_id = ? AND x.status = 'published' AND NOT EXISTS (SELECT 1 FROM exercises e WHERE e.lesson_id = x.id)", course.id).n, 0);
+    assert.strictEqual(s.db.get("SELECT COUNT(*) n FROM lessons x JOIN units u ON u.id = x.unit_id JOIN levels v ON v.id = u.level_id WHERE v.course_id = ? AND x.status = 'draft' AND EXISTS (SELECT 1 FROM exercises e WHERE e.lesson_id = x.id)", course.id).n, 0, 'drafts are only titles');
     const a1 = lv[0];
     const units = s.db.all('SELECT * FROM units WHERE level_id = ? ORDER BY position', a1.id);
     assert.strictEqual(units.length, 10);
     for (const u of units) {
       const ls = s.db.all("SELECT * FROM lessons WHERE unit_id = ? ORDER BY position", u.id);
-      assert.ok(ls.filter((x) => x.kind === 'lesson').length >= 2, u.title + ': 2+ lessons');
+      assert.strictEqual(ls.filter((x) => x.kind === 'lesson' && x.status === 'published').length, 4, u.title + ': 4 published lessons');
       assert.ok(ls.some((x) => x.kind === 'topic_test'), u.title + ': topic test');
       for (const x of ls.filter((y) => y.kind === 'lesson')) {
         const n = s.db.get('SELECT COUNT(*) n FROM exercises WHERE lesson_id = ?', x.id).n;
@@ -56,9 +63,10 @@ test('strict unlocking: a new learner has only A1; a chosen level opens nothing;
     const c = await learner(s, 'new@example.com');
     let p = await levels(c);
     assert.strictEqual(p.course.slug, 'lexio-roadmap'); assert.strictEqual(p.course.strict, true);
-    assert.deepStrictEqual(p.levels.map((l) => l.code), ['A1', 'A2', 'B1', 'B1+', 'B2', 'B2+', 'C1', 'IELTS']);
+    assert.deepStrictEqual(p.levels.map((l) => l.code), ['A1', 'A2', 'B1', 'B2', 'C1', 'IELTS']);
     assert.strictEqual(p.levels[0].unlocked, true);
-    assert.ok(p.levels.slice(1).every((l) => !l.unlocked && l.comingSoon), 'later levels are locked and "being prepared"');
+    assert.ok(p.levels.slice(1).every((l) => !l.unlocked), 'later levels are locked');
+    assert.ok(p.levels.slice(1, 5).every((l) => l.comingSoon), 'levels without published lessons are "being prepared"');
     // choosing a level by hand, even C2, unlocks nothing
     await c.post('/api/me/level', { level: 'C2' });
     p = await levels(c); assert.ok(p.levels.slice(1).every((l) => !l.unlocked));
@@ -131,7 +139,7 @@ test('examinations: scored on the server, 80% to pass, answers hidden until the 
       const o = await playAttempt(c, st, s.db);
       assert.strictEqual(o.state.status, 'completed', next.title);
       if (next.kind === 'topic_test') assert.strictEqual(o.state.result.exam.passed, true);
-      assert.ok(++guard < 40);
+      assert.ok(++guard < 80);
     }
     let p = await levels(c);
     const exam = lessonsOf(p, 'A1', ['exam'])[0];
@@ -183,16 +191,22 @@ test('IELTS center: original materials, practice tests with estimated bands, not
   const s = await startServer({ roadmap: true });
   try {
     const c = await learner(s, 'ielts@example.com');
+    // IELTS is the last level: locked until the level before is passed
+    const locked = (await c.get('/api/ielts')).json;
+    assert.strictEqual(locked.unlocked, false); assert.ok(locked.lockReason || locked.comingSoon);
+    assert.strictEqual((await c.post(`/api/lessons/${s.db.get("SELECT id FROM lessons WHERE title = 'The IELTS Academic test'").id}/start`)).status, 403, 'the server refuses a locked IELTS lesson');
+    // for this test the administrator opens the level (levels can be made non-strict)
+    s.db.run("UPDATE levels SET strict = 0, unlock_rule = 'open' WHERE code = 'IELTS'");
     const d = (await c.get('/api/ielts')).json;
-    assert.strictEqual(d.course.title, 'IELTS Preparation Center');
-    assert.deepStrictEqual(d.units.map((u) => u.title), ['Format and strategies', 'Listening practice', 'Reading practice', 'Writing practice', 'Speaking practice', 'Practice examinations']);
-    const all = d.units.flatMap((u) => u.lessons);
-    assert.ok(all.every((l) => l.state !== 'locked'), 'the center is never locked');
+    assert.strictEqual(d.unlocked, true);
+    assert.deepStrictEqual(d.units.map((u) => u.title).slice(0, 3), ['Format and scoring', 'Listening skills', 'Listening practice']);
+    const all = d.units.flatMap((u) => u.lessons).filter((l) => l.state !== 'locked');
+    assert.ok(all.length >= 14, 'the authored IELTS lessons are open');
     assert.ok(all.filter((l) => l.kind === 'practice_test').length >= 2);
     // the writing lessons carry Band 6.5 and 7.0 example answers and time-management advice exists
-    const wl = s.db.get("SELECT content FROM lessons WHERE title LIKE 'Writing Task 1%'");
+    const wl = s.db.get("SELECT content FROM lessons WHERE title LIKE 'Writing Task 1%' AND content != '{}'");
     assert.match(JSON.parse(wl.content).explanation.en, /Band 6\.5 example[\s\S]*Band 7\.0 example/);
-    assert.ok(s.db.get("SELECT 1 x FROM lessons WHERE title = 'Time management strategies'"));
+    assert.ok(s.db.get("SELECT 1 x FROM lessons WHERE title = 'Time management strategies' AND status = 'published'"));
     // note completion has audio and typed answers
     const lis = all.find((l) => l.title === 'Note completion and forms');
     const st = (await c.post(`/api/lessons/${lis.id}/start`)).json;

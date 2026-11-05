@@ -16,16 +16,16 @@ const overflow = (page) => page.evaluate(() => document.documentElement.scrollWi
     await page.waitForSelector('.roadmap-card');
 
     /* ---------- dashboard ---------- */
-    check((await page.locator('.level-strip li').count()) === 8, 'the dashboard shows all eight roadmap levels');
+    check((await page.locator('.level-strip li').count()) === 6, 'the dashboard shows all six roadmap levels');
     check((await page.locator('.level-strip li.ls-current').count()) === 1 && (await page.locator('.level-strip li.ls-current .ls-code').innerText()) === 'A1', 'A1 is the current level');
-    check((await page.locator('.level-strip li.ls-soon, .level-strip li.ls-locked').count()) === 7, 'every other level is locked, even after choosing C2 by hand');
+    check((await page.locator('.level-strip li.ls-soon, .level-strip li.ls-locked').count()) === 5, 'every other level is locked, even after choosing C2 by hand');
     check((await page.locator('.roadmap-card .skill-row').count()) === 4, 'four skill indicators');
     check(/80%/.test(await page.locator('.roadmap-card').innerText()), 'the dashboard states the 80% pass mark');
 
     /* ---------- path ---------- */
     await page.click('a[data-nav=learn]'); await page.waitForSelector('.path');
-    check((await page.locator('.level-tab').count()) === 8, 'eight level tabs');
-    check((await page.locator('.level-tab[aria-disabled="true"]').count()) === 7, 'seven are locked');
+    check((await page.locator('.level-tab').count()) === 6, 'six level tabs');
+    check((await page.locator('.level-tab[aria-disabled="true"]').count()) === 5, 'five are locked');
     check(await page.locator('.level-head').isVisible(), 'the level header explains the rules');
     check((await page.locator('.node.kind-exam').count()) === 1 && (await page.locator('.node.kind-topic_test').count()) === 10, 'the exam and ten topic tests are marked on the path');
     await page.click('.level-tab[aria-disabled="true"] >> nth=0', { force: true }); await page.waitForSelector('.notice');
