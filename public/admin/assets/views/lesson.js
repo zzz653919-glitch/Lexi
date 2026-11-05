@@ -5,6 +5,13 @@ import { navigate } from '../admin.js';
 const TYPE_IDS = [];
 const typeLabel = (id) => t('ex.type.' + id);
 
+/* the study-page fields of the lesson dialog -> the content object the API stores */
+const packContent = (v) => {
+  const rows = (text) => String(text || '').split('\n').map((x) => x.split('|').map((y) => y.trim())).filter((r) => r[0]);
+  return { objective: { en: v.content_objective_en, uz: v.content_objective_uz }, explanation: { en: v.content_explanation_en, uz: v.content_explanation_uz, ru: v.content_explanation_ru },
+    examples: rows(v.content_examples).map(([en, uz, ru]) => ({ en, tr: { uz, ru } })), vocabulary: rows(v.content_vocabulary).map(([en, uz, ru]) => ({ en, uz, ru })) };
+};
+
 export default async function lesson({ params }) {
   const id = Number(params.id);
   const [types, vocab] = await Promise.all([get('/admin/exercise-types'), get('/admin/vocabulary' + qs({ lesson_id: id, pageSize: 100 }))]);
@@ -17,12 +24,20 @@ export default async function lesson({ params }) {
     const l = d.lesson;
     const rows = d.exercises;
     const setStatus = async (status) => { try { await post(`/admin/lessons/${id}/status`, { status }); toast(t('adm.lesson_status_' + status), 'success'); load(); } catch (e) { toast(e.message, 'error', 8000); } };
+    const content = (() => { try { return JSON.parse(l.content || '{}'); } catch (_) { return {}; } })();
     const editLesson = async () => {
       const r = await formDialog({ title: t('adm.lesson_settings'), wide: true, fields: [
         { name: 'title', label: t('adm.f.title'), value: l.title, required: true }, { name: 'description', label: t('adm.f.description'), type: 'textarea', value: l.description }, { name: 'xp_reward', label: t('adm.f.xp_reward'), type: 'number', value: l.xp_reward, min: 0, max: 500 },
+        { name: 'kind', label: t('adm.f.lesson_kind'), type: 'select', value: l.kind || 'lesson', options: ['lesson', 'topic_test', 'exam', 'practice_test'].map((k) => ({ value: k, label: t('adm.lesson_kind.' + k) })), hint: t('adm.f.lesson_kind_hint') },
+        { name: 'skill', label: t('adm.f.lesson_skill'), type: 'select', value: l.skill || '', options: [{ value: '', label: t('adm.none') }].concat(['mixed', 'listening', 'reading', 'writing', 'speaking', 'vocabulary', 'grammar'].map((k) => ({ value: k, label: k === 'mixed' ? t('adm.skill_mixed') : t('exam.skill_' + k) }))) },
+        { name: 'content_objective_en', label: t('adm.content.objective') + ' (en)', value: content.objective && content.objective.en || '' }, { name: 'content_objective_uz', label: t('adm.content.objective') + ' (uz)', value: content.objective && content.objective.uz || '' },
+        { name: 'content_explanation_en', label: t('adm.content.explanation') + ' (en)', type: 'textarea', rows: 4, value: content.explanation && content.explanation.en || '' }, { name: 'content_explanation_uz', label: t('adm.content.explanation') + ' (uz)', type: 'textarea', rows: 4, value: content.explanation && content.explanation.uz || '' },
+        { name: 'content_explanation_ru', label: t('adm.content.explanation') + ' (ru)', type: 'textarea', rows: 3, value: content.explanation && content.explanation.ru || '' },
+        { name: 'content_examples', label: t('adm.content.examples'), type: 'textarea', rows: 4, value: (content.examples || []).map((e) => [e.en, e.tr && e.tr.uz || '', e.tr && e.tr.ru || ''].join(' | ')).join('\n'), hint: t('adm.content.examples_hint') },
+        { name: 'content_vocabulary', label: t('adm.content.vocabulary'), type: 'textarea', rows: 4, value: (content.vocabulary || []).map((w) => [w.en, w.uz || '', w.ru || ''].join(' | ')).join('\n'), hint: t('adm.content.vocabulary_hint') },
         { name: 'unlock_rule', label: t('adm.f.unlock_rule'), type: 'select', value: l.unlock_rule, options: [{ value: 'sequential', label: t('adm.unlock_long.sequential') }, { value: 'open', label: t('adm.unlock_long.open') }, { value: 'prerequisite', label: t('adm.unlock_long.prerequisite') }] },
         { name: 'prerequisite_lesson_id', label: t('adm.f.prerequisite'), type: 'select', value: l.prerequisite_lesson_id || '', options: [{ value: '', label: t('adm.none') }].concat(d.siblings.map((s) => ({ value: s.id, label: s.title }))) }, ...trFields(l)],
-        save: (v) => patch('/admin/lessons/' + id, { ...withTr(v), xp_reward: Number(v.xp_reward), prerequisite_lesson_id: v.prerequisite_lesson_id === '' ? null : Number(v.prerequisite_lesson_id) }) });
+        save: (v) => patch('/admin/lessons/' + id, { ...withTr(Object.fromEntries(Object.entries(v).filter(([k]) => !k.startsWith('content_')))), content: packContent(v), xp_reward: Number(v.xp_reward), prerequisite_lesson_id: v.prerequisite_lesson_id === '' ? null : Number(v.prerequisite_lesson_id) }) });
       if (r) load();
     };
     const move = async (i, dir) => { const ids = rows.map((x) => x.id); const j = i + dir; if (j < 0 || j >= ids.length) return; [ids[i], ids[j]] = [ids[j], ids[i]]; await post(`/admin/lessons/${id}/exercises/reorder`, { ids }); load(); };
@@ -97,6 +112,8 @@ async function exerciseDialog(lessonId, exerciseId, vocabItems) {
     translation: field({ label: t('adm.ex.translation'), name: 'translation', value: ex.translation }),
     explanation: field({ label: t('adm.ex.explanation'), name: 'explanation', type: 'textarea', rows: 2, value: ex.explanation }),
     hint: field({ label: t('adm.ex.hint'), name: 'hint', value: ex.hint }),
+    min_words: field({ label: t('adm.ex.min_words'), name: 'min_words', type: 'number', value: ex.min_words || 0, min: 0, max: 400 }),
+    module: field({ label: t('adm.ex.module'), name: 'module', type: 'select', value: ex.module || '', options: [{ value: '', label: t('adm.none') }].concat(['listening', 'reading', 'writing', 'speaking', 'vocabulary', 'grammar'].map((m) => ({ value: m, label: t('exam.skill_' + m) }))), hint: t('adm.ex.module_hint') }),
     difficulty: field({ label: t('adm.ex.difficulty'), name: 'difficulty', type: 'number', value: ex.difficulty, min: 1, max: 5 }),
     status: field({ label: t('adm.col.status'), name: 'status', type: 'select', value: ex.status, options: [{ value: 'published', label: t('adm.status.published') }, { value: 'draft', label: t('adm.ex.draft_hidden') }] }),
     vocabulary_id: field({ label: t('adm.ex.vocab'), name: 'vocabulary_id', type: 'select', value: ex.vocabulary_id || '', options: [{ value: '', label: t('adm.none') }].concat(vocabItems.map((v) => ({ value: v.id, label: `${v.en} — ${v.uz}` }))), hint: t('adm.ex.vocab_hint') }),
@@ -135,9 +152,11 @@ async function exerciseDialog(lessonId, exerciseId, vocabItems) {
   function drawType() {
     const kind = type.value;
     const f = common, parts = [];
-    const need = { multiple_choice: ['prompt'], translation_choice: ['prompt', 'sentence'], reading: ['passage', 'prompt'], listen_choice: ['prompt', 'audio_text'], listen_type: ['prompt', 'audio_text', 'answer'], fill_blank: ['prompt', 'sentence', 'answer', 'translation'], translate_type: ['prompt', 'sentence', 'direction', 'answer'], scramble_letters: ['prompt', 'sentence', 'answer'], order_words: ['prompt', 'sentence', 'answer'], match_pairs: ['prompt'], fix_spelling: ['prompt', 'sentence', 'answer', 'translation'] }[kind] || [];
+    const need = { multiple_choice: ['prompt'], translation_choice: ['prompt', 'sentence'], reading: ['passage', 'prompt'], listen_choice: ['prompt', 'audio_text'], listen_type: ['prompt', 'audio_text', 'answer'], fill_blank: ['prompt', 'sentence', 'answer', 'translation', 'audio_text'], writing: ['prompt', 'passage', 'answer', 'translation'], speaking: ['prompt', 'passage', 'translation'], translate_type: ['prompt', 'sentence', 'direction', 'answer'], scramble_letters: ['prompt', 'sentence', 'answer'], order_words: ['prompt', 'sentence', 'answer'], match_pairs: ['prompt'], fix_spelling: ['prompt', 'sentence', 'answer', 'translation'] }[kind] || [];
     need.forEach((k) => { const fld = f[k]; const special = 'adm.exl.' + k + '.' + kind; fld.el.querySelector('.label').textContent = has(special) ? t(special) : t('adm.ex.' + k); parts.push(f[k].el); });
     if (['listen_choice', 'listen_type'].includes(kind)) { parts.push(h('div', { class: 'field' }, h('span', { class: 'label', style: { display: 'block', fontWeight: 800, fontSize: '.88rem', marginBottom: '6px' } }, t('adm.ex.audio_upload')), audioFile, audioInfo)); showAudio(); }
+    if (kind === 'writing') parts.push(f.min_words.el);
+    parts.push(f.module.el);
     typeBox.replaceChildren(...parts); drawOptions(kind);
   }
   type.input.addEventListener('change', () => { if (CHOICE.includes(type.value) !== CHOICE.includes(ex.type) || type.value === 'match_pairs' || ex.type === 'match_pairs') state.options = []; drawType(); });
@@ -160,7 +179,7 @@ async function exerciseDialog(lessonId, exerciseId, vocabItems) {
   const variantBox = h('div', { class: 'variant-box' }, variantToggle, variantBody);
   const errBox = h('div', {});
   const gather = () => ({ type: type.value, prompt: common.prompt.value, sentence: common.sentence.value, passage: common.passage.value, answer: common.answer.value.split('\n').map((x) => x.trim()).filter(Boolean).join('|'), audio_text: common.audio_text.value, audio_url: state.audio_url,
-    direction: common.direction.value, translation: common.translation.value, explanation: common.explanation.value, hint: common.hint.value, difficulty: Number(common.difficulty.value), status: common.status.value, vocabulary_id: common.vocabulary_id.value ? Number(common.vocabulary_id.value) : null,
+    direction: common.direction.value, translation: common.translation.value, explanation: common.explanation.value, hint: common.hint.value, min_words: Number(common.min_words.value) || 0, module: common.module.value || null, difficulty: Number(common.difficulty.value), status: common.status.value, vocabulary_id: common.vocabulary_id.value ? Number(common.vocabulary_id.value) : null,
     options: state.options.filter((o) => o.text || o.match_text).map((o) => ({ text: o.text, match_text: o.match_text, is_correct: !!o.is_correct })), translations: gatherVariants() });
   const validate = async () => {
     const r = await post('/admin/exercises/validate', gather());

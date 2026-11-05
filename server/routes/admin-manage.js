@@ -7,6 +7,7 @@ const { publicUser } = require('./auth');
 
 const POS = ['', 'phrasal verb', 'noun', 'verb', 'adjective', 'adverb', 'pronoun', 'preposition', 'conjunction', 'interjection', 'phrase', 'determiner', 'other'];
 const CEFR = ['', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
+const KINDS = ['word', 'collocation', 'phrasal_verb', 'idiom', 'academic'];
 const AUDIO_TYPES = {
   mp3: { mime: 'audio/mpeg', ok: (b) => (b[0] === 0x49 && b[1] === 0x44 && b[2] === 0x33) || (b[0] === 0xff && (b[1] & 0xe0) === 0xe0) },
   ogg: { mime: 'audio/ogg', ok: (b) => b.slice(0, 4).toString('latin1') === 'OggS' },
@@ -26,6 +27,11 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
     if (!partial || b.en !== undefined) { const x = clean(b.en, 120); if (!x) e.en = 'val.word_en_required'; else v.en = x; }
     if (!partial || b.uz !== undefined) { const x = clean(b.uz, 200); if (!x) e.uz = 'val.word_uz_required'; else v.uz = x; }
     if (b.pos !== undefined) { if (!POS.includes(clean(b.pos, 20))) e.pos = 'val.pos'; else v.pos = clean(b.pos, 20); }
+    if (b.ipa !== undefined) v.ipa = clean(b.ipa, 80);
+    if (b.synonyms !== undefined) v.synonyms = clean(b.synonyms, 200);
+    if (b.topic !== undefined) v.topic = clean(b.topic, 60);
+    if (b.difficulty !== undefined) { const n = Number(b.difficulty); if (!Number.isInteger(n) || n < 1 || n > 6) e.difficulty = 'val.difficulty_range'; else v.difficulty = n; }
+    if (b.kind !== undefined) { if (!KINDS.includes(b.kind)) e.kind = 'val.word_kind'; else v.kind = b.kind; }
     if (b.example !== undefined) v.example = clean(b.example, 300);
     if (b.example_uz !== undefined) v.example_uz = clean(b.example_uz, 300);
     if (b.cefr !== undefined) { if (!CEFR.includes(clean(b.cefr, 4).toUpperCase())) e.cefr = 'val.cefr'; else v.cefr = clean(b.cefr, 4).toUpperCase(); }
@@ -61,8 +67,8 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
     const v = await vocabInput(req.body || {}, false);
     if (await db.get('SELECT 1 x FROM vocabulary WHERE en = ? COLLATE NOCASE AND uz = ? COLLATE NOCASE', v.en, v.uz)) throw bad('err.fix_fields', { en: 'val.word_exists' });
     const t = now();
-    const id = (await db.run(`INSERT INTO vocabulary (course_id, level_id, unit_id, lesson_id, en, uz, translations, pos, example, example_uz, audio_url, cefr, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-      v.course_id ?? null, v.level_id ?? null, v.unit_id ?? null, v.lesson_id ?? null, v.en, v.uz, v.translations || '{}', v.pos || '', v.example || '', v.example_uz || '', v.audio_url || '', v.cefr || '', v.status || 'published', t, t)).id;
+    const id = (await db.run(`INSERT INTO vocabulary (course_id, level_id, unit_id, lesson_id, en, uz, translations, pos, example, example_uz, audio_url, cefr, status, created_at, updated_at, ipa, synonyms, topic, difficulty, kind) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+      v.course_id ?? null, v.level_id ?? null, v.unit_id ?? null, v.lesson_id ?? null, v.en, v.uz, v.translations || '{}', v.pos || '', v.example || '', v.example_uz || '', v.audio_url || '', v.cefr || '', v.status || 'published', t, t, v.ipa || '', v.synonyms || '', v.topic || '', v.difficulty || 1, v.kind || 'word')).id;
     await audit(req, 'vocabulary.create', 'vocabulary', id, { en: v.en });
     res.status(201).json(vocabRow(await db.get('SELECT * FROM vocabulary WHERE id = ?', id)));
   });
@@ -84,7 +90,7 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
     await audit(req, 'vocabulary.bulk_status', 'vocabulary', '', { count: ids.length, status });
     res.json({ updated: ids.length });
   });
-  const VOCAB_HEAD = ['en', 'uz', 'pos', 'cefr', 'example', 'example_uz', 'ru', 'status', 'course', 'unit', 'lesson'];
+  const VOCAB_HEAD = ['en', 'uz', 'ipa', 'pos', 'cefr', 'example', 'example_uz', 'synonyms', 'difficulty', 'topic', 'kind', 'ru', 'status', 'course', 'unit', 'lesson'];
   r.get('/vocabulary/export', staff, async (req, res) => {
     const rows = (await db.all(`SELECT v.*, c.title course, un.title unit, l.title lesson FROM vocabulary v LEFT JOIN courses c ON c.id = v.course_id LEFT JOIN units un ON un.id = v.unit_id LEFT JOIN lessons l ON l.id = v.lesson_id ORDER BY v.id`)).map((v) => ({ ...v, ru: (vocabRow(v).translations.ru) || '' }));
     await audit(req, 'vocabulary.export', 'vocabulary', '', { format: req.query.format, count: rows.length });
@@ -106,7 +112,7 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
     const problems = [], ready = [];
     for (const [i, raw] of items.entries()) {
       try {
-        const v = await vocabInput({ en: raw.en, uz: raw.uz, pos: raw.pos || '', cefr: raw.cefr || '', example: raw.example || '', example_uz: raw.example_uz || '', status: ['draft', 'published', 'archived'].includes(raw.status) ? raw.status : 'published',
+        const v = await vocabInput({ en: raw.en, uz: raw.uz, pos: raw.pos || '', cefr: raw.cefr || '', ipa: raw.ipa || '', synonyms: raw.synonyms || '', topic: raw.topic || '', difficulty: raw.difficulty ? Number(raw.difficulty) : 1, kind: raw.kind || 'word', example: raw.example || '', example_uz: raw.example_uz || '', status: ['draft', 'published', 'archived'].includes(raw.status) ? raw.status : 'published',
           translations: raw.ru ? { ru: raw.ru } : (raw.translations && typeof raw.translations === 'object' ? raw.translations : {}) }, false);
         ready.push(v);
       } catch (e) { problems.push({ row: i + 1, problems: Object.values(e.fields || { _: e.message }) }); }
@@ -116,8 +122,8 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
     await db.tx(async () => {
       const t = now();
       for (const v of ready) {
-        const r2 = await db.run(`INSERT OR IGNORE INTO vocabulary (course_id, level_id, unit_id, lesson_id, en, uz, translations, pos, example, example_uz, audio_url, cefr, status, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
-          lesson ? lesson.course_id : course ? course.id : null, lesson ? lesson.level_id : null, lesson ? lesson.unit_id : null, lesson ? lesson.id : null, v.en, v.uz, v.translations || '{}', v.pos || '', v.example || '', v.example_uz || '', '', v.cefr || '', v.status || 'published', t, t);
+        const r2 = await db.run(`INSERT OR IGNORE INTO vocabulary (course_id, level_id, unit_id, lesson_id, en, uz, translations, pos, example, example_uz, audio_url, cefr, status, created_at, updated_at, ipa, synonyms, topic, difficulty, kind) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)`,
+          lesson ? lesson.course_id : course ? course.id : null, lesson ? lesson.level_id : null, lesson ? lesson.unit_id : null, lesson ? lesson.id : null, v.en, v.uz, v.translations || '{}', v.pos || '', v.example || '', v.example_uz || '', '', v.cefr || '', v.status || 'published', t, t, v.ipa || '', v.synonyms || '', v.topic || '', v.difficulty || 1, v.kind || 'word');
         if (r2.changes) added++; else skipped++;
       }
     });
@@ -166,6 +172,8 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
       reviewWords: (await db.get('SELECT COUNT(*) n FROM review_items WHERE user_id = ?', u.id)).n,
       achievements: (await core.achievementList(u.id)).filter((a) => a.earnedAt).map((a) => a.code),
       week: await core.weekDays(u),
+      level: { cefr: u.cefr_level, source: u.level_source },
+      exams: (await db.all(`SELECT x.kind, x.score_pct, x.pass_pct, x.passed, x.band, x.created_at, l.title FROM exam_results x JOIN lessons l ON l.id = x.lesson_id WHERE x.user_id = ? ORDER BY x.id DESC LIMIT 20`, u.id)).map((x) => ({ kind: x.kind, title: x.title, score: x.score_pct, passPct: x.pass_pct, passed: !!x.passed, band: x.band, at: x.created_at })),
       recent: await db.all(`SELECT a.id, a.kind, a.status, a.correct, a.incorrect, a.started_at, l.title lesson FROM lesson_attempts a LEFT JOIN lessons l ON l.id = a.lesson_id WHERE a.user_id = ? ORDER BY a.id DESC LIMIT 10`, u.id) });
   });
   const adminCount = async () => (await db.get("SELECT COUNT(*) n FROM users WHERE role = 'admin' AND status = 'active'")).n;
@@ -204,6 +212,37 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
     });
     await audit(req, 'user.reset_progress', 'user', u.id, { email: u.email });
     res.json({ ok: true });
+  });
+
+  /* ---------- curriculum status: how much of each level is written, published and tested ---------- */
+  r.get('/curriculum', staff, async (req, res) => {
+    const course = await db.get("SELECT id, title, status FROM courses WHERE slug = 'lexio-roadmap'");
+    if (!course) return res.json({ course: null, levels: [], totals: {}, vocabulary: { total: 0, kinds: [] } });
+    const levels = await db.all('SELECT id, code, title, exam_pass_pct, strict FROM levels WHERE course_id = ? ORDER BY position', course.id);
+    const out = [];
+    for (const lv of levels) {
+      const c = await db.get(`SELECT
+        SUM(CASE WHEN l.kind IN ('lesson','practice_test') THEN 1 ELSE 0 END) lessons,
+        SUM(CASE WHEN l.kind IN ('lesson','practice_test') AND l.status = 'published' THEN 1 ELSE 0 END) published,
+        SUM(CASE WHEN l.kind IN ('lesson','practice_test') AND l.status != 'published' THEN 1 ELSE 0 END) drafts,
+        SUM(CASE WHEN l.kind = 'topic_test' THEN 1 ELSE 0 END) topicTests,
+        SUM(CASE WHEN l.kind = 'exam' THEN 1 ELSE 0 END) exams,
+        SUM(CASE WHEN l.kind = 'practice_test' THEN 1 ELSE 0 END) practiceTests
+        FROM lessons l JOIN units u ON u.id = l.unit_id WHERE u.level_id = ?`, lv.id);
+      const topics = (await db.get('SELECT COUNT(*) n FROM units WHERE level_id = ?', lv.id)).n;
+      const ex = (await db.get("SELECT COUNT(*) n FROM exercises e JOIN lessons l ON l.id = e.lesson_id JOIN units u ON u.id = l.unit_id WHERE u.level_id = ? AND e.status = 'published'", lv.id)).n;
+      const skillRows = await db.all("SELECT l.skill, COUNT(*) n FROM lessons l JOIN units u ON u.id = l.unit_id WHERE u.level_id = ? AND l.kind IN ('lesson','practice_test') AND l.status = 'published' GROUP BY l.skill", lv.id);
+      const words = (await db.get("SELECT COUNT(*) n FROM vocabulary WHERE status = 'published' AND cefr = ?", lv.code)).n;
+      const learners = (await db.get('SELECT COUNT(DISTINCT a.user_id) n FROM lesson_attempts a JOIN lessons l ON l.id = a.lesson_id JOIN units u ON u.id = l.unit_id WHERE u.level_id = ?', lv.id)).n;
+      const passed = (await db.get("SELECT COUNT(DISTINCT x.user_id) n FROM exam_results x JOIN lessons l ON l.id = x.lesson_id JOIN units u ON u.id = l.unit_id WHERE u.level_id = ? AND l.kind = 'exam' AND x.passed = 1", lv.id)).n;
+      out.push({ id: lv.id, code: lv.code, title: lv.title, strict: !!lv.strict, passPct: lv.exam_pass_pct, topics, lessons: c.lessons || 0, published: c.published || 0, drafts: c.drafts || 0, topicTests: c.topicTests || 0, exams: c.exams || 0, practiceTests: c.practiceTests || 0,
+        exercises: ex, words, skills: Object.fromEntries(skillRows.map((x) => [x.skill || 'mixed', x.n])), learners, examPassed: passed, complete: (c.lessons || 0) > 0 && !(c.drafts || 0) && (c.exams || 0) > 0 });
+    }
+    const sum = (k) => out.reduce((a, x) => a + (x[k] || 0), 0);
+    const kinds = await db.all("SELECT kind, COUNT(*) n FROM vocabulary WHERE status = 'published' GROUP BY kind ORDER BY n DESC");
+    res.json({ course: { id: course.id, title: course.title, status: course.status }, levels: out,
+      totals: { lessons: sum('lessons'), published: sum('published'), drafts: sum('drafts'), topicTests: sum('topicTests'), exams: sum('exams'), exercises: sum('exercises'), levelsComplete: out.filter((x) => x.complete).length },
+      vocabulary: { total: (await db.get("SELECT COUNT(*) n FROM vocabulary WHERE status = 'published'")).n, withIpa: (await db.get("SELECT COUNT(*) n FROM vocabulary WHERE status = 'published' AND ipa != ''")).n, kinds: kinds.map((k) => ({ kind: k.kind, n: k.n })) } });
   });
 
   /* ---------- statistics (real records only) ---------- */

@@ -133,6 +133,8 @@ function make(db, settings) {
   async function courseFor(user, courseId) {
     const wanted = courseId || user.course_id;
     let c = wanted ? await db.get("SELECT * FROM courses WHERE id = ? AND status = 'published'", wanted) : null;
+    const slug = S().default_course_slug;
+    if (!c && slug) c = await db.get("SELECT * FROM courses WHERE slug = ? AND status = 'published'", slug);
     if (!c) c = await db.get("SELECT * FROM courses WHERE status = 'published' ORDER BY (track = 'general') DESC, position, id LIMIT 1");
     return c || null;
   }
@@ -140,6 +142,9 @@ function make(db, settings) {
      Rules: a level opens when the previous level has `unlock_threshold_pct` % of its lessons finished (or its rule is "open", or
      it is at/below the learner's chosen start level); inside a level a "sequential" lesson opens when the previous lesson is
      finished, an "open" lesson is always open, a "prerequisite" lesson opens when its chosen lesson is finished. */
+  /* the roadmap level a placement test opens: up to B2 at most, never the advanced levels (B2+, C1, IELTS) */
+  const PLACEMENT_TO_ROADMAP = ['A1', 'A1', 'A2', 'B1', 'B2', 'B2', 'B2'];
+  const roadmapStart = (levels, cefr) => { const i = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'].indexOf(cefr); const code = PLACEMENT_TO_ROADMAP[i < 0 ? 1 : i]; const idx = levels.findIndex((l) => l.code === code); return idx < 0 ? 0 : idx; };
   async function buildPath(user, course, lang) {
     const T = (row, f) => L10N.text(row, f, lang);
     const [levels, units, lessons, progRows, countRows, openRows] = await Promise.all([
@@ -152,39 +157,68 @@ function make(db, settings) {
     const prog = Object.fromEntries(progRows.map((p) => [p.lesson_id, p]));
     const counts = Object.fromEntries(countRows.map((r) => [r.lesson_id, r.n]));
     const open = openRows.map((r) => r.lesson_id);
-    const startPos = (levels.find((l) => l.code === user.start_level) || levels[0] || { position: 0 }).position;
-    const out = { course: { id: course.id, slug: course.slug, title: T(course, 'title'), description: T(course, 'description'), track: course.track }, levels: [] };
+    const strictCourse = levels.some((l) => l.strict);
+    // a strict (roadmap) course only opens levels above A1 through examinations; a placement test may open the levels up to its (capped) result
+    const placed = ['placement', 'reassessment'].includes(user.level_source);
+    const startPos = strictCourse
+      ? (placed ? roadmapStart(levels, user.cefr_level) : -1)
+      : (levels.find((l) => l.code === user.start_level) || levels[0] || { position: 0 }).position;
+    const examRows = await db.all("SELECT lesson_id, MAX(score_pct) best, MAX(passed) passed, MAX(band) band FROM exam_results WHERE user_id = ? GROUP BY lesson_id", user.id);
+    const exams = Object.fromEntries(examRows.map((r) => [r.lesson_id, r]));
+    const out = { course: { id: course.id, slug: course.slug, title: T(course, 'title'), description: T(course, 'description'), track: course.track, strict: strictCourse }, levels: [] };
     let prevLevel = null, order = [];
-    for (const lv of levels) {
+    for (const [li, lv] of levels.entries()) {
       const lvUnits = units.filter((u) => u.level_id === lv.id).map((u) => ({ ...u, lessons: lessons.filter((l) => l.unit_id === u.id) })).filter((u) => u.lessons.length);
-      if (!lvUnits.length) continue;
+      if (!lvUnits.length) {
+        if (lv.strict) { out.levels.push({ id: lv.id, code: lv.code, title: T(lv, 'title'), description: T(lv, 'description'), unlocked: false, comingSoon: true, strict: true, total: 0, done: 0, pct: 0, threshold: lv.exam_pass_pct, examPassPct: lv.exam_pass_pct, units: [], exam: null }); prevLevel = { total: 0, done: 0, strict: true, examPassed: false, empty: true }; }
+        continue;
+      }
       const flat = [].concat(...lvUnits.map((u) => u.lessons));
-      const done = flat.filter((l) => prog[l.id]).length;
-      let unlocked = lv.unlock_rule === 'open' || !prevLevel || lv.position <= startPos;
-      if (!unlocked) unlocked = prevLevel.total === 0 || Math.round(100 * prevLevel.done / prevLevel.total) >= lv.unlock_threshold_pct;
-      const lvOut = { id: lv.id, code: lv.code, title: T(lv, 'title'), description: T(lv, 'description'), unlocked, total: flat.length, done, pct: Math.round(100 * done / flat.length), threshold: lv.unlock_threshold_pct, units: [] };
+      const isDone = (l) => !!prog[l.id];
+      const examLesson = flat.find((l) => l.kind === 'exam') || null;
+      const required = flat.filter((l) => l.kind !== 'exam');
+      const done = flat.filter(isDone).length, requiredDone = required.filter(isDone).length;
+      const examPassed = !!(examLesson && prog[examLesson.id]);
+      let unlocked;
+      let levelReason = null;
+      if (lv.strict) {
+        unlocked = !prevLevel || li <= startPos;
+        if (!unlocked) {
+          if (prevLevel.empty) levelReason = { key: 'path.lock_coming', params: { level: lv.code } };
+          else if (!prevLevel.examPassed) levelReason = { key: 'path.lock_level_exam', params: { level: prevLevel.code, pct: prevLevel.examPassPct } };
+          unlocked = !levelReason;
+        }
+      } else {
+        unlocked = lv.unlock_rule === 'open' || !prevLevel || lv.position <= startPos;
+        if (!unlocked) unlocked = prevLevel.total === 0 || Math.round(100 * prevLevel.done / prevLevel.total) >= lv.unlock_threshold_pct;
+      }
+      const lvOut = { id: lv.id, code: lv.code, title: T(lv, 'title'), description: T(lv, 'description'), unlocked, total: flat.length, done, pct: Math.round(100 * done / flat.length), threshold: lv.strict ? lv.exam_pass_pct : lv.unlock_threshold_pct, strict: !!lv.strict, examPassPct: lv.exam_pass_pct, units: [], lockReason: levelReason,
+        exam: examLesson ? { lessonId: examLesson.id, passed: examPassed, bestScore: exams[examLesson.id] ? exams[examLesson.id].best : null } : null, requiredDone, requiredTotal: required.length, completed: !!lv.strict && examPassed };
       for (const [i, l] of flat.entries()) {
         let state = 'locked', reason = null;
         if (prog[l.id]) state = 'completed';
-        else if (!unlocked) reason = { key: 'path.lock_level', params: { pct: lv.unlock_threshold_pct, level: lv.code } };
-        else if (l.unlock_rule === 'open') state = 'available';
+        else if (!unlocked) reason = levelReason || { key: 'path.lock_level', params: { pct: lv.unlock_threshold_pct, level: lv.code } };
+        else if (l.kind === 'exam') {
+          if (requiredDone >= required.length) state = 'available'; else reason = { key: 'path.lock_exam_lessons', params: { done: requiredDone, total: required.length } };
+        } else if (l.unlock_rule === 'open') state = 'available';
         else if (l.unlock_rule === 'prerequisite' && l.prerequisite_lesson_id) {
           if (prog[l.prerequisite_lesson_id]) state = 'available';
           else { const pre = await db.get('SELECT title, translations FROM lessons WHERE id = ?', l.prerequisite_lesson_id); reason = pre ? { key: 'path.lock_lesson', params: { title: T(pre, 'title') } } : { key: 'path.lock_required' }; }
-        } else if (i === 0 || prog[flat[i - 1].id]) state = 'available';
+        } else if (i === 0 || prog[flat[i - 1].id] || flat[i - 1].kind === 'exam') state = 'available';
         else reason = { key: 'path.lock_lesson', params: { title: T(flat[i - 1], 'title') } };
         l._state = state; l._reason = reason;
       }
       for (const u of lvUnits) {
         const uDone = u.lessons.filter((l) => prog[l.id]).length;
         lvOut.units.push({ id: u.id, title: T(u, 'title'), description: T(u, 'description'), total: u.lessons.length, done: uDone, lessons: u.lessons.map((l) => ({
-          id: l.id, title: T(l, 'title'), description: T(l, 'description'), state: l._state, lockReason: l._reason, xp: l.xp_reward, exercises: counts[l.id] || 0,
+          id: l.id, title: T(l, 'title'), description: T(l, 'description'), state: l._state, lockReason: l._reason, xp: l.xp_reward, exercises: counts[l.id] || 0, kind: l.kind || 'lesson', skill: l.skill || null,
           inProgress: open.includes(l.id), accuracy: prog[l.id] ? prog[l.id].best_accuracy : null, completions: prog[l.id] ? prog[l.id].completions : 0,
+          bestScore: exams[l.id] ? exams[l.id].best : null, band: exams[l.id] ? exams[l.id].band : null,
         })) });
         u.lessons.forEach((l) => order.push({ lesson: l, level: lvOut, unit: u }));
       }
       out.levels.push(lvOut);
-      prevLevel = { total: flat.length, done };
+      prevLevel = { total: flat.length, done, code: lv.code, strict: !!lv.strict, examPassed, examPassPct: lv.exam_pass_pct };
     }
     // recommendation: the lesson in progress, else the first available unfinished lesson
     const states = out.levels.flatMap((lv) => lv.units.flatMap((u) => u.lessons.map((l) => ({ l, lv, u }))));

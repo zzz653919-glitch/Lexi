@@ -8,7 +8,7 @@ const DEFAULTS = {
   default_language: 'uz',
   default_translation_language: 'uz',
   supported_languages: ['uz', 'ru', 'en'],
-  available_levels: ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'IELTS'],
+  available_levels: ['A0', 'A1', 'A2', 'B1', 'B1+', 'B2', 'B2+', 'C1', 'C2', 'IELTS'],
   default_daily_goal_xp: 30,
   xp_per_correct: 10,
   xp_per_retry: 5,
@@ -44,6 +44,8 @@ const DEFAULTS = {
   daily_items_normal: 18,
   daily_items_long: 26,
   xp_daily_bonus: 15,
+  topic_test_pass_pct: 70,
+  default_course_slug: 'lexio-roadmap',
 };
 
 const SCHEMA = {
@@ -69,6 +71,8 @@ const SCHEMA = {
   registration_open: { t: 'bool' },
   maintenance_mode: { t: 'bool' },
   maintenance_message: { t: 'str', max: 300 },
+  topic_test_pass_pct: { t: 'int', min: 40, max: 100 },
+  default_course_slug: { t: 'str', max: 80 },
   placement_min_questions: { t: 'int', min: 8, max: 40 },
   placement_max_questions: { t: 'int', min: 12, max: 60 },
   placement_precision: { t: 'int', min: 20, max: 90 },
@@ -124,7 +128,7 @@ function make(db, { ttl = 2000 } = {}) {
       else if (s.t === 'langs') { const arr = Array.isArray(v) ? Array.from(new Set(v)) : null; if (!arr || !arr.length || arr.some((x) => !I18N.isSupported(x))) errors[k] = 'val.languages_list'; else values[k] = arr; }
       else if (s.t === 'list') {
         const arr = Array.isArray(v) ? v.map((x) => String(x).trim()).filter(Boolean) : null;
-        if (!arr || !arr.length || arr.length > s.max || arr.some((x) => !/^[A-Za-z0-9 _-]{1,20}$/.test(x))) errors[k] = 'val.setting_list'; else values[k] = Array.from(new Set(arr));
+        if (!arr || !arr.length || arr.length > s.max || arr.some((x) => !/^[A-Za-z0-9 +_-]{1,20}$/.test(x))) errors[k] = 'val.setting_list'; else values[k] = Array.from(new Set(arr));
       }
     }
     const lo = values.placement_min_questions !== undefined ? values.placement_min_questions : all().placement_min_questions, hi = values.placement_max_questions !== undefined ? values.placement_max_questions : all().placement_max_questions;

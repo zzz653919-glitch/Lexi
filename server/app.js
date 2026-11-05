@@ -11,6 +11,7 @@ const reviewLib = require('./lib/review');
 const learningLib = require('./lib/learning');
 const assessmentLib = require('./lib/assessment');
 const dailyLib = require('./lib/daily');
+const roadmapLib = require('./lib/roadmap');
 const i18nLib = require('./lib/i18n');
 const coreI18n = require('../shared/i18n-core');
 const seed = require('./seed');
@@ -21,7 +22,7 @@ const PUBLIC = path.join(__dirname, '..', 'public');
 function createApp(options = {}) {
   const opts = {
     dbPath: path.join(__dirname, '..', 'data', 'lexi.sqlite'), dataDir: path.join(__dirname, '..', 'data'),
-    rateLimit: true, quiet: false, secureCookies: false, publicUrl: '', trustProxy: false, seedSample: false, settingsTtl: 15000, ...options,
+    rateLimit: true, quiet: false, secureCookies: false, publicUrl: '', trustProxy: false, seedSample: false, seedRoadmap: true, settingsTtl: 15000, ...options,
   };
   const db = dbLib.open(opts.databaseUrl || opts.dbPath, { authToken: opts.databaseAuthToken });
   const settings = settingsLib.make(db, { ttl: opts.settingsTtl });
@@ -33,8 +34,9 @@ function createApp(options = {}) {
   const review = reviewLib.make(db, settings, core, learning);
   const assessment = assessmentLib.make(db, settings, learning);
   const daily = dailyLib.make(db, settings, core, review, learning);
+  const roadmap = roadmapLib.make(db);
   const audit = async (req, action, entity, entityId, details) => db.run('INSERT INTO audit_log (admin_id, admin_email, action, entity, entity_id, details, created_at) VALUES (?,?,?,?,?,?,?)', req.user.id, req.user.email, action, entity, String(entityId == null ? '' : entityId), JSON.stringify(details || {}).slice(0, 2000), now());
-  const ctx = { db, settings, auth, core, attempts, review, audit, opts, i18n, learning, assessment, daily };
+  const ctx = { db, settings, auth, core, attempts, review, audit, opts, i18n, learning, assessment, daily, roadmap };
 
   /* One-time start-up work, done lazily on the first request that needs the database (so a serverless cold start or a database that is
      briefly unreachable does not crash the process): schema migrations, optional sample content, first read of settings and texts. */
@@ -43,6 +45,8 @@ function createApp(options = {}) {
     if (!ready) ready = (async () => {
       await dbLib.migrate(db);
       if (opts.seedSample) seeded = await seed.ensureSample(db);
+      // the roadmap lessons are large: on a hosted database they are written by the build / CLI (resumable), at start-up only on a local file
+      if (opts.seedRoadmap && db.local) { try { await seed.ensureRoadmap(db); } catch (e) { if (!opts.quiet) console.error('[seed] roadmap:', e.message); } }
       // built-in test content is optional: if it cannot be written right now the site still opens (it is retried on the next start)
       try { await seed.ensureAssessmentContent(db); } catch (e) { if (!opts.quiet) console.error('[seed] placement content:', e.message); }
       await Promise.all([settings.refresh(true), i18n.refresh(true)]);
@@ -158,7 +162,7 @@ function createApp(options = {}) {
   app.use(express.static(PUBLIC, { index: false, redirect: false, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
   /* client-side routes of the single-page app: opening one directly (or reloading it) serves the app shell;
      any other path still gets the shell (so the app can show its own "page not found" screen) but with a real 404 status */
-  const CLIENT_ROUTES = /^\/(?:login|register|forgot|reset|learn|welcome|placement|results|daily\/[^/]+|attempt\/[^/]+|practice|vocabulary|review|leaderboard|achievements|profile)?\/?$/;
+  const CLIENT_ROUTES = /^\/(?:login|register|forgot|reset|learn|ielts|welcome|placement|results|daily\/[^/]+|attempt\/[^/]+|practice|vocabulary|review|leaderboard|achievements|profile)?\/?$/;
   app.get(/^\/(?!api\/|uploads\/).*/, (req, res, next) => {
     if (path.extname(req.path)) return next();
     res.setHeader('Cache-Control', 'no-store');

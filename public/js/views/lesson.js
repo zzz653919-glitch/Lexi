@@ -5,6 +5,7 @@ import { burst, countUp, play } from '../motion.js';
 import { t, n } from '../i18n.js';
 import { RENDERERS } from './exercises.js';
 import { achievementIcon } from './achievements.js';
+import { startAttempt } from './start.js';
 
 const PRAISE = ['lesson.praise_1', 'lesson.praise_2', 'lesson.praise_3', 'lesson.praise_4'];
 
@@ -40,6 +41,21 @@ export default async function lesson({ params, daily = false }) {
     if (await confirmDialog(t('lesson.leave_title'), t('lesson.leave_text'), t('lesson.leave_button'))) navigate(home);
   }
 
+  let studied = false;
+  /* the study page of a lesson: objective, explanation, examples with translations, new words */
+  function showStudy() {
+    const c = state.lesson.content;
+    foot.className = 'lesson-foot'; feedback.replaceChildren(); setHearts(); setProgress();
+    body.replaceChildren(h('div', { class: 'study' },
+      h('span', { class: 'eyebrow' }, t(state.lesson.kind === 'exam' ? 'study.exam' : state.lesson.kind === 'topic_test' ? 'study.test' : 'study.lesson')), h('h1', { class: 'q-title' }, state.lesson.title),
+      c.objective ? h('div', { class: 'card objective' }, h('b', {}, t('study.objective')), h('p', {}, c.objective)) : null,
+      c.explanation ? h('section', { class: 'card' }, h('h2', {}, t('study.explanation')), ...String(c.explanation).split('\n').map((p) => h('p', {}, p))) : null,
+      c.examples.length ? h('section', { class: 'card' }, h('h2', {}, t('study.examples')), h('ul', { class: 'study-examples' }, c.examples.map((e) => h('li', {}, h('button', { type: 'button', class: 'speak small', 'aria-label': t('ex.play'), onclick: () => speak({ text: e.en }) }, icon('volume')), h('span', {}, h('b', { lang: 'en' }, e.en), e.tr ? h('span', { class: 'muted' }, ' — ' + e.tr) : null))))) : null,
+      c.vocabulary.length ? h('section', { class: 'card' }, h('h2', {}, t('study.vocabulary')), h('ul', { class: 'study-vocab' }, c.vocabulary.map((w) => h('li', {}, h('b', { lang: 'en' }, w.en), w.ipa ? h('span', { class: 'ipa' }, ' /' + w.ipa + '/') : null, ' — ', w.tr || w.uz || '')))) : null,
+      c.tip ? h('p', { class: 'notice' }, h('b', {}, t('study.tip') + ' '), c.tip) : null));
+    action.textContent = t('study.start'); action.className = 'btn'; action.disabled = false; action.onclick = () => { studied = true; render(); };
+    foot.hidden = false;
+  }
   function showExercise() {
     answered = false; busy = false; feedback.replaceChildren(); foot.className = 'lesson-foot';
     const ex = state.exercise;
@@ -51,7 +67,7 @@ export default async function lesson({ params, daily = false }) {
     action.textContent = ex.type === 'card' ? t('lesson.continue') : t('lesson.check'); action.className = 'btn'; action.disabled = ex.type !== 'card'; action.onclick = check;
     foot.hidden = false;
     setTimeout(() => current.focus && current.focus(), 50);
-    if ((ex.type === 'listen_choice' || ex.type === 'listen_type') && ex.audio) setTimeout(() => speak(ex.audio), 350);
+    if ((ex.type === 'listen_choice' || ex.type === 'listen_type' || ex.type === 'fill_blank' || ex.type === 'speaking') && ex.audio) setTimeout(() => speak(ex.audio), 350);
   }
 
   async function check() {
@@ -67,6 +83,10 @@ export default async function lesson({ params, daily = false }) {
       setHearts(); setProgress();
       if (isCard) { busy = false; return next(); }       // a teaching card has no right or wrong: straight on
       const fb = res.feedback;
+      if (fb.exam && !fb.model) {   // inside an examination nothing is marked right or wrong until the end
+        foot.className = 'lesson-foot'; feedback.replaceChildren(h('b', {}, icon('check'), t('exam.saved')));
+        action.textContent = state.status === 'in_progress' ? t('lesson.continue') : t('lesson.finish'); action.className = 'btn'; action.disabled = false; action.onclick = next; action.focus(); return;
+      }
       foot.className = 'lesson-foot ' + (fb.correct ? 'good' : 'bad');
       if (fb.correct) { burst(feedback, { kind: 'stars' }); play(foot, 'good-glow', 750); }
       else { play(current.el, 'shake-x', 450); hintAt(); }
@@ -87,7 +107,7 @@ export default async function lesson({ params, daily = false }) {
     if (target) play(target, 'hint-pulse', 2100);
   }
   function next() { if (state.status !== 'in_progress') return showResult(); render(); }
-  function render() { if (state.status !== 'in_progress') return showResult(); if (!state.exercise) return showResult(); showExercise(); }
+  function render() { if (state.status !== 'in_progress') return showResult(); if (!state.exercise) return showResult(); if (!studied && state.lesson && state.lesson.content) return showStudy(); showExercise(); }
 
   function showResult() {
     const statsAfter = refreshStats();
@@ -99,6 +119,7 @@ export default async function lesson({ params, daily = false }) {
         h('div', { class: 'stack' }, h('a', { class: 'btn block', href: '/review' }, t('dashboard.review_words')), h('a', { class: 'btn secondary block', href: home }, t('practice.back_to_path')))));
       return;
     }
+    if (r.exam) return showExamResult(r);
     const earned = celebrate && celebrate.earned ? celebrate.earned : [];
     const xpNum = h('b', {}, '+' + r.xp), accNum = h('b', {}, r.accuracy + '%'), streakSlot = h('div', { class: 'streak-slot', style: { margin: '0 0 12px' } });
     body.replaceChildren(h('div', { class: 'result celebrate' }, h('img', { src: '/img/mascot.svg', alt: '' }),
@@ -122,6 +143,24 @@ export default async function lesson({ params, daily = false }) {
     Promise.all([statsBefore, statsAfter]).then(([b0, a0]) => {
       if (b0 && a0 && a0.streak.current > b0.streak.current && streakSlot.isConnected) streakSlot.append(h('span', { class: 'streak-up' }, icon('flame'), n('lesson.streak_up', a0.streak.current)));
     });
+  }
+
+  /* the result of an examination or topic test: score against the pass mark, per-skill breakdown, review of the mistakes, retake */
+  function showExamResult(r) {
+    const e = r.exam, isExam = e.kind === 'exam', lessonId = state.lesson && state.lesson.id;
+    const scoreEl = h('b', {}, '0%');
+    body.replaceChildren(h('div', { class: 'result exam-result ' + (e.passed ? 'passed' : 'failed') },
+      h('img', { src: '/img/mascot.svg', alt: '' }),
+      h('h1', {}, e.kind === 'practice_test' ? t('exam.practice_title') : e.passed ? t(isExam ? 'exam.passed_title' : 'exam.test_passed_title') : t(isExam ? 'exam.failed_title' : 'exam.test_failed_title')),
+      h('div', { class: 'card' }, h('div', { class: 'big-score' }, scoreEl), h('p', { class: 'muted' }, e.kind === 'practice_test' ? t('exam.practice_score', { score: e.score }) : t('exam.score_vs_pass', { score: e.score, pass: e.passPct })), h('div', { class: 'progress' + (e.passed ? '' : ' gold') }, h('i', { style: { width: e.score + '%' } })),
+        e.band ? h('p', { class: 'band-estimate' }, h('b', {}, t('exam.band_estimate', { band: e.band })), h('span', { class: 'muted small' }, ' ' + t('exam.band_note'))) : null),
+      e.kind === 'practice_test' ? null : e.passed ? h('p', { class: 'notice' }, t(isExam ? 'exam.passed_text' : 'exam.test_passed_text')) : h('p', { class: 'notice' }, t('exam.failed_text', { pass: e.passPct })),
+      Object.keys(e.skills).length ? h('section', { class: 'card', style: { textAlign: 'left' } }, h('h2', {}, t('exam.by_skill')), h('ul', { class: 'skill-list' }, Object.entries(e.skills).map(([k, v]) => h('li', { class: 'skill-row' }, h('div', { class: 'row between' }, h('b', {}, t('exam.skill_' + k)), h('span', { class: 'muted small' }, `${v.correct}/${v.total}`)), h('div', { class: 'progress' }, h('i', { style: { width: Math.round(100 * v.correct / v.total) + '%' } })))))) : null,
+      r.mistakes.length ? h('section', { class: 'card', style: { textAlign: 'left' } }, h('h2', {}, t('exam.review_mistakes')), h('ul', { class: 'review-list' }, r.mistakes.map((m) => h('li', {}, h('span', { class: 'muted' }, m.prompt || t('ex.type.' + m.type)), m.answer ? h('div', {}, t('lesson.answer_label') + ' ', h('b', {}, m.answer)) : null, m.explanation ? h('div', { class: 'muted small' }, m.explanation) : null)))) : null,
+      h('div', { class: 'stack', style: { marginTop: '18px' } },
+        e.passed || e.kind === 'practice_test' ? h('a', { class: 'btn block', href: e.kind === 'practice_test' ? '/ielts' : home }, t('common.continue')) : h('button', { class: 'btn block', type: 'button', onclick: () => lessonId && startAttempt(lessonId) }, t('exam.retake')),
+        e.passed ? null : e.kind === 'practice_test' ? h('button', { class: 'btn secondary block', type: 'button', onclick: () => lessonId && startAttempt(lessonId) }, t('exam.practise_again')) : h('a', { class: 'btn secondary block', href: home }, t('exam.review_lessons')))));
+    setTimeout(() => { countUp(scoreEl, 0, e.score, { format: (v) => v + '%' }); if (e.passed) burst(null, { kind: 'confetti' }); }, 150);
   }
 
   const onKey = (e) => {

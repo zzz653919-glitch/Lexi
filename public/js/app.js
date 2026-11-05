@@ -28,6 +28,7 @@ route('/review', view('review'), { auth: true });
 route('/leaderboard', view('leaderboard'), { auth: true });
 route('/achievements', view('achievements'), { auth: true });
 route('/profile', view('profile'), { auth: true });
+route('/ielts', view('ielts'), { auth: true });
 
 const root = document.getElementById('app');
 let shell = null, cleanup = null, navToken = 0;

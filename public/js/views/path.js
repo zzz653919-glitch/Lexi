@@ -29,10 +29,13 @@ export default async function pathView({ query }) {
 
   function draw() {
     tabs.replaceChildren(...data.levels.map((lv) => h('button', { type: 'button', role: 'tab', class: 'level-tab', 'aria-selected': String(lv === selected), 'aria-disabled': String(!lv.unlocked), onclick: () => { selected = lv; draw(); } },
-      lv.unlocked ? null : icon('lock'), lv.code, h('span', { class: 'muted small' }, `${lv.done}/${lv.total}`))));
+      lv.completed ? icon('check') : lv.unlocked ? null : icon('lock'), lv.code, h('span', { class: 'muted small' }, lv.comingSoon ? t('path.soon') : `${lv.done}/${lv.total}`))));
     const lv = selected;
     const parts = [];
-    if (!lv.unlocked) parts.push(h('div', { class: 'notice' }, t('path.level_locked_note', { level: lv.code, pct: lv.threshold })));
+    parts.push(h('div', { class: 'level-head card' + (lv.completed ? ' completed' : '') }, h('div', { class: 'row between' }, h('h2', {}, `${lv.code} — ${lv.title}`), h('span', { class: 'chip ' + (lv.completed ? 'ok' : lv.unlocked ? 'info' : 'bad') }, lv.completed ? icon('check') : lv.unlocked ? null : icon('lock'), t(lv.completed ? 'path.level_completed' : lv.unlocked ? 'path.level_current' : 'path.level_locked'))), lv.description ? h('p', { class: 'muted' }, lv.description) : null,
+      lv.strict && !lv.comingSoon ? h('p', { class: 'small' }, t('path.level_rules', { done: lv.requiredDone, total: lv.requiredTotal, pct: lv.examPassPct })) : null));
+    if (lv.comingSoon) parts.push(h('div', { class: 'notice' }, t('path.level_coming_soon', { level: lv.code })));
+    else if (!lv.unlocked) parts.push(h('div', { class: 'notice' }, lv.lockReason ? t(lv.lockReason.key, lv.lockReason.params) : t('path.level_locked_note', { level: lv.code, pct: lv.threshold })));
     let idx = 0;
     for (const u of lv.units) {
       parts.push(h('div', { class: 'unit-banner' }, h('h3', {}, u.title), h('p', {}, `${u.description || ''} ${t('dashboard.lessons_progress', { done: u.done, total: u.total })}`.trim())));
@@ -41,7 +44,7 @@ export default async function pathView({ query }) {
         const cur = rec && rec.lessonId === l.id;
         const off = Math.round(Math.sin(idx * 1.15) * 64); idx++;
         const stateText = l.state === 'completed' ? t('path.state_completed') : l.state === 'locked' ? t('path.state_locked') : cur ? t('path.state_start_here') : t('path.state_available');
-        const node = h('button', { type: 'button', class: `node ${l.state}${cur ? ' current' : ''}`, 'aria-label': `${l.title}, ${stateText}`, onclick: () => openLesson(l) }, icon(l.state === 'completed' ? 'check' : l.state === 'locked' ? 'lock' : 'play'));
+        const node = h('button', { type: 'button', class: `node ${l.state}${cur ? ' current' : ''}${l.kind && l.kind !== 'lesson' ? ' kind-' + l.kind : ''}`, 'aria-label': `${l.title}${l.kind === 'exam' ? ', ' + t('path.kind_exam') : l.kind === 'topic_test' ? ', ' + t('path.kind_test') : ''}, ${stateText}`, onclick: () => openLesson(l) }, icon(l.state === 'completed' ? 'check' : l.state === 'locked' ? 'lock' : l.kind === 'exam' ? 'trophy' : l.kind === 'topic_test' ? 'target' : 'play'));
         path.append(h('div', { class: 'node-wrap', style: { '--off': off + 'px' } }, cur ? h('span', { class: 'start-pill' }, l.inProgress ? t('common.continue') : t('common.start')) : null, node, h('span', { class: 'node-label' }, l.title)));
       });
       parts.push(path);

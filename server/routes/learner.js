@@ -2,9 +2,10 @@ const express = require('express');
 const A = require('../lib/auth');
 const { publicUser, validateProfile, AVATARS } = require('./auth');
 const L10N = require('../lib/localize');
+const IELTS = require('../lib/ielts');
 const { now, clean, int, clamp, HttpError, bad, escapeLike, weekStart, addDays } = require('../lib/util');
 
-module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n, learning, daily: dailySummary }) {
+module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n, learning, daily: dailySummary, roadmap }) {
   const r = express.Router();
   r.use(auth.requireUser);
 
@@ -68,10 +69,24 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
       achievements: achievements.filter((a) => a.earnedAt).sort((a, b) => (a.earnedAt < b.earnedAt ? 1 : -1)).slice(0, 3),
       review: reviewCounts, mistakesAvailable: mistakes,
       leaderboardEnabled: s.leaderboard_enabled,
-      daily, learning: learningInfo,
+      daily, learning: learningInfo, roadmap: await roadmap.summary(user, path),
     });
   });
   const mistakesAvailable = async (userId) => (await attempts.mistakeIds(userId, 50)).length;
+
+  /* ---------- IELTS preparation: the last level of the roadmap, shown with its own estimates ---------- */
+  r.get('/ielts', async (req, res) => {
+    const course = await db.get("SELECT * FROM courses WHERE slug = 'lexio-roadmap' AND status = 'published'");
+    if (!course) return res.json({ course: null });
+    const user = await core.userById(req.user.id);
+    const path = await core.buildPath(user, course, req.lang);
+    const level = path.levels.find((l) => l.code === 'IELTS');
+    if (!level) return res.json({ course: null });
+    const rows = await db.all('SELECT l.skill, MAX(x.band) best FROM exam_results x JOIN lessons l ON l.id = x.lesson_id WHERE x.user_id = ? AND x.band IS NOT NULL GROUP BY l.skill', user.id);
+    const best = Object.fromEntries(rows.map((x) => [x.skill, x.best]));
+    res.json({ course: { id: course.id, title: level.title, description: level.description }, unlocked: level.unlocked, comingSoon: !!level.comingSoon, lockReason: level.lockReason || null, units: level.units, totals: { lessons: level.total, done: level.done },
+      bands: { listening: best.listening || null, reading: best.reading || null, overall: IELTS.overall([best.listening, best.reading]) } });
+  });
 
   /* ---------- lessons ---------- */
   r.post('/lessons/:id/start', async (req, res) => {
@@ -94,6 +109,7 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     const tl = user.translation_language;
     if (q) { where.push(`(v.en LIKE ? ESCAPE '\\' OR ${L10N.vocabWordSql(tl)} LIKE ? ESCAPE '\\')`); args.push('%' + escapeLike(q) + '%', '%' + escapeLike(q) + '%'); }
     if (req.query.level) { where.push('(v.cefr = ? OR lv.code = ?)'); args.push(String(req.query.level), String(req.query.level)); }
+    if (['word', 'collocation', 'phrasal_verb', 'idiom', 'academic'].includes(req.query.kind)) { where.push('v.kind = ?'); args.push(req.query.kind); }
     if (req.query.unitId) { where.push('v.unit_id = ?'); args.push(int(req.query.unitId)); }
     if (filter === 'due') { where.push('ri.vocabulary_id IS NOT NULL AND ri.due_at <= ?'); args.push(now()); }
     if (filter === 'difficult') where.push('ri.is_difficult = 1');
@@ -101,9 +117,9 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     if (filter === 'learning') where.push('ri.vocabulary_id IS NOT NULL');
     const from = 'FROM vocabulary v LEFT JOIN levels lv ON lv.id = v.level_id LEFT JOIN units un ON un.id = v.unit_id LEFT JOIN review_items ri ON ri.vocabulary_id = v.id AND ri.user_id = ?';
     const total = (await db.get(`SELECT COUNT(*) n ${from} WHERE ${where.join(' AND ')}`, user.id, ...args)).n;
-    const rows = await db.all(`SELECT v.id, v.en, v.uz, v.translations, v.pos, v.example, v.example_uz, v.audio_url, COALESCE(NULLIF(v.cefr,''), lv.code, '') level, un.title unit, ri.box, ri.due_at, ri.is_difficult, ri.correct, ri.wrong
+    const rows = await db.all(`SELECT v.id, v.en, v.uz, v.translations, v.pos, v.example, v.example_uz, v.audio_url, v.ipa, v.synonyms, v.kind, v.topic, COALESCE(NULLIF(v.cefr,''), lv.code, '') level, un.title unit, ri.box, ri.due_at, ri.is_difficult, ri.correct, ri.wrong
       ${from} WHERE ${where.join(' AND ')} ORDER BY lv.position, un.position, v.id LIMIT ? OFFSET ?`, user.id, ...args, size, (page - 1) * size);
-    res.json({ total, page, pageSize: size, items: rows.map((v) => { const t = L10N.vocab(v, tl); return { id: v.id, en: v.en, translation: t.word, translationLanguage: t.language, pos: v.pos, example: v.example, example_translation: t.example, audio_url: v.audio_url, level: v.level, unit: v.unit, box: v.box, due_at: v.due_at, correct: v.correct, wrong: v.wrong, status: v.box === null ? 'new' : v.due_at <= now() ? 'due' : 'learning', difficult: !!v.is_difficult }; }) });
+    res.json({ total, page, pageSize: size, items: rows.map((v) => { const t = L10N.vocab(v, tl); return { id: v.id, en: v.en, translation: t.word, translationLanguage: t.language, pos: v.pos, example: v.example, example_translation: t.example, audio_url: v.audio_url, ipa: v.ipa, synonyms: v.synonyms, kind: v.kind, topic: v.topic, level: v.level, unit: v.unit, box: v.box, due_at: v.due_at, correct: v.correct, wrong: v.wrong, status: v.box === null ? 'new' : v.due_at <= now() ? 'due' : 'learning', difficult: !!v.is_difficult }; }) });
   });
   const safeJson = (s) => { try { return JSON.parse(s); } catch (_) { return {}; } };
   r.post('/vocabulary/:id/difficult', async (req, res) => res.json(await review.setDifficult(req.user, int(req.params.id), !!(req.body || {}).difficult)));

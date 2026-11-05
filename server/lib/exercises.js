@@ -5,7 +5,7 @@ const I18N = require('../../shared/i18n-core');
 const UZ = require('../../shared/uz-alphabet');
 
 // the labels and default instructions of the types are interface texts (locales: ex.type.<id>, ex.instr.<id>)
-const TYPES = Object.fromEntries(['multiple_choice', 'translation_choice', 'fill_blank', 'translate_type', 'scramble_letters', 'order_words', 'match_pairs', 'listen_choice', 'listen_type', 'reading', 'fix_spelling'].map((id) => [id, {}]));
+const TYPES = Object.fromEntries(['multiple_choice', 'translation_choice', 'fill_blank', 'translate_type', 'scramble_letters', 'order_words', 'match_pairs', 'listen_choice', 'listen_type', 'reading', 'fix_spelling', 'writing', 'speaking'].map((id) => [id, {}]));
 const TYPE_IDS = Object.keys(TYPES);
 const CHOICE = new Set(['multiple_choice', 'translation_choice', 'listen_choice', 'reading']);
 
@@ -33,7 +33,7 @@ function editDistance(a, b) {
 const tokensOf = (sentence) => String(sentence).replace(/[.!?]+$/, '').split(/\s+/).filter(Boolean);
 
 /* ---------- validation of authored exercises (used by the admin editor, import and publishing) ---------- */
-const VARIANT_TEXT = { prompt: 300, answer: 500, sentence: 400, passage: 3000, translation: 400, explanation: 600, hint: 200, audio_text: 300 };
+const VARIANT_TEXT = { prompt: 300, answer: 500, sentence: 400, passage: 3000, translation: 400, explanation: 600, hint: 200, audio_text: 900 };
 /* translated variants of an exercise: { ru: { sentence, answer, ..., options: [{ text, match_text }] } } (only known languages and fields) */
 function cleanVariants(raw) {
   const out = {};
@@ -55,12 +55,14 @@ function normalizeInput(raw) {
     answer: cleanMultiline(raw.answer, 500).replace(/\n+/g, '|'),
     sentence: clean(raw.sentence, 400),
     passage: cleanMultiline(raw.passage, 3000),
-    audio_text: clean(raw.audio_text, 300),
+    audio_text: clean(raw.audio_text, 900),
     audio_url: clean(raw.audio_url, 200),
     translation: clean(raw.translation, 400),
     explanation: clean(raw.explanation, 600),
     hint: clean(raw.hint, 200),
     direction: raw.direction === 'uz-en' ? 'uz-en' : 'en-uz',
+    min_words: Math.min(400, Math.max(0, Number.parseInt(raw.min_words, 10) || 0)),
+    module: ['listening', 'reading', 'writing', 'speaking', 'vocabulary', 'grammar'].includes(raw.module) ? raw.module : null,
     skill: ['vocabulary', 'grammar', 'reading', 'listening'].includes(raw.skill) ? raw.skill : null,
     difficulty: Math.min(5, Math.max(1, Number.parseInt(raw.difficulty, 10) || 1)),
     status: raw.status === 'draft' ? 'draft' : 'published',
@@ -108,6 +110,16 @@ function validate(ex) {
     if (pairs.length < 3 || pairs.length > 6 || pairs.length !== opts.length) need('options', 'val.pairs_count');
     if (new Set(pairs.map((o) => norm(o.text))).size !== pairs.length || new Set(pairs.map((o) => norm(o.match_text))).size !== pairs.length) need('options', 'val.pairs_unique');
   }
+  if (ex.type === 'writing') {
+    if (!ex.prompt) need('prompt', 'val.writing_prompt_required');
+    if (!alternatives(ex.answer).length) need('answer', 'val.writing_keywords_required');
+    if (ex.min_words < 5) need('min_words', 'val.writing_min_words');
+    if (!ex.translation) need('translation', 'val.model_answer_required');
+  }
+  if (ex.type === 'speaking') {
+    if (!ex.prompt) need('prompt', 'val.speaking_prompt_required');
+    if (!ex.translation) need('translation', 'val.model_answer_required');
+  }
   if (ex.type === 'fix_spelling') {
     if (!ex.sentence) need('sentence', 'val.spelling_text_required');
     if (!alternatives(ex.answer).length) need('answer', 'val.spelling_answer_required');
@@ -125,6 +137,7 @@ function payload(ex, options, seed) {
   if (ex.type === 'reading') p.passage = ex.passage;
   if (ex.type === 'listen_choice' || ex.type === 'listen_type') p.audio = ex.audio_url ? { url: ex.audio_url } : { text: ex.audio_text };
   if (ex.type === 'fill_blank' || ex.type === 'translate_type' || ex.type === 'fix_spelling') p.sentence = ex.sentence;
+  if (ex.type === 'fill_blank' && (ex.audio_text || ex.audio_url)) p.audio = ex.audio_url ? { url: ex.audio_url } : { text: ex.audio_text };   // note completion while listening
   if (ex.type === 'scramble_letters') {
     p.sentence = ex.sentence;
     const letters = Array.from(alternatives(ex.answer)[0].toUpperCase());
@@ -137,6 +150,8 @@ function payload(ex, options, seed) {
     const extra = options.map((o, i) => ({ id: toks.length + i, text: o.text }));   // optional distractor words
     p.tiles = shuffled(toks.concat(extra), s);
   }
+  if (ex.type === 'writing') { p.passage = ex.passage || ''; p.minWords = ex.min_words; }
+  if (ex.type === 'speaking') { p.passage = ex.passage || ''; if (ex.audio_text || ex.audio_url) p.audio = ex.audio_url ? { url: ex.audio_url } : { text: ex.audio_text }; }
   if (ex.type === 'match_pairs') {
     p.left = options.map((o, i) => ({ id: i, text: o.text }));
     p.right = shuffledPerm(options.length, s).map((src, j) => ({ id: j, text: options[src].match_text }));
@@ -174,6 +189,19 @@ function grade(ex, options, answer, seed) {
       if (typeof answer !== 'string') return { invalid: true };
       const r = typed(answer, alts, true);
       return res(r.correct, alts[0], { typo: !!r.typo });
+    }
+    case 'writing': {
+      if (typeof answer !== 'string') return { invalid: true };
+      const text = answer.trim(), words = (text.match(/[\p{L}\p{N}'’-]+/gu) || []).length;
+      if (!words) return { invalid: true };
+      const kws = alts, low = ' ' + norm(text) + ' ';
+      const hit = kws.filter((k) => low.includes(' ' + norm(k) + ' ')), missing = kws.filter((k) => !hit.includes(k));
+      const enough = words >= ex.min_words, needed = Math.ceil(kws.length * 0.5);
+      return res(enough && hit.length >= needed, ex.translation, { detail: { words, minWords: ex.min_words, hits: hit.length, total: kws.length, needed, missing }, model: ex.translation });
+    }
+    case 'speaking': {
+      if (answer !== true) return { invalid: true };   // the learner confirms they said it aloud (nothing is recorded or scored by a machine)
+      return res(true, ex.translation, { model: ex.translation });
     }
     case 'fix_spelling': {
       if (typeof answer !== 'string') return { invalid: true };

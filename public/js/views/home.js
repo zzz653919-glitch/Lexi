@@ -55,6 +55,25 @@ export default async function home() {
     rec2 && rec2.reassess ? h('div', { class: 'notice reassess', role: 'note' }, h('span', {}, t('reassess.' + rec2.reason, { accuracy: rec2.accuracy, days: rec2.days })), retake) : null,
   ].filter(Boolean);
 
+  /* the roadmap: level strip, progress of the current level, the four skills, test results and weak areas */
+  const rm = d.roadmap;
+  const skillRow = (k) => { const x = rm.skills[k]; return h('li', { class: 'skill-row' }, h('div', { class: 'row between' }, h('b', {}, t('exam.skill_' + k)), h('span', { class: 'muted small' }, x.pct === null ? t('roadmap.no_data') : x.pct + '%')), h('div', { class: 'progress', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': x.pct || 0, 'aria-label': t('exam.skill_' + k) }, h('i', { style: { width: (x.pct || 0) + '%' } }))); };
+  const roadmapCard = rm ? h('section', { class: 'card roadmap-card', 'aria-labelledby': 'rm-h' },
+    h('div', { class: 'row between' }, h('h2', { id: 'rm-h' }, t('roadmap.title')), h('a', { class: 'small', href: '/learn' }, t('roadmap.open_path'))),
+    h('ol', { class: 'level-strip', 'aria-label': t('path.levels') }, rm.levels.map((l) => h('li', { class: 'ls-' + l.state, 'aria-label': `${l.code}: ${t('roadmap.state_' + l.state)}` }, h('span', { class: 'ls-dot' }, l.state === 'completed' ? icon('check') : l.state === 'locked' || l.state === 'soon' ? icon('lock') : null), h('span', { class: 'ls-code' }, l.code)))),
+    h('div', { class: 'row between' }, h('b', {}, `${rm.level.code} — ${rm.level.title}`), h('span', { class: 'muted small' }, t('roadmap.level_lessons', { done: rm.level.requiredDone, total: rm.level.requiredTotal }))),
+    bar(rm.level.requiredTotal ? 100 * rm.level.requiredDone / rm.level.requiredTotal : 0),
+    h('p', { class: 'small muted' }, rm.level.exam ? (rm.level.exam.passed ? t('roadmap.exam_passed', { score: rm.level.exam.bestScore }) : rm.level.exam.bestScore !== null ? t('roadmap.exam_best', { score: rm.level.exam.bestScore, pass: rm.level.examPassPct }) : t('roadmap.exam_pending', { pass: rm.level.examPassPct })) : t('roadmap.no_exam')),
+    h('div', { class: 'grid two' },
+      h('div', {}, h('h3', {}, t('roadmap.skills')), h('ul', { class: 'skill-list' }, ['listening', 'reading', 'writing', 'speaking'].map(skillRow))),
+      h('div', {}, h('h3', {}, t('roadmap.weak')), rm.weak.length ? h('div', { class: 'chips' }, rm.weak.map((k) => h('span', { class: 'chip warn' }, icon('target'), t('exam.skill_' + k)))) : h('p', { class: 'muted small' }, t('roadmap.weak_none')),
+        h('h3', { style: { marginTop: '14px' } }, t('roadmap.tests')), rm.tests.length ? h('ul', { class: 'test-results' }, rm.tests.map((x) => h('li', {}, h('span', {}, x.title, ' ', h('span', { class: 'muted small' }, fmt.date(x.at))), h('span', { class: 'chip ' + (x.passed ? 'ok' : 'bad') }, `${x.score}%`)))) : h('p', { class: 'muted small' }, t('roadmap.tests_none')))),
+    h('div', { class: 'vocab-progress' }, h('h3', {}, t('roadmap.vocab_title')),
+      h('p', { class: 'small muted' }, t('roadmap.vocab_summary', { practised: fmt.number(rm.vocab.practised), total: fmt.number(rm.vocab.total), mastered: fmt.number(rm.vocab.mastered) })),
+      h('ul', { class: 'vocab-levels' }, rm.vocab.levels.filter((x) => x.total).map((x) => h('li', {}, h('span', { class: 'vl-code' }, x.code), h('div', { class: 'progress', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': x.total, 'aria-valuenow': x.practised, 'aria-label': t('roadmap.vocab_level', { code: x.code, practised: x.practised, total: x.total }) }, h('i', { style: { width: Math.round(100 * x.practised / x.total) + '%' } })), h('span', { class: 'muted small' }, `${x.practised}/${x.total}`))))),
+    h('p', { class: 'muted small' }, t('roadmap.lessons_summary', { done: rm.lessons.done, remaining: rm.lessons.remaining })),
+    h('div', { class: 'row between ielts-link' }, h('div', {}, h('b', {}, t('roadmap.ielts_card')), h('div', { class: 'muted small' }, t('roadmap.ielts_text'))), h('a', { class: 'btn small secondary', href: '/ielts' }, t('common.open')))) : null;
+
   const el = h('div', { class: 'stack' },
     h('div', { class: 'page-head' }, h('div', { class: 'hello' }, h('img', { src: '/img/mascot.svg', alt: '' }), h('div', {}, h('h1', {}, t('dashboard.hello', { name: u.displayName })), h('p', { class: 'muted', style: { margin: 0 } }, d.today.goalMet ? t('dashboard.goal_reached') : t('dashboard.xp_to_goal', { n: Math.max(0, d.today.goal - d.today.xp) }))))),
     h('section', { class: 'card continue-card', 'aria-labelledby': 'cont-h' },
@@ -62,6 +81,7 @@ export default async function home() {
       h('h2', { id: 'cont-h' }, rec ? rec.title : d.course ? t('dashboard.all_done') : t('dashboard.no_published')),
       rec ? h('p', { style: { margin: 0, opacity: .9 } }, t('dashboard.unit', { title: rec.unit })) : null, contBtn),
     ...banners,
+    roadmapCard,
     lr.level ? h('section', { class: 'card daily-card', 'aria-labelledby': 'daily-h' },
       h('div', { class: 'row between' }, h('span', { class: 'eyebrow' }, t('daily.eyebrow')), h('a', { class: 'level-link', href: '/profile', title: t('level.change_hint') }, levelBadge(lr.level), h('span', { class: 'sr-only' }, levelName(lr.level)))),
       h('h2', { id: 'daily-h' }, dl.completedToday ? t('daily.done_title') : t('daily.title')),

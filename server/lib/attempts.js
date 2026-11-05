@@ -3,6 +3,15 @@ const { now, HttpError, bad, randomToken, rng } = require('./util');
 const X = require('./exercises');
 const L10N = require('./localize');
 const LV = require('./levels');
+const IELTS = require('./ielts');
+
+/* the study page of a lesson (objective, explanation, examples, vocabulary) in the learner's interface language, falling back to English */
+function studyContent(json, lang) {
+  let c; try { c = JSON.parse(json || '{}'); } catch (_) { c = {}; }
+  const pick = (v) => (v && typeof v === 'object' && !Array.isArray(v) ? (v[lang] != null && v[lang] !== '' ? v[lang] : v.en != null ? v.en : v.uz) : v);
+  if (!c || !Object.keys(c).length) return null;
+  return { objective: pick(c.objective) || '', explanation: pick(c.explanation) || '', tip: pick(c.tip) || '', examples: (c.examples || []).map((e) => ({ en: e.en, tr: pick(e.tr) || e.uz || '' })), vocabulary: (c.vocabulary || []).map((v) => ({ en: v.en, ipa: v.ipa || '', tr: v[lang] || v.uz || '' })) };
+}
 
 function make(db, settings, core, learning) {
   const S = () => settings.all();
@@ -31,13 +40,13 @@ function make(db, settings, core, learning) {
     const a = await db.get('SELECT * FROM lesson_attempts WHERE id = ?', attemptId);
     const queue = JSON.parse(a.queue);
     const hearts = core.heartState(await core.userById(user.id));
-    const lessonRow = a.lesson_id ? await db.get('SELECT id, title, translations FROM lessons WHERE id = ?', a.lesson_id) : null;
-    const lesson = lessonRow ? { id: lessonRow.id, title: L10N.text(lessonRow, 'title', lang) } : null;
+    const lessonRow = a.lesson_id ? await db.get('SELECT id, title, translations, kind, skill, content FROM lessons WHERE id = ?', a.lesson_id) : null;
+    const lesson = lessonRow ? { id: lessonRow.id, title: L10N.text(lessonRow, 'title', lang), kind: lessonRow.kind || 'lesson', skill: lessonRow.skill || null, content: a.position === 0 && a.status === 'in_progress' ? studyContent(lessonRow.content, lang) : null } : null;
     const tl = await translationLanguage(user);
     const v = {
       attemptId: a.id, kind: a.kind, status: a.status, lesson, position: a.position, queueLength: queue.length, totalPlanned: a.total_planned,
       correct: a.correct, incorrect: a.incorrect, progress: queue.length ? Math.round(100 * Math.min(a.position, queue.length) / queue.length) : 0,
-      hearts: hearts.hearts, maxHearts: hearts.max, heartsEnabled: hearts.enabled && a.kind === 'lesson', exercise: null,
+      hearts: hearts.hearts, maxHearts: hearts.max, heartsEnabled: hearts.enabled && a.kind === 'lesson' && !(lesson && ['exam', 'topic_test', 'practice_test'].includes(lesson.kind)), exercise: null,
     };
     if (a.status === 'in_progress' && a.position < queue.length) v.exercise = await exercisePayload(a, queue[a.position], tl);
     if (a.status !== 'in_progress') v.result = await result(a, user, tl);
@@ -50,8 +59,9 @@ function make(db, settings, core, learning) {
     return await db.tx(async () => {
       const st = await core.syncHearts(user.id);
       let a = await db.get("SELECT * FROM lesson_attempts WHERE user_id = ? AND lesson_id = ? AND kind = 'lesson' AND status = 'in_progress'", user.id, lessonId);
+      const kind = (await db.get('SELECT kind FROM lessons WHERE id = ?', lessonId)).kind;
       if (!a) {
-        if (st.enabled && st.hearts <= 0) throw Object.assign(new HttpError(403, 'err.out_of_hearts'), { extra: { nextHeartAt: st.nextAt } });
+        if (st.enabled && st.hearts <= 0 && !['exam', 'topic_test', 'practice_test'].includes(kind)) throw Object.assign(new HttpError(403, 'err.out_of_hearts'), { extra: { nextHeartAt: st.nextAt } });
         const ids = (await db.all("SELECT id FROM exercises WHERE lesson_id = ? AND status = 'published' ORDER BY position, id", lessonId)).map((r) => r.id);
         if (!ids.length) throw new HttpError(409, 'err.lesson_empty');
         const r = await db.run('INSERT INTO lesson_attempts (user_id, lesson_id, kind, queue, total_planned, started_at, seed) VALUES (?,?,?,?,?,?,?)', user.id, lessonId, 'lesson', JSON.stringify(ids), ids.length, now(), 1 + Math.floor(Math.random() * 1e6));
@@ -89,6 +99,8 @@ function make(db, settings, core, learning) {
         return { feedback: { ...JSON.parse(prev.feedback), replayed: true }, state: await view(a.id, user, lang) };
       }
       const { row: ex, options } = await localized(exerciseId, await translationLanguage(user));
+      const lessonKind = a.lesson_id ? (await db.get('SELECT kind FROM lessons WHERE id = ?', a.lesson_id)).kind : 'lesson';
+      const examMode = ['exam', 'topic_test', 'practice_test'].includes(lessonKind);   // one try per question, no hearts, scored on the server at the end
       const g = X.grade(ex, options, body.answer, a.seed);
       if (g.invalid) throw bad('err.invalid_answer');
       const slot = a.position;
@@ -97,6 +109,9 @@ function make(db, settings, core, learning) {
       const full = await core.userById(user.id);
       let xp = 0;
       const fb = { correct: g.correct, typo: !!g.typo, correctAnswer: g.correctAnswer, explanation: ex.explanation, translation: ex.translation, exerciseId };
+      if (g.detail) fb.detail = g.detail;
+      if (g.model) { fb.model = g.model; fb.translation = ''; }
+      if (examMode) { fb.exam = true; if (ex.type !== 'writing' && ex.type !== 'speaking') { delete fb.correctAnswer; fb.explanation = ''; } }   // an exam does not reveal answers until it is over
       const ins = await db.run('INSERT INTO exercise_responses (attempt_id, user_id, exercise_id, slot, answer, is_correct, is_retry, feedback, xp, created_at) VALUES (?,?,?,?,?,?,?,?,?,?)',
         a.id, user.id, exerciseId, slot, JSON.stringify(body.answer).slice(0, 600), g.correct ? 1 : 0, isRetry ? 1 : 0, '{}', 0, now());
       if (g.correct) {
@@ -111,8 +126,8 @@ function make(db, settings, core, learning) {
       const upd = { correct: a.correct, incorrect: a.incorrect, xp_awarded: a.xp_awarded + xp };
       if (!isRetry) { if (g.correct) upd.correct++; else upd.incorrect++; }
       if (!g.correct) {
-        if (!isRetry) newQueue = queue.concat(exerciseId);                  // one more chance at the end of the lesson
-        if (a.kind === 'lesson') {
+        if (!isRetry && !examMode) newQueue = queue.concat(exerciseId);     // one more chance at the end of the lesson
+        if (a.kind === 'lesson' && !examMode) {
           const h = await core.changeHearts(user.id, -1);
           if (h.enabled && h.hearts <= 0) status = 'out_of_hearts';
         }
@@ -148,7 +163,24 @@ function make(db, settings, core, learning) {
     const full = await core.userById(user.id), s = S();
     const accuracy = a.total_planned ? Math.round(100 * a.correct / a.total_planned) : 0;
     let bonus = 0, perfect = 0;
-    if (a.kind === 'lesson') {
+    const examRow = a.lesson_id ? await db.get('SELECT l.*, lv.exam_pass_pct FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE l.id = ?', a.lesson_id) : null;
+    if (examRow && ['exam', 'topic_test', 'practice_test'].includes(examRow.kind)) {
+      // an examination: scored here on the server from the stored answers; only a pass completes it (and opens what depends on it)
+      const pass = examRow.kind === 'exam' ? examRow.exam_pass_pct : examRow.kind === 'practice_test' ? 0 : s.topic_test_pass_pct;   // a practice test always counts as done; it reports an estimated band instead
+      const rows = await db.all('SELECT e.module, e.type, r.is_correct FROM exercise_responses r JOIN exercises e ON e.id = r.exercise_id WHERE r.attempt_id = ?', a.id);
+      const total = a.total_planned, score = total ? Math.round(100 * a.correct / total) : 0, passed = total > 0 && score >= pass;
+      const band = examRow.kind === 'practice_test' && ['listening', 'reading'].includes(examRow.skill) ? IELTS.bandFromPercent(score) : null;
+      const skills = {};
+      for (const r of rows) { const k = r.module || (r.type.startsWith('listen') ? 'listening' : r.type === 'reading' ? 'reading' : r.type === 'writing' ? 'writing' : r.type === 'speaking' ? 'speaking' : 'language'); const x = skills[k] || (skills[k] = { correct: 0, total: 0 }); x.total++; if (r.is_correct) x.correct++; }
+      await db.run('INSERT INTO exam_results (user_id, lesson_id, attempt_id, kind, correct, total, score_pct, pass_pct, passed, skills, band, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', user.id, a.lesson_id, a.id, examRow.kind, a.correct, total, score, pass, passed ? 1 : 0, JSON.stringify(skills), band, now());
+      if (passed) {
+        bonus += await core.awardXp(full, examRow.xp_reward, 'lesson_complete', 'attempt', a.id);
+        const prog = await db.get('SELECT * FROM user_progress WHERE user_id = ? AND lesson_id = ?', user.id, a.lesson_id);
+        if (prog) await db.run('UPDATE user_progress SET completions = completions + 1, best_accuracy = MAX(best_accuracy, ?), last_completed_at = ? WHERE user_id = ? AND lesson_id = ?', score, now(), user.id, a.lesson_id);
+        else await db.run('INSERT INTO user_progress (user_id, lesson_id, completions, best_accuracy, first_completed_at, last_completed_at) VALUES (?,?,1,?,?,?)', user.id, a.lesson_id, score, now(), now());
+        await core.bumpDay(full, { lessons: 1 });
+      }
+    } else if (a.kind === 'lesson') {
       const lesson = await db.get('SELECT * FROM lessons WHERE id = ?', a.lesson_id);
       bonus += await core.awardXp(full, lesson.xp_reward, 'lesson_complete', 'attempt', a.id);
       if (a.incorrect === 0) perfect = await core.awardXp(full, s.xp_perfect_bonus, 'perfect_bonus', 'attempt', a.id);
@@ -180,11 +212,16 @@ function make(db, settings, core, learning) {
       if (m.vocabulary_id && !seen.has(m.vocabulary_id)) { const v = await db.get('SELECT id, en, uz, example, example_uz, translations FROM vocabulary WHERE id = ?', m.vocabulary_id); if (v) { seen.add(v.id); const t = L10N.vocab(v, tl); words.push({ id: v.id, en: v.en, translation: t.word, example: v.example }); } }
     }
     const mistakes = [];
-    for (const m of missed) { const { row } = await localized(m.id, tl); mistakes.push({ type: row.type, prompt: row.prompt || row.sentence, answer: (row.answer || '').split('|')[0] }); }
+    for (const m of missed) {
+      const { row, options } = await localized(m.id, tl);
+      const right = options.find((o) => o.is_correct);
+      mistakes.push({ type: row.type, prompt: row.prompt || row.sentence, answer: right ? right.text : (row.answer || '').split('|')[0], explanation: row.explanation || '' });
+    }
+    const exam = await db.get('SELECT kind, correct, total, score_pct, pass_pct, passed, skills, band FROM exam_results WHERE attempt_id = ?', a.id);
     const fresh = JSON.parse((await db.get('SELECT feedback FROM exercise_responses WHERE attempt_id = ? ORDER BY id DESC LIMIT 1', a.id))?.feedback || '{}');
     return {
       outcome: a.status, correct: a.correct, incorrect: a.incorrect, total, accuracy: total ? Math.round(100 * a.correct / total) : 0, xp: a.xp_awarded,
-      mistakes, words,
+      mistakes, words, exam: exam ? { kind: exam.kind, score: exam.score_pct, passPct: exam.pass_pct, passed: !!exam.passed, band: exam.band, skills: JSON.parse(exam.skills) } : null,
       lastFeedback: fresh,
     };
   }

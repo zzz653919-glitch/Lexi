@@ -6,6 +6,7 @@ const { now } = require('./util');
 
 const PATH_MIN = 1, PATH_MAX = 5;   // the sample course has A1..C1; Pre-A1 learners start on A1 and C2 learners on C1
 const pathLevel = (code) => LV.code(Math.max(PATH_MIN, Math.min(PATH_MAX, LV.index(code))));
+const ROADMAP_START = ['A1', 'A1', 'A2', 'B1', 'B2', 'B2', 'B2'];   // the roadmap level a placement result recommends (never above B2)
 const round2 = (n) => Math.round(n * 100) / 100;
 
 function make(db, settings) {
@@ -102,6 +103,7 @@ function make(db, settings) {
       steps: [
         { key: 'daily', params: { items: S()['daily_items_' + (user.lesson_length || 'normal')] || 18 } },
         { key: 'review', params: {} },
+        { key: 'roadmap', params: { level: ROADMAP_START[Math.max(0, LV.index(level))] } },
         ...(weak.length ? [{ key: 'weak', params: { skills: weak } }] : []),
         ...(next ? [{ key: 'next', params: { level: next, days: Math.max(7, S().adapt_min_days) } }] : [{ key: 'maintain', params: {} }]),
         { key: 'retest', params: { days: S().placement_valid_days } },

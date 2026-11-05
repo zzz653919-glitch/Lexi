@@ -31,6 +31,7 @@ function prompt(question, hidden) {
     const { db } = await openDb();
     const r = await require('./seed').ensureSample(db);
     console.log(r.created ? `Sample content created (${r.exercises} exercises, ${r.vocabulary} words).` : 'Sample content already exists (or the database already has courses). Nothing changed.');
+    const rm = await require('./seed').ensureRoadmap(db); console.log(rm.lessons ? `Roadmap created (${rm.lessons} lessons, ${rm.exercises} exercises).` : 'Roadmap already present.');
   } else if (cmd === 'create-admin') {
     /* The password is read from the ADMIN_PASSWORD environment variable or typed at a hidden prompt; it is never printed or stored in plain text. */
     const { db } = await openDb();

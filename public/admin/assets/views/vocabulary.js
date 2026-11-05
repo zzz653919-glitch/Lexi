@@ -47,12 +47,14 @@ export default async function vocabulary({ query }) {
     { name: 'en', label: t('adm.f.word_en'), value: w.en || '', required: true, maxlength: 120 }, { name: 'uz', label: t('adm.f.word_uz'), value: w.uz || '', required: true, maxlength: 200 },
     { name: 'ru', label: t('adm.f.word_ru'), value: (w.translations && w.translations.ru) || '', maxlength: 200 },
     { name: 'pos', label: t('adm.f.pos'), type: 'select', value: w.pos || '', options: POS.map((p) => ({ value: p, label: p ? t('adm.pos.' + p.replace(' ', '_')) : '—' })) }, { name: 'cefr', label: t('adm.col.level'), type: 'select', value: w.cefr || '', options: CEFR.map((p) => ({ value: p, label: p || '—' })) },
+    { name: 'ipa', label: t('adm.f.ipa'), value: w.ipa || '', maxlength: 80, hint: t('adm.f.ipa_hint') }, { name: 'synonyms', label: t('adm.f.synonyms'), value: w.synonyms || '', maxlength: 200 },
+    { name: 'kind', label: t('adm.f.word_kind'), type: 'select', value: w.kind || 'word', options: ['word', 'collocation', 'phrasal_verb', 'idiom', 'academic'].map((k) => ({ value: k, label: t('vocab.kind_' + k) })) }, { name: 'topic', label: t('adm.f.word_topic'), value: w.topic || '', maxlength: 60 }, { name: 'difficulty', label: t('adm.f.word_difficulty'), type: 'number', value: w.difficulty || 1, min: 1, max: 6 },
     { name: 'example', label: t('adm.f.example'), value: w.example || '', maxlength: 300 }, { name: 'example_uz', label: t('adm.f.example_uz'), value: w.example_uz || '', maxlength: 300 },
     { name: 'ru_example', label: t('adm.f.example_ru'), value: (w.translations && w.translations.ru_example) || '', maxlength: 300 },
     { name: 'course_id', label: t('adm.col.course'), type: 'select', value: w.course_id || '', options: [{ value: '', label: t('adm.none') }].concat(courses.map((c) => ({ value: c.id, label: c.title }))) },
     { name: 'status', label: t('adm.col.status'), type: 'select', value: w.status || 'published', options: ['published', 'draft', 'archived'].map((s) => ({ value: s, label: t('adm.status.' + s) })) },
   ];
-  const toBody = (v, w) => { const tr = { ...(w && w.translations ? w.translations : {}) }; if (v.ru.trim()) tr.ru = v.ru.trim(); else delete tr.ru; if (v.ru_example.trim()) tr.ru_example = v.ru_example.trim(); else delete tr.ru_example; return { en: v.en, uz: v.uz, pos: v.pos, cefr: v.cefr, example: v.example, example_uz: v.example_uz, status: v.status, course_id: v.course_id === '' ? null : Number(v.course_id), translations: tr }; };
+  const toBody = (v, w) => { const tr = { ...(w && w.translations ? w.translations : {}) }; if (v.ru.trim()) tr.ru = v.ru.trim(); else delete tr.ru; if (v.ru_example.trim()) tr.ru_example = v.ru_example.trim(); else delete tr.ru_example; return { en: v.en, uz: v.uz, pos: v.pos, cefr: v.cefr, ipa: v.ipa, synonyms: v.synonyms, kind: v.kind, topic: v.topic, difficulty: Number(v.difficulty) || 1, example: v.example, example_uz: v.example_uz, status: v.status, course_id: v.course_id === '' ? null : Number(v.course_id), translations: tr }; };
   async function edit(w) {
     const audio = { url: w.audio_url || '' };
     const info = h('div', { class: 'muted small' }), file = h('input', { type: 'file', accept: '.mp3,.ogg,.wav,audio/*', 'aria-label': t('adm.upload_pron') });
@@ -64,7 +66,7 @@ export default async function vocabulary({ query }) {
   }
   async function add() { const r = await formDialog({ title: t('adm.add_word'), wide: true, fields: fieldsFor(), save: (v) => post('/admin/vocabulary', toBody(v)) }); if (r) { toast(t('adm.word_added'), 'success'); load(); } }
   async function importWords() {
-    const fmtF = field({ label: t('adm.f.format'), name: 'format', type: 'select', options: [{ value: 'csv', label: 'CSV (en,uz,pos,cefr,example,example_uz,ru,status)' }, { value: 'json', label: 'JSON' }] });
+    const fmtF = field({ label: t('adm.f.format'), name: 'format', type: 'select', options: [{ value: 'csv', label: 'CSV (en,uz,ipa,pos,cefr,example,example_uz,synonyms,difficulty,topic,kind,ru,status)' }, { value: 'json', label: 'JSON' }] });
     const course = field({ label: t('adm.f.add_to_course'), name: 'courseId', type: 'select', options: [{ value: '', label: t('adm.none') }].concat(courses.map((c) => ({ value: c.id, label: c.title }))) });
     const text = field({ label: t('adm.f.content'), name: 'content', type: 'textarea', rows: 8, hint: t('adm.import_hint_vocab') });
     const file = h('input', { type: 'file', accept: '.csv,.json,text/csv,application/json', 'aria-label': t('adm.choose_file') });
