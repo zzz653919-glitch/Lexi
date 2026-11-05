@@ -64,12 +64,14 @@ const overflow = (page) => page.evaluate(() => document.documentElement.scrollWi
     await page.waitForFunction(() => /100%/.test((document.querySelector('.exam-result .big-score') || {}).textContent || ''));
     check(/passed/i.test(await page.locator('.exam-result h1').innerText()), 'a passed examination celebrates the score (100%)');
     await page.click('.exam-result a.btn'); await page.waitForSelector('.path');
+    await page.locator('.level-tab >> nth=0').click();
     check((await page.locator('.level-tab >> nth=0').innerText()).length > 0 && (await page.locator('.level-head .chip.ok').count()) === 1, 'level A1 is shown as completed');
     check(s.db.get('SELECT COUNT(*) n FROM exam_results WHERE user_id = ?', uid).n === 2, 'both results were saved');
 
     /* ---------- IELTS center ---------- */
+    s.db.run("UPDATE levels SET strict = 0, unlock_rule = 'open' WHERE code = 'IELTS'"); // the administrator opens the IELTS level for this check
     await page.goto(s.base + '/ielts'); await page.waitForSelector('.ielts-list');
-    check((await page.locator('section.card').count()) === 6 && /not official/i.test(await page.locator('.notice').first().innerText()), 'the IELTS center lists six sections and says its bands are estimates');
+    check((await page.locator('section.card').count()) === 10 && /not official/i.test(await page.locator('.notice').first().innerText()), 'the IELTS center lists its ten sections and says its bands are estimates');
     await page.locator('.ielts-lesson:has-text("Listening practice test 1") .btn').click(); await page.waitForSelector('.study');
     await playLesson(page, s.db, { max: 40 });
     await page.waitForSelector('.exam-result');
