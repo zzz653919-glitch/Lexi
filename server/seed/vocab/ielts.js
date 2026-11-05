@@ -46,7 +46,6 @@ class size|sinf hajmi|klɑːs saɪz|noun|Smaller class sizes help.||3
 dropout rate|o‘qishni tashlash darajasi|ˈdrɒpaʊt reɪt|noun|The dropout rate fell.||4
 youth crime|yoshlar jinoyati|juːθ kraɪm|noun|Youth crime is rising.||4
 juvenile|voyaga yetmagan|ˈdʒuːvənaɪl|adjective|Juvenile offenders need support.||5
-deterrent|to‘xtatuvchi vosita|dɪˈterənt|noun|Heavy fines are a deterrent.||5
 rehabilitate|qayta tarbiyalamoq|ˌriːəˈbɪlɪteɪt|verb|Prisons should rehabilitate.||5
 capital punishment|o‘lim jazosi|ˈkæpɪtl ˈpʌnɪʃmənt|noun|Capital punishment is debated.||4
 community service|jamoat ishlari|kəˈmjuːnəti ˈsɜːvɪs|noun|He did community service.||4
@@ -104,7 +103,6 @@ opponents|raqiblar|əˈpəʊnənts|noun|Opponents fear job losses.||4
 detractor|kamsituvchi (tanqidchi)|dɪˈtræktə|noun|Detractors call it wasteful.||5
 outweigh|ustun kelmoq|ˌaʊtˈweɪ|verb|Benefits outweigh costs.||4
 a double-edged sword|ikki tomonlama qurol|ə ˈdʌbl edʒd sɔːd|idiom|Technology is a double-edged sword.||5
-a vicious circle|jirkanch doira|ə ˈvɪʃəs ˈsɜːkl|idiom|Poverty is a vicious circle.||5
 on balance|umuman olganda|ɒn ˈbæləns|phrase|On balance, I agree.||4
 to a large extent|katta darajada|tuː ə lɑːdʒ ɪkˈstent|phrase|I agree to a large extent.||4
 to some degree|ma’lum darajada|tuː sʌm dɪˈɡriː|phrase|To some degree, this is true.||4
