@@ -19,12 +19,19 @@ function make(db) {
     if (curState) curState.state = cur.completed ? 'completed' : 'current';
     const sk = await skills(user.id, path.course.id);
     const tests = (await db.all(`SELECT x.kind, x.score_pct, x.pass_pct, x.passed, x.created_at, l.title FROM exam_results x JOIN lessons l ON l.id = x.lesson_id
-      JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE x.user_id = ? AND lv.course_id = ? ORDER BY x.id DESC LIMIT 6`, user.id, path.course.id))
+      JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE x.user_id = ? AND lv.course_id = ? ORDER BY x.id DESC LIMIT 10`, user.id, path.course.id))
       .map((x) => ({ kind: x.kind, title: x.title, score: x.score_pct, passPct: x.pass_pct, passed: !!x.passed, at: x.created_at }));
+    // vocabulary progress by level: words practised (box >= 1) and mastered (box >= 3) among the published words of each level
+    const codes = path.levels.map((l) => l.code);
+    const vrows = codes.length ? await db.all(`SELECT v.cefr c, COUNT(*) total, SUM(CASE WHEN ri.box >= 1 THEN 1 ELSE 0 END) practised, SUM(CASE WHEN ri.box >= 3 THEN 1 ELSE 0 END) mastered
+      FROM vocabulary v LEFT JOIN review_items ri ON ri.vocabulary_id = v.id AND ri.user_id = ? WHERE v.status = 'published' AND v.cefr IN (${codes.map(() => '?').join(',')}) GROUP BY v.cefr`, user.id, ...codes) : [];
+    const vby = Object.fromEntries(vrows.map((r) => [r.c, r]));
+    const vlevels = codes.map((c) => ({ code: c, total: vby[c] ? vby[c].total : 0, practised: vby[c] ? vby[c].practised || 0 : 0, mastered: vby[c] ? vby[c].mastered || 0 : 0 }));
+    const vocab = { total: vlevels.reduce((a, x) => a + x.total, 0), practised: vlevels.reduce((a, x) => a + x.practised, 0), mastered: vlevels.reduce((a, x) => a + x.mastered, 0), levels: vlevels };
     const weak = MODULES.filter((m) => sk[m].answered >= 5 && sk[m].pct < 70);
     const total = path.totals;
     return { levels, level: { code: cur.code, title: cur.title, pct: cur.pct, requiredDone: cur.requiredDone, requiredTotal: cur.requiredTotal, examPassPct: cur.examPassPct, exam: cur.exam, completed: !!cur.completed },
-      lessons: { done: total.done, total: total.lessons, remaining: Math.max(0, total.lessons - total.done) }, skills: sk, tests, weak };
+      lessons: { done: total.done, total: total.lessons, remaining: Math.max(0, total.lessons - total.done) }, skills: sk, tests, weak, vocab };
   }
   return { summary, skills };
 }

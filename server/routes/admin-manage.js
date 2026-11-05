@@ -214,6 +214,37 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
     res.json({ ok: true });
   });
 
+  /* ---------- curriculum status: how much of each level is written, published and tested ---------- */
+  r.get('/curriculum', staff, async (req, res) => {
+    const course = await db.get("SELECT id, title, status FROM courses WHERE slug = 'lexio-roadmap'");
+    if (!course) return res.json({ course: null, levels: [], totals: {}, vocabulary: { total: 0, kinds: [] } });
+    const levels = await db.all('SELECT id, code, title, exam_pass_pct, strict FROM levels WHERE course_id = ? ORDER BY position', course.id);
+    const out = [];
+    for (const lv of levels) {
+      const c = await db.get(`SELECT
+        SUM(CASE WHEN l.kind IN ('lesson','practice_test') THEN 1 ELSE 0 END) lessons,
+        SUM(CASE WHEN l.kind IN ('lesson','practice_test') AND l.status = 'published' THEN 1 ELSE 0 END) published,
+        SUM(CASE WHEN l.kind IN ('lesson','practice_test') AND l.status != 'published' THEN 1 ELSE 0 END) drafts,
+        SUM(CASE WHEN l.kind = 'topic_test' THEN 1 ELSE 0 END) topicTests,
+        SUM(CASE WHEN l.kind = 'exam' THEN 1 ELSE 0 END) exams,
+        SUM(CASE WHEN l.kind = 'practice_test' THEN 1 ELSE 0 END) practiceTests
+        FROM lessons l JOIN units u ON u.id = l.unit_id WHERE u.level_id = ?`, lv.id);
+      const topics = (await db.get('SELECT COUNT(*) n FROM units WHERE level_id = ?', lv.id)).n;
+      const ex = (await db.get("SELECT COUNT(*) n FROM exercises e JOIN lessons l ON l.id = e.lesson_id JOIN units u ON u.id = l.unit_id WHERE u.level_id = ? AND e.status = 'published'", lv.id)).n;
+      const skillRows = await db.all("SELECT l.skill, COUNT(*) n FROM lessons l JOIN units u ON u.id = l.unit_id WHERE u.level_id = ? AND l.kind IN ('lesson','practice_test') AND l.status = 'published' GROUP BY l.skill", lv.id);
+      const words = (await db.get("SELECT COUNT(*) n FROM vocabulary WHERE status = 'published' AND cefr = ?", lv.code)).n;
+      const learners = (await db.get('SELECT COUNT(DISTINCT a.user_id) n FROM lesson_attempts a JOIN lessons l ON l.id = a.lesson_id JOIN units u ON u.id = l.unit_id WHERE u.level_id = ?', lv.id)).n;
+      const passed = (await db.get("SELECT COUNT(DISTINCT x.user_id) n FROM exam_results x JOIN lessons l ON l.id = x.lesson_id JOIN units u ON u.id = l.unit_id WHERE u.level_id = ? AND l.kind = 'exam' AND x.passed = 1", lv.id)).n;
+      out.push({ id: lv.id, code: lv.code, title: lv.title, strict: !!lv.strict, passPct: lv.exam_pass_pct, topics, lessons: c.lessons || 0, published: c.published || 0, drafts: c.drafts || 0, topicTests: c.topicTests || 0, exams: c.exams || 0, practiceTests: c.practiceTests || 0,
+        exercises: ex, words, skills: Object.fromEntries(skillRows.map((x) => [x.skill || 'mixed', x.n])), learners, examPassed: passed, complete: (c.lessons || 0) > 0 && !(c.drafts || 0) && (c.exams || 0) > 0 });
+    }
+    const sum = (k) => out.reduce((a, x) => a + (x[k] || 0), 0);
+    const kinds = await db.all("SELECT kind, COUNT(*) n FROM vocabulary WHERE status = 'published' GROUP BY kind ORDER BY n DESC");
+    res.json({ course: { id: course.id, title: course.title, status: course.status }, levels: out,
+      totals: { lessons: sum('lessons'), published: sum('published'), drafts: sum('drafts'), topicTests: sum('topicTests'), exams: sum('exams'), exercises: sum('exercises'), levelsComplete: out.filter((x) => x.complete).length },
+      vocabulary: { total: (await db.get("SELECT COUNT(*) n FROM vocabulary WHERE status = 'published'")).n, withIpa: (await db.get("SELECT COUNT(*) n FROM vocabulary WHERE status = 'published' AND ipa != ''")).n, kinds: kinds.map((k) => ({ kind: k.kind, n: k.n })) } });
+  });
+
   /* ---------- statistics (real records only) ---------- */
   r.get('/stats', adminOnly, async (req, res) => {
     const days = clamp(int(req.query.days, 30), 7, 365);

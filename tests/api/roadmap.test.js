@@ -314,3 +314,27 @@ test('vocabulary database: complete entries (IPA, part of speech, example, level
     assert.strictEqual(s.db.get("SELECT COUNT(*) n FROM (SELECT lower(en) e FROM vocabulary WHERE lesson_id IS NULL AND topic != '' GROUP BY lower(en) HAVING COUNT(*) > 1)").n, 0, 'one entry per headword in the vocabulary database');
   } finally { await s.stop(); }
 });
+
+test('dashboard shows vocabulary progress per level and test history; the administrator sees the curriculum status', async () => {
+  const s = await startServer({ roadmap: true });
+  try {
+    const c = await learner(s, 'dash@example.com');
+    let d = (await c.get('/api/dashboard')).json;
+    assert.ok(d.roadmap.vocab.total >= 4000, 'the vocabulary database is counted');
+    assert.deepStrictEqual(d.roadmap.vocab.levels.map((x) => x.code), ['A1', 'A2', 'B1', 'B2', 'C1', 'IELTS']);
+    assert.strictEqual(d.roadmap.vocab.practised, 0);
+    // practising a word moves the counters
+    const w = s.db.get("SELECT id FROM vocabulary WHERE cefr = 'A1' AND status = 'published' LIMIT 1");
+    const uid = s.db.get("SELECT id FROM users WHERE email = 'dash@example.com'").id;
+    s.db.run("INSERT INTO review_items (user_id, vocabulary_id, box, due_at) VALUES (?,?,?,?)", uid, w.id, 4, new Date().toISOString());
+    d = (await c.get('/api/dashboard')).json;
+    assert.strictEqual(d.roadmap.vocab.practised, 1); assert.strictEqual(d.roadmap.vocab.mastered, 1);
+    assert.strictEqual(d.roadmap.vocab.levels[0].practised, 1);
+    // the administrator's curriculum status
+    s.db.run("UPDATE users SET role = 'admin' WHERE email = 'dash@example.com'");
+    const st = (await c.get('/api/admin/curriculum')).json;
+    assert.strictEqual(st.levels.length, 6); assert.strictEqual(st.totals.lessons, 240);
+    assert.ok(st.levels.slice(0, 5).every((l) => l.complete && l.exams === 1), 'A1–C1 are complete with an examination');
+    assert.ok(st.vocabulary.total >= 5000); assert.ok(st.vocabulary.kinds.some((k) => k.kind === 'idiom'));
+  } finally { await s.stop(); }
+});

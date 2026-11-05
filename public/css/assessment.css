@@ -73,3 +73,10 @@ html[data-motion="off"] .q-in { animation: none; }
 .band-estimate b { font-size: 1.3rem; }
 
 .ipa { color: var(--ink-2); font-weight: 600; font-family: "Segoe UI", "Noto Sans", "DejaVu Sans", sans-serif; }
+
+/* vocabulary progress by level (dashboard) */
+.vocab-progress { margin-top: 14px; }
+.vocab-levels { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.vocab-levels li { display: grid; grid-template-columns: 52px 1fr 70px; gap: 10px; align-items: center; }
+.vocab-levels .vl-code { font-weight: 700; }
+.vocab-levels .muted { text-align: right; }

@@ -67,7 +67,10 @@ export default async function home() {
     h('div', { class: 'grid two' },
       h('div', {}, h('h3', {}, t('roadmap.skills')), h('ul', { class: 'skill-list' }, ['listening', 'reading', 'writing', 'speaking'].map(skillRow))),
       h('div', {}, h('h3', {}, t('roadmap.weak')), rm.weak.length ? h('div', { class: 'chips' }, rm.weak.map((k) => h('span', { class: 'chip warn' }, icon('target'), t('exam.skill_' + k)))) : h('p', { class: 'muted small' }, t('roadmap.weak_none')),
-        h('h3', { style: { marginTop: '14px' } }, t('roadmap.tests')), rm.tests.length ? h('ul', { class: 'test-results' }, rm.tests.map((x) => h('li', {}, h('span', {}, x.title), h('span', { class: 'chip ' + (x.passed ? 'ok' : 'bad') }, `${x.score}%`)))) : h('p', { class: 'muted small' }, t('roadmap.tests_none')))),
+        h('h3', { style: { marginTop: '14px' } }, t('roadmap.tests')), rm.tests.length ? h('ul', { class: 'test-results' }, rm.tests.map((x) => h('li', {}, h('span', {}, x.title, ' ', h('span', { class: 'muted small' }, fmt.date(x.at))), h('span', { class: 'chip ' + (x.passed ? 'ok' : 'bad') }, `${x.score}%`)))) : h('p', { class: 'muted small' }, t('roadmap.tests_none')))),
+    h('div', { class: 'vocab-progress' }, h('h3', {}, t('roadmap.vocab_title')),
+      h('p', { class: 'small muted' }, t('roadmap.vocab_summary', { practised: fmt.number(rm.vocab.practised), total: fmt.number(rm.vocab.total), mastered: fmt.number(rm.vocab.mastered) })),
+      h('ul', { class: 'vocab-levels' }, rm.vocab.levels.filter((x) => x.total).map((x) => h('li', {}, h('span', { class: 'vl-code' }, x.code), h('div', { class: 'progress', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': x.total, 'aria-valuenow': x.practised, 'aria-label': t('roadmap.vocab_level', { code: x.code, practised: x.practised, total: x.total }) }, h('i', { style: { width: Math.round(100 * x.practised / x.total) + '%' } })), h('span', { class: 'muted small' }, `${x.practised}/${x.total}`))))),
     h('p', { class: 'muted small' }, t('roadmap.lessons_summary', { done: rm.lessons.done, remaining: rm.lessons.remaining })),
     h('div', { class: 'row between ielts-link' }, h('div', {}, h('b', {}, t('roadmap.ielts_card')), h('div', { class: 'muted small' }, t('roadmap.ielts_text'))), h('a', { class: 'btn small secondary', href: '/ielts' }, t('common.open')))) : null;
 

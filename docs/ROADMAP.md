@@ -1,39 +1,46 @@
 # LEXIO roadmap: A1 → IELTS Band 6.5–7.0
 
-## Levels
-`A1 — Beginner · A2 — Elementary · B1 — Pre-Intermediate · B1+ — Intermediate · B2 — Upper-Intermediate · B2+ — IELTS Foundation · C1 — Advanced · IELTS — Band 6.5–7.0 preparation`
-Each level has 10–12 topics (units). A topic holds lessons, a topic test, and the last topic of a level holds the **final level examination**.
+The course `lexio-roadmap` is the default course for new learners. It has **six levels, 60 topics and 240 lessons**, plus a topic test for every topic of A1–C1 and a final examination for every level.
 
-### Content status (honest)
-| Level | Topics in the structure | Published content |
-|---|---|---|
-| A1 | 10 | **Complete**: 20 lessons (each with objective, simple Uzbek explanation, examples with translations, new words, 14–17 exercises incl. listening, reading, writing, speaking), 10 topic tests, final exam (41 questions) |
-| A2 … C1, IELTS (roadmap level) | 11–12 each | Structure only. These levels show as "being prepared" and stay locked; nothing empty can be completed |
-| IELTS Preparation Center (`/ielts`) | 6 sections | 14 lessons (format, time management, band descriptors; Listening, Reading, Writing Task 1 & 2 and Speaking Parts 1–3 strategies with Band 6.5 and 7.0 example answers; a Writing self-assessment checklist) + 2 practice tests (Listening 12 questions, Reading 13) with estimated bands. Writing and Speaking tasks use model answers |
+| Level | Name | Topics | Lessons | Topic tests | Final exam |
+|---|---|---|---|---|---|
+| A1 | Beginner | 10 | 40 | 10 | yes |
+| A2 | Elementary | 10 | 40 | 10 | yes |
+| B1 | Intermediate | 10 | 40 | 10 | yes |
+| B2 | Upper-Intermediate | 10 | 40 | 10 | yes |
+| C1 | Advanced | 10 | 40 | 10 | yes |
+| IELTS | Preparation, Band 6.5–7.0 | 10 | 40 (incl. practice tests and four mock examinations) | – | yes |
 
-Authoring more levels is done in the admin panel (Courses → LEXIO English Roadmap) or by adding specs next to `server/seed/roadmap/a1-*.js` (the same builder validates every exercise with the editor's rules).
+The order and titles of all 240 lessons are in `server/seed/roadmap/curriculum.js`.
+
+## What every A1–C1 lesson contains
+Objective, an Uzbek explanation (new alphabet), English examples with Uzbek translations, six vocabulary items with IPA, a grammar point, and 14–17 exercises: translation, matching, spelling, listening (with generated audio), fill-in-the-blank, MCQ, reading (including True / False / Not Given), sentence building, **writing** and **speaking** tasks with model answers. Each topic ends with a topic test; each level ends with an examination covering grammar, vocabulary, listening, reading and writing.
+
+## IELTS course
+Original materials only (no official papers). Format and scoring, what Band 6.5 and 7.0 mean, registration and test day, study plan; Listening (forms, multiple choice, maps, lectures, four practice tests); Reading (skimming and scanning, TFNG, headings, summary completion, practice tests, timing); Writing Task 1 (data, tables and pie charts, maps and processes, Band 6.5 / 7.0 samples) and Task 2 (opinion, discussion, problem–solution, samples); Speaking Parts 1–3, pronunciation, difficult questions; strategy, common mistakes; four mock examinations. Practice tests report an *estimated* band (`server/lib/ielts.js`); no score is guaranteed. Writing and speaking answers are checked for length and key structure only: an examiner is needed for a real assessment.
 
 ## Strict unlocking (server side)
-* Every learner starts at A1; all other levels are locked. Choosing a level by hand never unlocks anything.
+* Every learner starts at A1; the other levels are locked. Choosing a level by hand never unlocks anything.
 * Inside a level, lessons are sequential. The level examination opens only when **all** lessons and topic tests of the level are completed.
-* A level opens only when the previous level's examination was passed (default **80%**, `levels.exam_pass_pct`, editable per level). A failed examination is saved, completes nothing, and can be retaken as often as wanted.
-* A placement test may open levels up to its (capped) result: at most B2, never B2+/C1/IELTS. `buildPath` computes every lesson's state on the server and `lessonAccess` refuses to start a locked lesson (HTTP 403).
-* Examinations and topic tests are scored on the server from the stored answers (`exam_results`): one try per question, no hearts, **no answers shown until the end**, then the mistakes with the right answers and a per-skill breakdown. Topic tests pass at 70% (`topic_test_pass_pct`).
+* A level opens only when the previous level's examination was passed (default **80%**, `levels.exam_pass_pct`, editable per level). A failed examination is saved, completes nothing, and can be retaken.
+* A placement test may open levels up to its (capped) result: at most B2. `buildPath` computes every lesson's state on the server and `lessonAccess` refuses to start a locked lesson.
+* Examinations and topic tests are scored on the server from the stored answers (`exam_results`): one try per question, no hearts, no answers shown until the end, then the mistakes with the right answers.
 
 ## Lesson types
-`lesson` (study page + exercises), `topic_test`, `exam`, `practice_test` (IELTS; always completes and reports an *estimated band*). Exercise types: the existing ones plus **writing** (server checks length and key words/phrases; shows a model answer) and **speaking** (read/listen, say it aloud, confirm; nothing is recorded or machine-scored). True/False/Not Given = `reading` with three options; matching headings = `match_pairs`; note completion = `fill_blank` with audio.
+`lesson` (study page + exercises), `topic_test`, `exam`, `practice_test` (IELTS; reports an estimated band).
 
-## IELTS estimate
-Practice tests are original and shorter than the real ones. The share of correct answers is scaled to 40 questions and converted with the usual Academic Listening/Reading ranges (`server/lib/ielts.js`). It is an estimate of readiness only, not an official score or a guarantee. Writing and Speaking use model answers and self-assessment checklists.
+## Vocabulary database (5,000+ words)
+`server/seed/vocab/*.js` (one text per file, one line per entry): English, Uzbek, IPA, part of speech, example, synonyms, difficulty, topic and kind (word, collocation, phrasal verb, idiom, academic) for A1–C1 and IELTS, on top of the words inside the lessons. The loader (`server/seed/vocab/index.js`) skips words that already exist and writes in batches; `parse()` reports incomplete lines and duplicates, which the tests require to be empty. The learner's vocabulary page shows IPA, synonyms and kind; the admin editor and the CSV / JSON import support all fields.
 
 ## Dashboard
-Level strip (completed / current / locked / being prepared), progress of the current level, examination status, four skill indicators (first-try accuracy per skill), recent test results, weak areas (skills under 70% after 5+ answers), completed / remaining lessons, daily goal, streak, achievements, next recommended lesson.
+Level strip (completed / current / locked / being prepared), progress of the current level, examination status, four skill indicators (first-try accuracy per skill), the last ten test results with dates, weak areas, **vocabulary progress by level** (words practised and mastered), remaining lessons, the daily goal, the next lesson and the IELTS link.
 
 ## Admin
-Courses → levels (code incl. B1+/B2+, strict flag, exam pass mark), units, lessons (type, skill, study content in en/uz/ru, publish / unpublish), exercises (all types, audio upload, minimum words, skill), exam publishing rules (10+ questions, one examination per level), student results on the user page.
+* Courses → levels (strict flag, exam pass mark), topics, lessons (type, skill, study content in en/uz/ru, publish / unpublish), exercises (all types, audio upload, minimum words), student exam results.
+* **Curriculum status** (`/admin/curriculum`, `GET /api/admin/curriculum`): per level the written / published / draft lessons, topic tests, examination, exercises, words, learners and passes, published lessons by skill, and the vocabulary database by kind.
 
 ## Seeding
-`server/seed/roadmap/` creates the course, levels and topics, then each topic's lessons in its own atomic batch (resumable, never duplicates). It runs at start-up on a local database and in `scripts/vercel-build.js` / `npm run seed` for a hosted one. New learners are placed on the roadmap (`default_course_slug`); existing learners keep their current course.
+`server/seed/roadmap/` creates the course, levels and topics, then each topic's lessons in its own atomic batch (resumable, never duplicates; `db.batch`). It runs at start-up on a local database and in `scripts/vercel-build.js` / `npm run seed` on a hosted one. The vocabulary files are loaded after it with their own version flag. Typed exercises (spelling, listening dictation, translation) never repeat a word that already has the same exercise in an earlier level.
 
 ## Tests
-`tests/api/roadmap.test.js` (content integrity, strict unlocking, exams, IELTS, admin, seeding) and `tests/ui/roadmap.ui.js`.
+`tests/api/roadmap.test.js` (content integrity, 240 lessons, strict unlocking, exams, IELTS, admin, vocabulary database, dashboard, curriculum status) and `tests/ui/roadmap.ui.js`.
