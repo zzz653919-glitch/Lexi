@@ -71,3 +71,5 @@ html[data-motion="off"] .q-in { animation: none; }
 .ielts-lesson.completed .ico { background: var(--ok-soft); color: var(--ok); }
 .ielts-info { flex: 1; min-width: 0; }
 .band-estimate b { font-size: 1.3rem; }
+
+.ipa { color: var(--ink-2); font-weight: 600; font-family: "Segoe UI", "Noto Sans", "DejaVu Sans", sans-serif; }

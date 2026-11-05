@@ -51,7 +51,7 @@ export default async function lesson({ params, daily = false }) {
       c.objective ? h('div', { class: 'card objective' }, h('b', {}, t('study.objective')), h('p', {}, c.objective)) : null,
       c.explanation ? h('section', { class: 'card' }, h('h2', {}, t('study.explanation')), ...String(c.explanation).split('\n').map((p) => h('p', {}, p))) : null,
       c.examples.length ? h('section', { class: 'card' }, h('h2', {}, t('study.examples')), h('ul', { class: 'study-examples' }, c.examples.map((e) => h('li', {}, h('button', { type: 'button', class: 'speak small', 'aria-label': t('ex.play'), onclick: () => speak({ text: e.en }) }, icon('volume')), h('span', {}, h('b', { lang: 'en' }, e.en), e.tr ? h('span', { class: 'muted' }, ' — ' + e.tr) : null))))) : null,
-      c.vocabulary.length ? h('section', { class: 'card' }, h('h2', {}, t('study.vocabulary')), h('ul', { class: 'study-vocab' }, c.vocabulary.map((w) => h('li', {}, h('b', { lang: 'en' }, w.en), ' — ', w.tr || w.uz || '')))) : null,
+      c.vocabulary.length ? h('section', { class: 'card' }, h('h2', {}, t('study.vocabulary')), h('ul', { class: 'study-vocab' }, c.vocabulary.map((w) => h('li', {}, h('b', { lang: 'en' }, w.en), w.ipa ? h('span', { class: 'ipa' }, ' /' + w.ipa + '/') : null, ' — ', w.tr || w.uz || '')))) : null,
       c.tip ? h('p', { class: 'notice' }, h('b', {}, t('study.tip') + ' '), c.tip) : null));
     action.textContent = t('study.start'); action.className = 'btn'; action.disabled = false; action.onclick = () => { studied = true; render(); };
     foot.hidden = false;
