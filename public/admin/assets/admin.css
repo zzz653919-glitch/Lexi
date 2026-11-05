@@ -72,3 +72,40 @@ fieldset.plain legend { font-weight: 800; font-size: .88rem; padding: 0; margin-
 .variant-box { margin: 10px 0; border: 2px dashed var(--line); border-radius: 12px; padding: 8px 12px; }
 .variant-box summary { font-weight: 800; cursor: pointer; min-height: 32px; }
 .tbl td code { overflow-wrap: anywhere; }
+
+/* ---------- LEXIO space look for the admin panel (same tokens as the learner site: /css/theme-space.css) ---------- */
+.adm-side { background: rgba(8, 10, 38, .78); backdrop-filter: blur(12px); border-right: 1px solid var(--line); }
+.adm-side .brand { color: var(--ink); letter-spacing: .22em; text-transform: uppercase; font-size: 1.05rem; }
+.adm-side .tag { color: var(--cyan); letter-spacing: .14em; }
+.adm-side a.nav-i { border: 0; border-radius: 999px; color: #d3d8f5; font-weight: 600; min-height: 42px; }
+.adm-side a.nav-i:hover { background: rgba(255, 255, 255, .08); }
+.adm-side a.nav-i[aria-current="page"] { background: #fff; color: #05061a; }
+.adm-side a.nav-i svg { width: 20px; height: 20px; }
+.adm-main { padding-top: 26px; }
+.adm-main h1 { font-size: clamp(1.6rem, 4vw, 2.2rem); }
+.crumbs a { color: var(--brand-ink); }
+.tbl-wrap, .tree-level, .stat-card, .file-drop, .preview-box, .lesson-row { border-width: 1px; }
+.tbl-wrap { background: var(--surface); backdrop-filter: blur(10px); border-color: var(--line); }
+.tbl th { background: rgba(160, 175, 255, .08); color: #c5ccf5; }
+.tbl th, .tbl td { border-bottom: 1px solid var(--line); }
+.tbl tbody tr:hover td { background: rgba(255, 255, 255, .04); }
+.tree-level { background: var(--surface); backdrop-filter: blur(10px); }
+.tree-level > header { background: linear-gradient(90deg, rgba(255, 138, 107, .22), rgba(43, 95, 207, .16)); }
+.tree-unit { border-top: 1px solid var(--line); }
+.lesson-row { background: rgba(5, 6, 26, .45); border-color: var(--line); }
+.stat-card { background: var(--surface); backdrop-filter: blur(10px); }
+.stat-card b { background: linear-gradient(90deg, #fff, #ffc7a8); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.chart .bar { fill: var(--coral); } .chart .line { stroke: var(--cyan); } .chart .area { fill: rgba(143, 211, 255, .14); }
+.chart .grid { stroke: rgba(160, 175, 255, .18); }
+.preview-box, .file-drop, .variant-box { background: rgba(5, 6, 26, .45); border-color: var(--line); }
+.btn.icon { box-shadow: none; }
+.problems { background: var(--danger-soft); border: 1px solid rgba(255, 138, 166, .4); }
+.ok-box { background: var(--ok-soft); border: 1px solid rgba(111, 224, 184, .4); }
+.tag-draft { background: var(--gold-soft); color: var(--gold-ink); } .tag-published { background: var(--ok-soft); color: var(--ok); }
+.lang-card[aria-pressed="true"] { border-color: var(--cyan); box-shadow: 0 0 0 2px var(--cyan); }
+@media (max-width: 899px) {
+  .adm-side { background: rgba(5, 6, 26, .92); border-bottom: 1px solid var(--line); }
+  .adm-side a.nav-i { border-radius: 999px; }
+}
+.tbl .tag, .tbl .chip { white-space: nowrap; overflow-wrap: normal; word-break: normal; }
+.adm-main .page-head { margin-bottom: 14px; }
