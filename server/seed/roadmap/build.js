@@ -12,6 +12,7 @@ const all = (txt) => String(txt).split(/[;,]/).map((x) => x.trim()).filter(Boole
 const single = (w) => /^\p{L}{3,14}$/u.test(w[0]);
 const blankOf = (sentence, word) => { const re = new RegExp('\\b' + word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'i'); return re.test(sentence) ? sentence.replace(re, '____') : null; };
 const ru = (o) => ({ translations: { ru: o } });
+let usedTyped = new Set(); // listen_type / scramble words already used in this seeding run (a word repeated in a later level must not create an identical exercise)
 const others = (words, i, n, f) => words.filter((_, k) => k !== i).slice(0, n).map(f);
 
 /* word = [en, uz, ru, pos, example, exampleUz] */
@@ -22,14 +23,15 @@ function lessonExercises(L) {
   add('translation_choice', { sentence: w[0][0], explanation: `“${w[0][0]}” — ${uz(w[0])}`, options: opts(uz(w[0]), others(w, 0, 3, uz)), ...ru({ explanation: `“${w[0][0]}” — ${rus(w[0])}`, options: opts(rus(w[0]), others(w, 0, 3, rus)).map(({ text }) => ({ text })) }) }, 'vocabulary', 0);
   add('translation_choice', { sentence: uz(w[1]), direction: 'uz-en', explanation: `“${w[1][0]}” — ${uz(w[1])}`, options: opts(w[1][0], others(w, 1, 3, (x) => x[0])), ...ru({ sentence: rus(w[1]), explanation: `“${w[1][0]}” — ${rus(w[1])}` }) }, 'vocabulary', 1);
   add('match_pairs', { options: w.slice(0, 4).map((x) => ({ text: x[0], match_text: uz(x), is_correct: true })), ...ru({ options: w.slice(0, 4).map((x) => ({ text: x[0], match_text: rus(x) })) }) }, 'vocabulary');
-  const si = w.findIndex(single);
-  if (si >= 0) add('scramble_letters', { sentence: uz(w[si]), answer: w[si][0], ...ru({ sentence: rus(w[si]) }) }, 'vocabulary', si);
+  const si = w.findIndex((x) => single(x) && !usedTyped.has('s:' + x[0].toLowerCase()));
+  if (si >= 0) usedTyped.add('s:' + w[si][0].toLowerCase()), add('scramble_letters', { sentence: uz(w[si]), answer: w[si][0], ...ru({ sentence: rus(w[si]) }) }, 'vocabulary', si);
   add('listen_choice', { audio_text: w[2][0], options: opts(w[2][0], others(w, 2, 3, (x) => x[0])) }, 'listening', 2);
-  const li = w.findIndex((x, i) => i >= 3 && single(x));
-  if (li >= 0) add('listen_type', { audio_text: w[li][0], answer: w[li][0] }, 'listening', li);
+  const li = w.findIndex((x, i) => i >= 3 && single(x) && !usedTyped.has('l:' + x[0].toLowerCase()));
+  if (li >= 0) usedTyped.add('l:' + w[li][0].toLowerCase()), add('listen_type', { audio_text: w[li][0], answer: w[li][0] }, 'listening', li);
   const bi = w.findIndex((x) => x[4] && blankOf(x[4], x[0]));
   if (bi >= 0) add('fill_blank', { sentence: blankOf(w[bi][4], w[bi][0]), answer: w[bi][0], translation: w[bi][5] || '' }, 'grammar', bi);
-  add('translate_type', { sentence: w[3][0], direction: 'en-uz', answer: all(w[3][1]), explanation: `“${w[3][0]}” — ${uz(w[3])}`, ...ru({ answer: all(w[3][2] || w[3][1]), explanation: `“${w[3][0]}” — ${rus(w[3])}` }) }, 'vocabulary', 3);
+  const ti = Math.max(3, w.findIndex((x, i) => i >= 3 && !usedTyped.has('t:' + x[0].toLowerCase()))), tw = w[ti]; usedTyped.add('t:' + tw[0].toLowerCase());
+  add('translate_type', { sentence: tw[0], direction: 'en-uz', answer: all(tw[1]), explanation: `“${tw[0]}” — ${uz(tw)}`, ...ru({ answer: all(tw[2] || tw[1]), explanation: `“${tw[0]}” — ${rus(tw)}` }) }, 'vocabulary', ti);
   for (const g of L.g) add('multiple_choice', { prompt: g[0], explanation: g[4] || '', options: opts(g[1], [g[2], g[3]]) }, 'grammar');
   add('listen_choice', { prompt: L.dlg[1], audio_text: L.dlg[0], options: opts(L.dlg[2], [L.dlg[3], L.dlg[4]]) }, 'listening');
   for (const q of L.rd.slice(1)) {
@@ -88,6 +90,8 @@ async function lessonStatements(db, { unlock = 'sequential', unitId, position, k
    added when all the lessons they cover have content. Every step is atomic, resumable and never duplicates. */
 async function ensureRoadmap(db, content) {
   const t = now(), made = { lessons: 0, exercises: 0 };
+  usedTyped = new Set();
+  for (const r of await db.all("SELECT type, answer, sentence FROM exercises WHERE type IN ('listen_type','scramble_letters','translate_type')")) usedTyped.add({ listen_type: 'l:', scramble_letters: 's:', translate_type: 't:' }[r.type] + String(r.type === 'translate_type' ? r.sentence : r.answer).toLowerCase());
   let course = await db.get("SELECT id FROM courses WHERE slug = 'lexio-roadmap'");
   if (!course) {
     const id = await nextId(db, 'courses');

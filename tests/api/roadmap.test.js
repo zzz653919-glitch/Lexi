@@ -42,7 +42,7 @@ test('roadmap content: six levels, 240 lessons in 60 topics, A1 complete with te
         for (const t of ['translation_choice', 'match_pairs', 'listen_choice', 'reading', 'multiple_choice', 'writing', 'speaking']) assert.ok(types.has(t), `${x.title}: ${t}`);
       }
     }
-    assert.strictEqual(s.db.get("SELECT COUNT(*) n FROM lessons WHERE kind = 'exam'").n, 2);
+    assert.strictEqual(s.db.get("SELECT COUNT(*) n FROM lessons WHERE kind = 'exam'").n, 3);
     const exam = s.db.get("SELECT l.* FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels v ON v.id = u.level_id WHERE l.kind = 'exam' AND v.code = 'A1'");
     const exQ = s.db.all('SELECT * FROM exercises WHERE lesson_id = ?', exam.id);
     assert.ok(exQ.length >= 35); for (const m of ['grammar', 'vocabulary', 'listening', 'reading', 'writing']) assert.ok(exQ.some((e) => e.module === m), 'exam covers ' + m);
@@ -66,7 +66,7 @@ test('strict unlocking: a new learner has only A1; a chosen level opens nothing;
     assert.deepStrictEqual(p.levels.map((l) => l.code), ['A1', 'A2', 'B1', 'B2', 'C1', 'IELTS']);
     assert.strictEqual(p.levels[0].unlocked, true);
     assert.ok(p.levels.slice(1).every((l) => !l.unlocked), 'later levels are locked');
-    assert.ok(p.levels.slice(2, 5).every((l) => l.comingSoon), 'levels without published lessons are "being prepared"');
+    assert.ok(p.levels.slice(3, 5).every((l) => l.comingSoon), 'levels without published lessons are "being prepared"');
     // choosing a level by hand, even C2, unlocks nothing
     await c.post('/api/me/level', { level: 'C2' });
     p = await levels(c); assert.ok(p.levels.slice(1).every((l) => !l.unlocked));
