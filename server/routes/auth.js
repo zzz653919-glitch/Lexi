@@ -15,7 +15,7 @@ const LEARNING_LANGUAGES = ['en'];
 
 const publicUser = (u) => ({
   id: u.id, email: u.email, displayName: u.display_name, role: u.role, avatar: u.avatar, timezone: u.timezone, uiLanguage: u.ui_language, translationLanguage: u.translation_language, learningLanguage: u.learning_language,
-  courseId: u.course_id, startLevel: u.start_level, cefrLevel: u.cefr_level || null, levelSource: u.level_source, onboarded: !!u.onboarded, lessonLength: u.lesson_length || 'normal', dailyGoalXp: u.daily_goal_xp, xpTotal: u.xp_total, leaderboardOptIn: !!u.leaderboard_opt_in, createdAt: u.created_at,
+  courseId: u.course_id, startLevel: u.start_level, cefrLevel: u.cefr_level || null, levelSource: u.level_source, onboarded: !!u.onboarded, mode: u.mode || 'standard', lessonLength: u.lesson_length || 'normal', dailyGoalXp: u.daily_goal_xp, xpTotal: u.xp_total, leaderboardOptIn: !!u.leaderboard_opt_in, createdAt: u.created_at,
 });
 
 function validateProfile(input, settings, { partial }) {

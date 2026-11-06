@@ -80,3 +80,9 @@ html[data-motion="off"] .q-in { animation: none; }
 .vocab-levels li { display: grid; grid-template-columns: 52px 1fr 70px; gap: 10px; align-items: center; }
 .vocab-levels .vl-code { font-weight: 700; }
 .vocab-levels .muted { text-align: right; }
+
+/* welcome screen: the LEXIO KIDS option (playful colours, on purpose different from the other two) */
+.choice-card.kids-choice { background: linear-gradient(135deg, #ffd23f 0%, #ff8fc0 55%, #8fd8ff 100%); border: 4px solid #fff; color: #3a2a63; text-align: center; }
+.choice-card.kids-choice h2, .choice-card.kids-choice p { color: #3a2a63; }
+.choice-card.kids-choice .kids-choice-art { font-size: 2.4rem; letter-spacing: .15em; margin-bottom: 4px; }
+.choice-card.kids-choice .kids-btn { background: #ff4f9a; color: #fff; border-radius: 999px; font-weight: 800; box-shadow: 0 5px 0 rgba(0, 0, 0, .2); }

@@ -47,6 +47,7 @@ function createApp(options = {}) {
       if (opts.seedSample) seeded = await seed.ensureSample(db);
       // the roadmap lessons are large: on a hosted database they are written by the build / CLI (resumable), at start-up only on a local file
       if (opts.seedRoadmap && db.local) { try { await seed.ensureRoadmap(db); } catch (e) { if (!opts.quiet) console.error('[seed] roadmap:', e.message); } }
+      if (opts.seedKids && !opts.seedRoadmap && db.local) { try { await seed.ensureKids(db); } catch (e) { if (!opts.quiet) console.error('[seed] kids:', e.message); } }
       // built-in test content is optional: if it cannot be written right now the site still opens (it is retried on the next start)
       try { await seed.ensureAssessmentContent(db); } catch (e) { if (!opts.quiet) console.error('[seed] placement content:', e.message); }
       await Promise.all([settings.refresh(true), i18n.refresh(true)]);
@@ -90,7 +91,7 @@ function createApp(options = {}) {
     let body = u.data ? Buffer.from(u.data, 'base64') : null;
     if (!body) { const file = path.join(opts.dataDir, 'uploads', u.id); if (fs.existsSync(file)) body = fs.readFileSync(file); }   // files stored by earlier versions
     if (!body) return res.status(404).end();
-    res.setHeader('Content-Type', u.mime); res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Content-Type', u.mime); res.setHeader('X-Content-Type-Options', 'nosniff'); res.setHeader('Cache-Control', 'public, max-age=86400');
     res.end(body);
   });
 
@@ -128,7 +129,9 @@ function createApp(options = {}) {
   api.use('/admin', require('./routes/admin-content')(ctx));
   api.use('/admin', require('./routes/admin-assessment')(ctx));
   api.use('/admin', require('./routes/admin-manage')(ctx));
+  api.use('/admin', require('./routes/admin-kids')(ctx));   // before admin-i18n, which is administrators only
   api.use('/admin', require('./routes/admin-i18n')(ctx));
+  api.use('/', require('./routes/kids')(ctx));
   api.use('/', require('./routes/learning')(ctx));
   api.use('/', require('./routes/learner')(ctx));
   api.use((req, res, next) => next(new HttpError(404, 'err.not_found')));
@@ -162,7 +165,7 @@ function createApp(options = {}) {
   app.use(express.static(PUBLIC, { index: false, redirect: false, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
   /* client-side routes of the single-page app: opening one directly (or reloading it) serves the app shell;
      any other path still gets the shell (so the app can show its own "page not found" screen) but with a real 404 status */
-  const CLIENT_ROUTES = /^\/(?:login|register|forgot|reset|confirm|learn|ielts|welcome|placement|results|daily\/[^/]+|attempt\/[^/]+|practice|vocabulary|review|leaderboard|achievements|profile)?\/?$/;
+  const CLIENT_ROUTES = /^\/(?:login|register|forgot|reset|confirm|kids(?:\/learn\/[^/]+)?|learn|ielts|welcome|placement|results|daily\/[^/]+|attempt\/[^/]+|practice|vocabulary|review|leaderboard|achievements|profile)?\/?$/;
   app.get(/^\/(?!api\/|uploads\/).*/, (req, res, next) => {
     if (path.extname(req.path)) return next();
     res.setHeader('Cache-Control', 'no-store');

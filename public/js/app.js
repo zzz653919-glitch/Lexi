@@ -30,6 +30,8 @@ route('/leaderboard', view('leaderboard'), { auth: true });
 route('/achievements', view('achievements'), { auth: true });
 route('/profile', view('profile'), { auth: true });
 route('/ielts', view('ielts'), { auth: true });
+route('/kids', view('kids-home'), { auth: true });
+route('/kids/learn/:slug', view('kids-lesson'), { auth: true, focus: true });
 
 const root = document.getElementById('app');
 let shell = null, cleanup = null, navToken = 0;
