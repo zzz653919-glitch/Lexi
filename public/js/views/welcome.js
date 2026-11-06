@@ -36,12 +36,14 @@ export default async function welcome() {
   });
   const el = h('main', { class: 'guest welcome' }, h('div', { class: 'welcome-wrap stack' },
     h('div', { class: 'center' }, h('img', { class: 'mascot', src: '/img/mascot.svg', alt: '', width: 110, height: 110 }), h('h1', {}, t('welcome.title', { name: session.user.displayName })), h('p', { class: 'muted' }, t('welcome.subtitle'))),
-    h('section', { class: 'card choice-card recommended' }, h('span', { class: 'chip ok' }, icon('star'), t('welcome.recommended')), h('h2', {}, t('welcome.test_title')),
+    h('div', { class: 'welcome-grid' },
+    h('section', { class: 'card choice-card recommended' }, h('div', { class: 'choice-art', 'aria-hidden': 'true' }, '🧭'), h('span', { class: 'chip ok' }, icon('star'), t('welcome.recommended')), h('h2', {}, t('welcome.test_title')),
       h('p', { class: 'muted' }, t('welcome.test_text', { min: info.min, max: info.max })),
       h('ul', { class: 'check-list' }, ['welcome.test_point_1', 'welcome.test_point_2', 'welcome.test_point_3'].map((k) => h('li', {}, icon('check'), t(k)))),
       info.available ? h('label', { class: 'switch field', for: 'wl' }, listening, h('span', {}, t('welcome.include_listening'))) : null,
       info.available ? startBtn : h('p', { class: 'notice' }, t('welcome.test_unavailable'))),
-    h('section', { class: 'card choice-card' }, h('h2', {}, t('welcome.manual_title')), h('p', { class: 'muted' }, t('welcome.manual_text')), chooseBtn), choose,
-    h('section', { class: 'card choice-card kids-choice', id: 'kids-card' }, h('div', { class: 'kids-choice-art', 'aria-hidden': 'true' }, '🦁 🐘 🍎 🎈'), h('h2', {}, t('welcome.kids_title')), h('p', {}, t('welcome.kids_text')), kidsBtn)));
+    h('section', { class: 'card choice-card' }, h('div', { class: 'choice-art', 'aria-hidden': 'true' }, '🪜'), h('h2', {}, t('welcome.manual_title')), h('p', { class: 'muted' }, t('welcome.manual_text')), chooseBtn),
+    h('section', { class: 'card choice-card kids-choice', id: 'kids-card' }, h('div', { class: 'kids-choice-art', 'aria-hidden': 'true' }, '🦁 🐘 🍎 🎈'), h('h2', {}, t('welcome.kids_title')), h('p', {}, t('welcome.kids_text')), kidsBtn)),
+    choose));
   return { el, title: t('welcome.page_title'), nav: '', bare: true };
 }
