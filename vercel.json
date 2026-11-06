@@ -3,6 +3,36 @@
   "installCommand": "npm ci --omit=dev",
   "buildCommand": "node scripts/vercel-build.js",
   "outputDirectory": "vercel-static",
-  "functions": { "api/index.js": { "includeFiles": "{server/**,shared/**,locales/**,public/index.html}", "maxDuration": 30 } },
-  "rewrites": [{ "source": "/(.*)", "destination": "/api/index" }]
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "{server/**,shared/**,locales/**,public/index.html}",
+      "maxDuration": 30
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/fonts/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
+    },
+    {
+      "source": "/img/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=86400, stale-while-revalidate=604800"
+        }
+      ]
+    }
+  ]
 }

@@ -128,29 +128,31 @@ function make(db, settings) {
   }
 
   /* the small version for the dashboard: a handful of queries, run in parallel */
-  async function brief(user) {
-    const u = await db.get('SELECT * FROM users WHERE id = ?', user.id);
-    const [sk, progress, last, change, pl] = await Promise.all([skills(u.id, u.cefr_level), recent(u.id, u), db.get("SELECT result_level FROM assessments WHERE user_id = ? AND status = 'completed' ORDER BY id DESC LIMIT 1", u.id),
-      db.get('SELECT level, previous, source, created_at FROM user_level_history WHERE user_id = ? ORDER BY id DESC LIMIT 1', u.id), plan(u)]);
+  async function brief(user, loaded = false) {
+    const u = loaded ? user : await db.get('SELECT * FROM users WHERE id = ?', user.id);   // the account row loaded for this request is enough
+    const progressP = recent(u.id, u);
+    const [sk, progress, last, change, pl, rec] = await Promise.all([skills(u.id, u.cefr_level), progressP, db.get("SELECT result_level FROM assessments WHERE user_id = ? AND status = 'completed' ORDER BY id DESC LIMIT 1", u.id),
+      db.get('SELECT level, previous, source, created_at FROM user_level_history WHERE user_id = ? ORDER BY id DESC LIMIT 1', u.id), plan(u), progressP.then((p) => recommendation(u, p))]);
     const overall = LV.index(u.cefr_level || 'A1');
     return { level: u.cefr_level, source: u.level_source, onboarded: !!u.onboarded, skills: sk, progress, plan: pl, assessmentLevel: last ? last.result_level : null,
       weaknesses: sk.filter((x) => x.samples > 0 && overall - x.score >= 0.7).map((x) => x.skill), strengths: sk.filter((x) => x.samples > 0 && x.score - overall >= 0.7).map((x) => x.skill),
-      recommendation: await recommendation(u, progress), lastChange: change ? { level: change.level, previous: change.previous, source: change.source, at: change.created_at } : null };
+      recommendation: rec, lastChange: change ? { level: change.level, previous: change.previous, source: change.source, at: change.created_at } : null };
   }
 
   /* everything the dashboard / profile need to know about the learner's level */
   async function status(user) {
-    const full = await db.get('SELECT * FROM users WHERE id = ?', user.id);
-    const last = await db.get("SELECT id, kind, asked, correct, result_level, result, completed_at FROM assessments WHERE user_id = ? AND status = 'completed' ORDER BY id DESC LIMIT 1", user.id);
-    const sk = await skills(user.id, full.cefr_level);
+    const full = await db.get('SELECT * FROM users WHERE id = ?', user.id);   // fresh: this is also called right after the level was changed
+    const progressP = recent(user.id, full);
+    // independent reads together (a hosted database costs one network trip per query)
+    const [last, sk, progress, rec, pl, hist] = await Promise.all([db.get("SELECT id, kind, asked, correct, result_level, result, completed_at FROM assessments WHERE user_id = ? AND status = 'completed' ORDER BY id DESC LIMIT 1", user.id),
+      skills(user.id, full.cefr_level), progressP, progressP.then((p) => recommendation(full, p)), plan(full), history(user.id)]);
     const overall = LV.index(full.cefr_level || 'A1');
     const weak = sk.filter((x) => x.samples > 0 && overall - x.score >= 0.7).map((x) => x.skill);
     const strong = sk.filter((x) => x.samples > 0 && x.score - overall >= 0.7).map((x) => x.skill);
     return {
       level: full.cefr_level, source: full.level_source, changedAt: full.level_changed_at, onboarded: !!full.onboarded, lessonLength: full.lesson_length,
       assessment: last ? { id: last.id, kind: last.kind, level: last.result_level, asked: last.asked, correct: last.correct, completedAt: last.completed_at, result: JSON.parse(last.result) } : null,
-      skills: sk, strengths: strong, weaknesses: weak, progress: await recent(user.id, full), recommendation: await recommendation(full),
-      plan: await plan(full), history: await history(user.id),
+      skills: sk, strengths: strong, weaknesses: weak, progress, recommendation: rec, plan: pl, history: hist,
     };
   }
 

@@ -52,8 +52,12 @@ async function learn(db, userId, wordIds) {
 
 /* everything the reward rules look at */
 async function stats(db, user) {
-  const cats = await db.all("SELECT c.*, (SELECT COUNT(*) FROM kids_words w WHERE w.category_id = c.id AND w.status = 'published') n FROM kids_categories c WHERE c.status = 'published' ORDER BY c.position, c.id");
-  const prog = await db.all('SELECT * FROM kids_progress WHERE user_id = ?', user.id);
+  // independent reads run together: a hosted database costs one network trip per query, so the page waits for the slowest one, not for all
+  const [cats, prog, g, st, days, known] = await Promise.all([
+    db.all("SELECT c.*, (SELECT COUNT(*) FROM kids_words w WHERE w.category_id = c.id AND w.status = 'published') n FROM kids_categories c WHERE c.status = 'published' ORDER BY c.position, c.id"),
+    db.all('SELECT * FROM kids_progress WHERE user_id = ?', user.id), db.all('SELECT * FROM kids_games WHERE user_id = ?', user.id), db.all('SELECT * FROM kids_story_progress WHERE user_id = ?', user.id),
+    db.all('SELECT * FROM kids_days WHERE user_id = ?', user.id),
+    db.all('SELECT w.id, w.en, c.slug FROM kids_known k JOIN kids_words w ON w.id = k.word_id JOIN kids_categories c ON c.id = w.category_id WHERE k.user_id = ?', user.id)]);
   const catsDone = new Set(); let lessonStars = 0, lessons = 0, partsTotal = 0;
   for (const c of cats.filter((x) => x.n)) {
     const sp = split(c.n); partsTotal += sp.parts;
@@ -61,23 +65,19 @@ async function stats(db, user) {
     lessonStars += mine.reduce((a, p) => a + p.stars, 0); lessons += mine.filter((p) => p.stars > 0).length;
     if (mine.filter((p) => p.stars > 0).length === sp.parts) catsDone.add(c.slug);
   }
-  const g = await db.all('SELECT * FROM kids_games WHERE user_id = ?', user.id);
-  const st = await db.all('SELECT * FROM kids_story_progress WHERE user_id = ?', user.id);
-  const days = await db.all('SELECT * FROM kids_days WHERE user_id = ?', user.id);
-  const known = await db.all('SELECT w.id, w.en, c.slug FROM kids_known k JOIN kids_words w ON w.id = k.word_id JOIN kids_categories c ON c.id = w.category_id WHERE k.user_id = ?', user.id);
   const active = new Map(days.filter((d) => d.lessons + d.games + d.quizzes + d.speaks + d.arts > 0 || d.seconds > 0).map((d) => [d.local_date, d]));
   let day = localDate(new Date(), user.timezone); if (!active.has(day)) day = addDays(day, -1);
   let streak = 0; while (active.has(day)) { streak++; day = addDays(day, -1); }
   const gameStars = g.reduce((a, x) => a + x.stars, 0), storyStars = st.reduce((a, x) => a + x.stars, 0);
-  return { cats, partsTotal, catsDone, lessonStars, lessons, games: new Set(g.filter((x) => x.plays > 0).map((x) => x.game)), gameStars, stories: new Set(st.filter((x) => x.reads > 0).map((x) => x.slug)), storyStars,
+  return { cats, prog, partsTotal, catsDone, lessonStars, lessons, games: new Set(g.filter((x) => x.plays > 0).map((x) => x.game)), gameStars, stories: new Set(st.filter((x) => x.reads > 0).map((x) => x.slug)), storyStars,
     stars: lessonStars + gameStars + storyStars, maxStars: partsTotal * 3 + GAMES.length * 3 + STORIES.length * 3, wordsKnown: known.length, knownByCat: known, streak,
     missionsDays: days.filter((d) => d.bonus).length, speaks: days.reduce((a, d) => a + d.speaks, 0), arts: days.reduce((a, d) => a + d.arts, 0), days };
 }
 
 /* the catalogue of rewards; `test` decides from the child's stats whether it is earned */
 async function catalogue(db, lang) {
-  const cats = (await db.all("SELECT * FROM kids_categories WHERE status = 'published' ORDER BY position, id"));
-  const animals = await db.all("SELECT w.en, w.pic, w.image_url FROM kids_words w JOIN kids_categories c ON c.id = w.category_id WHERE c.slug = 'animals' AND w.status = 'published' ORDER BY w.position, w.id");
+  const [cats, animals] = await Promise.all([db.all("SELECT * FROM kids_categories WHERE status = 'published' ORDER BY position, id"),
+    db.all("SELECT w.en, w.pic, w.image_url FROM kids_words w JOIN kids_categories c ON c.id = w.category_id WHERE c.slug = 'animals' AND w.status = 'published' ORDER BY w.position, w.id")]);
   const L = [];
   const add = (kind, code, emoji, need, test, extra = {}) => L.push({ kind, code, emoji, need, test, ...extra });
   for (const c of cats) add('sticker', 'cat_' + c.slug, c.emoji, { type: 'category', name: K.pickTitle(c, lang) }, (s) => s.catsDone.has(c.slug), { name: K.pickTitle(c, lang) });
@@ -97,14 +97,14 @@ async function catalogue(db, lang) {
 }
 /* earned rewards are remembered: a reward that was earned stays, even if the content changes later */
 async function sync(db, user, lang) {
-  const [cat, s] = [await catalogue(db, lang), null];
-  const st = s || await stats(db, user);
-  const have = new Set((await db.all('SELECT kind, code FROM kids_rewards WHERE user_id = ?', user.id)).map((r) => r.kind + ':' + r.code));
+  const [cat, st, rows] = await Promise.all([catalogue(db, lang), stats(db, user), db.all('SELECT kind, code FROM kids_rewards WHERE user_id = ?', user.id)]);
+  const have = new Set(rows.map((r) => r.kind + ':' + r.code));
   const t = now(), fresh = [];
   for (const r of cat) {
     const key = r.kind + ':' + r.code;
-    if (!have.has(key) && r.test(st)) { await db.run('INSERT OR IGNORE INTO kids_rewards (user_id, kind, code, earned_at) VALUES (?,?,?,?)', user.id, r.kind, r.code, t); fresh.push({ kind: r.kind, code: r.code, emoji: r.emoji, name: r.name || null }); have.add(key); }
+    if (!have.has(key) && r.test(st)) { fresh.push({ kind: r.kind, code: r.code, emoji: r.emoji, name: r.name || null }); have.add(key); }
   }
+  if (fresh.length) await db.batch(fresh.map((r) => ({ sql: 'INSERT OR IGNORE INTO kids_rewards (user_id, kind, code, earned_at) VALUES (?,?,?,?)', args: [user.id, r.kind, r.code, t] })));   // one round trip
   return { fresh, earned: have, catalogue: cat, stats: st };
 }
 

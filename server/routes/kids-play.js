@@ -26,14 +26,20 @@ module.exports = function kidsPlayRoutes({ db, auth, opts }) {
   const secondsOf = (b) => clamp(int(b.seconds, 0), 0, W.LIMITS.seconds);
 
   /* ---------- profile and the companion ---------- */
+  const FREE = { character: W.CHARACTERS.filter((c) => !c[1]).map((c) => c[0]), accessory: [], background: ['sky'] };
+  /* the profile is read by every Kids page: a few reads at once (no reward recalculation; earned rewards are remembered in kids_rewards) */
   async function profileBody(u) {
-    const p = await W.ensureProfile(db, u.id);
     const today = localDate(new Date(), u.timezone);
-    const day = await db.get('SELECT seconds FROM kids_days WHERE user_id = ? AND local_date = ?', u.id, today);
-    const s = await W.sync(db, u, 'en');
-    const has = (k, c) => s.earned.has(k + ':' + c);
-    return { stars: s.stats.stars, character: p.character, accessory: p.accessory, background: p.background, sound: !!p.sound, narration: !!p.narration, age: p.age, mic: !!p.mic, reminders: !!p.reminders, reminderTime: p.reminder_time, dailyLimitMin: p.daily_limit_min,
-      todaySeconds: day ? day.seconds : 0, limitReached: !!(p.daily_limit_min && day && day.seconds >= p.daily_limit_min * 60), pinSet: !!p.pin_hash, hasActivityToday: !!(await db.get(`SELECT 1 x FROM kids_days WHERE user_id = ? AND local_date = ? AND (${W.activeSql})`, u.id, today)),
+    const read = () => Promise.all([db.get('SELECT * FROM kids_profile WHERE user_id = ?', u.id), db.get('SELECT seconds FROM kids_days WHERE user_id = ? AND local_date = ?', u.id, today),
+      db.all('SELECT kind, code FROM kids_rewards WHERE user_id = ?', u.id),
+      db.get('SELECT (SELECT COALESCE(SUM(stars), 0) FROM kids_progress WHERE user_id = ?) + (SELECT COALESCE(SUM(stars), 0) FROM kids_games WHERE user_id = ?) + (SELECT COALESCE(SUM(stars), 0) FROM kids_story_progress WHERE user_id = ?) AS n', u.id, u.id, u.id),
+      db.get(`SELECT 1 x FROM kids_days WHERE user_id = ? AND local_date = ? AND (${W.activeSql})`, u.id, today)]);
+    let [p, day, rewards, stars, active] = await read();
+    if (!p) { await W.ensureProfile(db, u.id); [p, day, rewards, stars, active] = await read(); }
+    if (!rewards.length) { await W.sync(db, u, 'en'); rewards = await db.all('SELECT kind, code FROM kids_rewards WHERE user_id = ?', u.id); }   // first visit: the free rewards
+    const has = (k, c) => FREE[k].includes(c) || rewards.some((r) => r.kind === k && r.code === c);
+    return { stars: stars.n, character: p.character, accessory: p.accessory, background: p.background, sound: !!p.sound, narration: !!p.narration, age: p.age, mic: !!p.mic, reminders: !!p.reminders, reminderTime: p.reminder_time, dailyLimitMin: p.daily_limit_min,
+      todaySeconds: day ? day.seconds : 0, limitReached: !!(p.daily_limit_min && day && day.seconds >= p.daily_limit_min * 60), pinSet: !!p.pin_hash, hasActivityToday: !!active,
       unlocked: { character: W.CHARACTERS.map((c) => c[0]).filter((c) => has('character', c)), accessory: W.ACCESSORIES.map((c) => c[0]).filter((c) => has('accessory', c)), background: W.BACKGROUNDS.map((c) => c[0]).filter((c) => has('background', c)) } };
   }
   r.get('/kids/profile', user, async (req, res) => res.json(await profileBody(req.user)));
@@ -111,8 +117,8 @@ module.exports = function kidsPlayRoutes({ db, auth, opts }) {
 
   /* ---------- rewards, the world, missions ---------- */
   r.get('/kids/rewards', user, async (req, res) => {
-    const s = await W.sync(db, req.user, req.lang);
-    const when = new Map((await db.all('SELECT kind, code, earned_at FROM kids_rewards WHERE user_id = ?', req.user.id)).map((x) => [x.kind + ':' + x.code, x.earned_at]));
+    const [s, rows] = await Promise.all([W.sync(db, req.user, req.lang), db.all('SELECT kind, code, earned_at FROM kids_rewards WHERE user_id = ?', req.user.id)]);
+    const when = new Map(rows.map((x) => [x.kind + ':' + x.code, x.earned_at]));
     res.json({ stars: s.stats.stars, items: s.catalogue.filter((x) => x.kind !== 'decor' && x.kind !== 'place').map((x) => ({ kind: x.kind, code: x.code, emoji: x.emoji, name: x.name || null, image: x.image || '', need: x.need, earned: s.earned.has(x.kind + ':' + x.code), at: when.get(x.kind + ':' + x.code) || null })) });
   });
   r.get('/kids/world', user, async (req, res) => {
@@ -170,7 +176,7 @@ module.exports = function kidsPlayRoutes({ db, auth, opts }) {
     const u = req.user, s = await W.sync(db, u, req.lang), st = s.stats;
     const lg = req.lang;
     const catRows = st.cats.filter((c) => c.n);
-    const prog = await db.all('SELECT * FROM kids_progress WHERE user_id = ?', u.id);
+    const prog = st.prog;
     const knownBy = new Map(); for (const k of st.knownByCat) knownBy.set(k.slug, (knownBy.get(k.slug) || 0) + 1);
     const today = localDate(new Date(), u.timezone), days = new Map(st.days.map((d) => [d.local_date, d]));
     const categories = catRows.map((c) => {

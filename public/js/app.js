@@ -194,9 +194,11 @@ export async function boot() {
   try {
     // real start-up stages: 1 texts of the device language, 2 site settings + account, 3 the account's language, 4 the first page
     splash.step(0, 4);
-    await initI18n({ user: null, config: null });
-    splash.step(1, 4, t('load.prepare'));
-    const [cfg, me] = await Promise.all([get('/public/config'), get('/auth/me')]);
+    // the texts of the device language, the site settings and the account are requested together (early.js may already have started the last two)
+    const early = window.__early || {};
+    const take = async (p, fallback) => { try { const r = p && (await p); if (r && r.ok && r.data) return r.data; } catch (_) { /* fall back */ } return fallback(); };
+    const texts = initI18n({ user: null, config: null }).then(() => splash.step(1, 4, t('load.prepare')));   // stage 1 is shown as soon as the texts are in, while the data is still coming
+    const [, cfg, me] = await Promise.all([texts, take(early.config, () => get('/public/config')), take(early.me, () => get('/auth/me'))]);
     session.config = cfg; session.user = me.user; session.csrf = me.csrfToken; session.recovery = !!me.recovery;
     if (cfg.brandColor) applyBrand(cfg.brandColor);
     splash.step(2, 4);
