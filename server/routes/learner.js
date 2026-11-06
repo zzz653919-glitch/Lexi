@@ -12,11 +12,12 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
   /* ---------- profile ---------- */
   r.get('/me/profile', async (req, res) => res.json(await profile(req.user, req.lang)));
   async function profile(u, lang) {
-    const user = await core.userById(u.id);
-    const done = (await db.get('SELECT COUNT(*) n FROM user_progress WHERE user_id = ?', u.id)).n;
-    const course = await core.courseFor(user);
-    return { user: publicUser(user), stats: { lessonsCompleted: done, streak: await core.streakInfo(user), hearts: core.heartState(user), achievements: (await db.get('SELECT COUNT(*) n FROM user_achievements WHERE user_id = ?', u.id)).n }, avatars: AVATARS,
-      course: course ? { id: course.id, title: L10N.text(course, 'title', lang) } : null, courses: (await db.all("SELECT id, title, track, translations FROM courses WHERE status = 'published' ORDER BY position, id")).map((c) => ({ id: c.id, title: L10N.text(c, 'title', lang), track: c.track })) };
+    // the reads run together: one network trip each on a hosted database
+    const [user, done, ach, courses] = await Promise.all([core.userById(u.id), db.get('SELECT COUNT(*) n FROM user_progress WHERE user_id = ?', u.id), db.get('SELECT COUNT(*) n FROM user_achievements WHERE user_id = ?', u.id),
+      db.all("SELECT id, title, track, translations FROM courses WHERE status = 'published' ORDER BY position, id")]);
+    const [course, streak] = await Promise.all([core.courseFor(user), core.streakInfo(user)]);
+    return { user: publicUser(user), stats: { lessonsCompleted: done.n, streak, hearts: core.heartState(user), achievements: ach.n }, avatars: AVATARS,
+      course: course ? { id: course.id, title: L10N.text(course, 'title', lang) } : null, courses: courses.map((c) => ({ id: c.id, title: L10N.text(c, 'title', lang), track: c.track })) };
   }
   r.patch('/me', async (req, res) => {
     const b = req.body || {};
@@ -41,8 +42,9 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
   });
 
   r.get('/me/stats', async (req, res) => {
-    const user = await core.userById(req.user.id);
-    res.json({ xpTotal: user.xp_total, streak: await core.streakInfo(user), hearts: core.heartState(user), today: await core.dayInfo(user), reviewDue: (await review.counts(user)).due });
+    const user = req.user;   // the chips of every page: the reads run together
+    const [streak, today, rc] = await Promise.all([core.streakInfo(user), core.dayInfo(user), review.counts(user)]);
+    res.json({ xpTotal: user.xp_total, streak, hearts: core.heartState(user), today, reviewDue: rc.due });
   });
 
   /* ---------- path, dashboard ---------- */
@@ -53,14 +55,14 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     res.json(await core.buildPath(user, course, req.lang));
   });
   r.get('/dashboard', async (req, res) => {
-    const user = await core.userById(req.user.id);
+    const user = req.user;   // loaded for this request already
     const s = settings.all();
     const course = await core.courseFor(user);
     const path = course ? await core.buildPath(user, course, req.lang) : null;
     const rec = path && path.recommended;
     let unit = null;
     if (path && rec) { for (const lv of path.levels) for (const u of lv.units) if (u.id === rec.unitId) unit = { id: u.id, title: u.title, total: u.total, done: u.done, level: lv.code }; }
-    const [today, streak, week, achievements, reviewCounts, mistakes, daily, learningInfo] = await Promise.all([core.dayInfo(user), core.streakInfo(user), core.weekDays(user), core.achievementList(user.id), review.counts(user), mistakesAvailable(user.id), dailySummary.summary(user), learning.brief(user)]);
+    const [today, streak, week, achievements, reviewCounts, mistakes, daily, learningInfo, rm] = await Promise.all([core.dayInfo(user), core.streakInfo(user), core.weekDays(user), core.achievementList(user.id), review.counts(user), mistakesAvailable(user.id), dailySummary.summary(user), learning.brief(user, true), roadmap.summary(user, path)]);
     res.json({
       user: publicUser(user), course: course ? { id: course.id, title: L10N.text(course, 'title', req.lang) } : null, recommended: rec || null, unit,
       lessons: path ? path.totals : { lessons: 0, done: 0 },
@@ -69,7 +71,7 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
       achievements: achievements.filter((a) => a.earnedAt).sort((a, b) => (a.earnedAt < b.earnedAt ? 1 : -1)).slice(0, 3),
       review: reviewCounts, mistakesAvailable: mistakes,
       leaderboardEnabled: s.leaderboard_enabled,
-      daily, learning: learningInfo, roadmap: await roadmap.summary(user, path),
+      daily, learning: learningInfo, roadmap: rm,
     });
   });
   const mistakesAvailable = async (userId) => (await attempts.mistakeIds(userId, 50)).length;

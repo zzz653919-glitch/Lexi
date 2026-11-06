@@ -147,13 +147,14 @@ function make(db, settings) {
   const roadmapStart = (levels, cefr) => { const i = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'].indexOf(cefr); const code = PLACEMENT_TO_ROADMAP[i < 0 ? 1 : i]; const idx = levels.findIndex((l) => l.code === code); return idx < 0 ? 0 : idx; };
   async function buildPath(user, course, lang) {
     const T = (row, f) => L10N.text(row, f, lang);
-    const [levels, units, lessons, progRows, countRows, openRows] = await Promise.all([
+    const [levels, units, lessons, progRows, countRows, openRows, examRows] = await Promise.all([
       db.all('SELECT * FROM levels WHERE course_id = ? ORDER BY position, id', course.id),
       db.all('SELECT u.* FROM units u JOIN levels l ON l.id = u.level_id WHERE l.course_id = ? ORDER BY u.position, u.id', course.id),
       db.all("SELECT l.*, u.level_id FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE lv.course_id = ? AND l.status = 'published' ORDER BY l.position, l.id", course.id),
       db.all('SELECT * FROM user_progress WHERE user_id = ?', user.id),
       db.all("SELECT lesson_id, COUNT(*) n FROM exercises WHERE status = 'published' GROUP BY lesson_id"),
-      db.all("SELECT lesson_id FROM lesson_attempts WHERE user_id = ? AND status = 'in_progress' AND lesson_id IS NOT NULL", user.id)]);
+      db.all("SELECT lesson_id FROM lesson_attempts WHERE user_id = ? AND status = 'in_progress' AND lesson_id IS NOT NULL", user.id),
+      db.all("SELECT lesson_id, MAX(score_pct) best, MAX(passed) passed, MAX(band) band FROM exam_results WHERE user_id = ? GROUP BY lesson_id", user.id)]);
     const prog = Object.fromEntries(progRows.map((p) => [p.lesson_id, p]));
     const counts = Object.fromEntries(countRows.map((r) => [r.lesson_id, r.n]));
     const open = openRows.map((r) => r.lesson_id);
@@ -163,7 +164,6 @@ function make(db, settings) {
     const startPos = strictCourse
       ? (placed ? roadmapStart(levels, user.cefr_level) : -1)
       : (levels.find((l) => l.code === user.start_level) || levels[0] || { position: 0 }).position;
-    const examRows = await db.all("SELECT lesson_id, MAX(score_pct) best, MAX(passed) passed, MAX(band) band FROM exam_results WHERE user_id = ? GROUP BY lesson_id", user.id);
     const exams = Object.fromEntries(examRows.map((r) => [r.lesson_id, r]));
     const out = { course: { id: course.id, slug: course.slug, title: T(course, 'title'), description: T(course, 'description'), track: course.track, strict: strictCourse }, levels: [] };
     let prevLevel = null, order = [];

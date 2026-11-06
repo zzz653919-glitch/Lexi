@@ -53,10 +53,13 @@ function make(db, { secureCookies = false } = {}) {
     req.user = null; req.session = null;
     const token = parseCookies(req.headers.cookie)[COOKIE];
     if (token) {
-      const s = await db.get('SELECT * FROM sessions WHERE token_hash = ?', sha256(token));
-      if (s && s.expires_at > now()) {
-        const u = await db.get('SELECT * FROM users WHERE id = ?', s.user_id);
-        if (u && u.status === 'active') { req.user = u; req.session = s; }
+      // one round trip (session + account): every API request starts here, and a hosted database costs a network trip per query
+      const r = await db.get(`SELECT s.token_hash AS s_token_hash, s.user_id AS s_user_id, s.csrf_token AS s_csrf_token, s.created_at AS s_created_at, s.expires_at AS s_expires_at, s.ip AS s_ip, s.user_agent AS s_user_agent, s.recovery AS s_recovery, u.*
+        FROM sessions s JOIN users u ON u.id = s.user_id WHERE s.token_hash = ?`, sha256(token));
+      if (r && r.s_expires_at > now() && r.status === 'active') {
+        const s = { token_hash: r.s_token_hash, user_id: r.s_user_id, csrf_token: r.s_csrf_token, created_at: r.s_created_at, expires_at: r.s_expires_at, ip: r.s_ip, user_agent: r.s_user_agent, recovery: r.s_recovery };
+        const u = {}; for (const k of Object.keys(r)) if (!k.startsWith('s_')) u[k] = r[k];
+        req.user = u; req.session = s;
       }
     }
     next();

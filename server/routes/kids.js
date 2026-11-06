@@ -21,43 +21,35 @@ module.exports = function kidsRoutes({ db, auth }) {
   });
 
   const published = (sql) => `${sql} AND status = 'published'`;
-  async function catalogue(userId) {
-    const cats = await db.all(published('SELECT * FROM kids_categories WHERE 1=1') + ' ORDER BY position, id');
-    const counts = new Map((await db.all("SELECT category_id, COUNT(*) n FROM kids_words WHERE status = 'published' GROUP BY category_id")).map((x) => [x.category_id, x.n]));
-    const prog = await db.all('SELECT * FROM kids_progress WHERE user_id = ?', userId);
-    return cats.filter((c) => counts.get(c.id)).map((c) => {
-      const n = counts.get(c.id), sp = K.split(n);
-      const mine = prog.filter((p) => p.category_id === c.id && p.part <= sp.parts);
+  /* the categories with the child's stars per part, built from one stats read (W.stats runs its queries together) */
+  function catalogueFrom(st) {
+    return st.cats.filter((c) => c.n).map((c) => {
+      const sp = K.split(c.n), mine = st.prog.filter((p) => p.category_id === c.id && p.part <= sp.parts);
       const parts = Array.from({ length: sp.parts }, (_, i) => ({ part: i + 1, stars: (mine.find((p) => p.part === i + 1) || {}).stars || 0 }));
-      return { c, n, ...sp, parts, stars: parts.reduce((a, p) => a + p.stars, 0), done: parts.every((p) => p.stars > 0) };
+      return { c, n: c.n, ...sp, parts, stars: parts.reduce((a, p) => a + p.stars, 0), done: parts.every((p) => p.stars > 0) };
     });
   }
-  async function streakOf(u) {
-    const days = new Map((await db.all('SELECT local_date, lessons FROM kids_days WHERE user_id = ?', u.id)).map((d) => [d.local_date, d.lessons]));
-    let d = localDate(new Date(), u.timezone); if (!days.get(d)) d = addDays(d, -1);
-    let n = 0; while (days.get(d)) { n++; d = addDays(d, -1); }
-    return n;
-  }
-  async function badgeContext(u, cat) {
+  function badgeContext(st, u, cat) {
+    const lessonDays = new Map(st.days.map((d) => [d.local_date, d.lessons]));
+    let d = localDate(new Date(), u.timezone); if (!lessonDays.get(d)) d = addDays(d, -1);
+    let streak = 0; while (lessonDays.get(d)) { streak++; d = addDays(d, -1); }
     const done = {}; for (const x of cat) done[x.c.slug] = x.done;
     return { stars: cat.reduce((a, x) => a + x.stars, 0), lessonsDone: cat.reduce((a, x) => a + x.parts.filter((p) => p.stars > 0).length, 0), threeStar: cat.reduce((a, x) => a + x.parts.filter((p) => p.stars === 3).length, 0),
-      done, allDone: cat.length > 0 && cat.every((x) => x.done), streak: await streakOf(u) };
+      done, allDone: cat.length > 0 && cat.every((x) => x.done), streak };
   }
 
   r.get('/kids/overview', user, async (req, res) => {
-    const u = req.user, L = req.lang;
-    const cat = await catalogue(u.id);
-    const ctx = await badgeContext(u, cat);
-    const today = localDate(new Date(), u.timezone);
-    const days = new Map((await db.all('SELECT * FROM kids_days WHERE user_id = ?', u.id)).map((d) => [d.local_date, d]));
+    const u = req.user, L = req.lang, today = localDate(new Date(), u.timezone);
+    const [world, prof0, mrow, earnedRows] = await Promise.all([W.stats(db, u), db.get('SELECT * FROM kids_profile WHERE user_id = ?', u.id), db.get('SELECT * FROM kids_days WHERE user_id = ? AND local_date = ?', u.id, today), db.all('SELECT * FROM kids_badges WHERE user_id = ?', u.id)]);
+    const prof = prof0 || await W.ensureProfile(db, u.id);
+    const cat = catalogueFrom(world), ctx = badgeContext(world, u, cat);
+    const days = new Map(world.days.map((d) => [d.local_date, d]));
     const week = Array.from({ length: 7 }, (_, i) => { const date = addDays(today, i - 6), d = days.get(date) || {}; return { date, lessons: d.lessons || 0, stars: d.stars || 0, today: date === today }; });
-    const earned = new Map((await db.all('SELECT * FROM kids_badges WHERE user_id = ?', u.id)).map((b) => [b.code, b.earned_at]));
+    const earned = new Map(earnedRows.map((b) => [b.code, b.earned_at]));
     // next lesson: the first part that has never been finished; otherwise the weakest part to improve
     let next = null;
     for (const x of cat) { const p = x.parts.find((q) => q.stars === 0); if (p) { next = { slug: x.c.slug, part: p.part, title: K.pickTitle(x.c, L), emoji: x.c.emoji, color: x.c.color }; break; } }
     if (!next) { let low = null; for (const x of cat) for (const p of x.parts) if (p.stars < 3 && (!low || p.stars < low.p.stars)) low = { x, p }; if (low) next = { slug: low.x.c.slug, part: low.p.part, title: K.pickTitle(low.x.c, L), emoji: low.x.c.emoji, color: low.x.c.color }; }
-    const world = await W.stats(db, u), prof = await W.ensureProfile(db, u.id);
-    const mrow = await db.get('SELECT * FROM kids_days WHERE user_id = ? AND local_date = ?', u.id, today);
     res.json({
       character: prof.character, accessory: prof.accessory, background: prof.background, missions: W.missionsOf(mrow), missionsBonus: !!(mrow && mrow.bonus), lessonStars: ctx.stars,
       name: u.display_name, stars: world.stars, maxStars: world.maxStars, lessonsDone: ctx.lessonsDone, lessonsTotal: cat.reduce((a, x) => a + x.parts.length, 0), streak: ctx.streak,
@@ -70,11 +62,11 @@ module.exports = function kidsRoutes({ db, auth }) {
   /* the cards of one category (all parts) + administrator-written quiz questions */
   r.get('/kids/categories/:slug', user, async (req, res) => {
     const c = need(await db.get("SELECT * FROM kids_categories WHERE slug = ? AND status = 'published'", String(req.params.slug)));
-    const words = await db.all("SELECT * FROM kids_words WHERE category_id = ? AND status = 'published' ORDER BY position, id", c.id);
+    const [words, prog, qrows] = await Promise.all([db.all("SELECT * FROM kids_words WHERE category_id = ? AND status = 'published' ORDER BY position, id", c.id),
+      db.all('SELECT part, stars FROM kids_progress WHERE user_id = ? AND category_id = ?', req.user.id, c.id), db.all("SELECT * FROM kids_questions WHERE category_id = ? AND status = 'published' ORDER BY position, id", c.id)]);
     if (!words.length) throw new HttpError(404, 'err.not_found');
     const sp = K.split(words.length), lg = lang(req);
-    const prog = await db.all('SELECT part, stars FROM kids_progress WHERE user_id = ? AND category_id = ?', req.user.id, c.id);
-    const questions = (await db.all("SELECT * FROM kids_questions WHERE category_id = ? AND status = 'published' ORDER BY position, id", c.id)).map((q) => ({
+    const questions = qrows.map((q) => ({
       id: q.id, prompt: (lg === 'ru' && q.prompt_ru) || (lg === 'uz' && q.prompt_uz) || q.prompt, pic: q.pic, image: q.image_url, audio: q.audio_url, correct: q.correct, wrong: [q.wrong1, q.wrong2, q.wrong3].filter(Boolean) }));
     res.json({
       category: { slug: c.slug, title: K.pickTitle(c, req.lang), emoji: c.emoji, color: c.color, kind: c.kind, parts: sp.parts, size: sp.size },
@@ -101,12 +93,12 @@ module.exports = function kidsRoutes({ db, auth }) {
       fresh = await W.learn(db, u.id, words.slice((part - 1) * sp.size, part * sp.size).map((x) => x.id));
       await W.bump(db, u, { lessons: 1, stars: gained, newwords: fresh, seconds: clamp(int(b.seconds, 0), 0, W.LIMITS.seconds) });
     });
-    const cat = await catalogue(u.id), ctx = await badgeContext(u, cat);
-    const have = new Set((await db.all('SELECT code FROM kids_badges WHERE user_id = ?', u.id)).map((x) => x.code));
+    const [rw, st, haveRows] = await Promise.all([W.sync(db, u, req.lang), W.stats(db, u), db.all('SELECT code FROM kids_badges WHERE user_id = ?', u.id)]);
+    const cat = catalogueFrom(st), ctx = badgeContext(st, u, cat), have = new Set(haveRows.map((x) => x.code));
     const freshBadges = K.BADGES.filter((x) => !have.has(x.code) && x.test(ctx));
-    for (const x of freshBadges) await db.run('INSERT OR IGNORE INTO kids_badges (user_id, code, earned_at) VALUES (?,?,?)', u.id, x.code, t);
+    if (freshBadges.length) await db.batch(freshBadges.map((x) => ({ sql: 'INSERT OR IGNORE INTO kids_badges (user_id, code, earned_at) VALUES (?,?,?)', args: [u.id, x.code, t] })));
     const me = cat.find((x) => x.c.id === c.id);
-    const rw = await W.sync(db, u, req.lang), mi = await W.settleMissions(db, u);
+    const mi = await W.settleMissions(db, u);
     if (mi.allDone) rw.fresh.push(...(await W.sync(db, u, req.lang)).fresh);
     res.json({ stars, pct, gained, totalStars: rw.stats.stars, categoryDone: !!(me && me.done), newBadges: freshBadges.map((x) => ({ code: x.code, emoji: x.emoji })), newRewards: rw.fresh, missions: mi.missions, missionsDone: mi.allDone, newWords: fresh });
   });

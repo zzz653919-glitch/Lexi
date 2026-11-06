@@ -68,3 +68,10 @@ The app can run on Vercel when the database is a hosted **Turso** (libSQL, SQLit
 * The first request after a quiet period is slower (cold start + a network round trip per query). Use a Turso region near your Vercel functions.
 * `npm run backup` with `DATABASE_URL` set writes a JSON dump of all tables (except sessions) to `backups/`; Turso also offers its own backups.
 * Request bodies are limited by Vercel to about 4.5 MB (the app's own limits are lower: audio 2 MB, imports 2 MB).
+
+## Speed (Vercel + Turso)
+On a hosted database every query is a network trip, so what matters is **how many queries a page waits for one after another** and **how far the function is from the database**.
+* **Put the function next to the database.** Turso shows the database location (`turso db show <name>` or the dashboard). In Vercel → Settings → Functions → *Function Region* (or `"regions": ["fra1"]` in `vercel.json`) choose the closest region (for example `fra1` for Frankfurt, `sin1` for Singapore, `iad1` for Virginia). A function in Virginia talking to a database in Europe loses 80–150 ms on every query.
+* The application keeps the number of queries low and runs independent ones together; `tests/api/performance.test.js` guards the limits (the account lookup is one query, the public settings and the interface texts need none, Kids pages need 2–11).
+* The first two requests of a page start in `public/js/early.js` while the modules download; the core modules are preloaded in `index.html`; fonts and images are cached for a long time (`vercel.json`).
+* A cold start only reads (migrations list, settings, texts): the content is prepared by the build step.

@@ -14,7 +14,7 @@ if (!url) {
   const inst = createApp({
     databaseUrl: url, databaseAuthToken: process.env.DATABASE_AUTH_TOKEN,
     dataDir: '/tmp/lexi',            // only used for the (best-effort) password-reset outbox log
-    trustProxy: true, publicUrl, seedSample: false,
+    trustProxy: true, publicUrl, seedSample: false, seedAssessment: false,   // the build step (scripts/vercel-build.js) prepared the database: a cold start only reads
   });
   module.exports = inst.app;
 }

@@ -49,8 +49,10 @@ function createApp(options = {}) {
       if (opts.seedRoadmap && db.local) { try { await seed.ensureRoadmap(db); } catch (e) { if (!opts.quiet) console.error('[seed] roadmap:', e.message); } }
       if (opts.seedKids && !opts.seedRoadmap && db.local) { try { await seed.ensureKids(db); } catch (e) { if (!opts.quiet) console.error('[seed] kids:', e.message); } }
       // built-in test content is optional: if it cannot be written right now the site still opens (it is retried on the next start)
-      try { await seed.ensureAssessmentContent(db); } catch (e) { if (!opts.quiet) console.error('[seed] placement content:', e.message); }
-      await Promise.all([settings.refresh(true), i18n.refresh(true)]);
+      // (independent steps run together: on a hosted database every query is a network trip; the hosted build already prepared the content, so there it is skipped)
+      await Promise.all([
+        opts.seedAssessment === false ? null : seed.ensureAssessmentContent(db).catch((e) => { if (!opts.quiet) console.error('[seed] placement content:', e.message); }),
+        settings.refresh(true), i18n.refresh(true)]);
     })().then(() => { lastInitError = null; }, (e) => { ready = null; lastInitError = e; throw e; });
     return ready;
   };
@@ -99,13 +101,10 @@ function createApp(options = {}) {
   const api = express.Router();
   api.use('/admin', express.json({ limit: '4mb' }));
   api.use(express.json({ limit: '100kb' }));
-  api.use(auth.attach);
-  api.use((req, res, next) => { req.lang = i18n.languageFor(req); req.t = (key, params) => i18n.tr(req.lang, key, params); next(); });
-  api.use(auth.csrf);
-  api.use((req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
-
+  /* the public settings and the interface texts need no account: they are answered before the session lookup (one query less each) */
   const languages = () => coreI18n.LANGUAGES.filter((l) => settings.all().supported_languages.includes(l.code)).map(({ code, name, flag, label }) => ({ code, name, flag, label }));
   api.get('/public/config', (req, res) => {
+    res.setHeader('Cache-Control', 'no-store');
     const s = settings.all();
     res.json({ siteName: s.site_name, tagline: s.tagline, brandColor: s.brand_color, registrationOpen: s.registration_open, languages: languages(), defaultLanguage: i18n.defaultLanguage(), defaultTranslationLanguage: s.default_translation_language, maintenance: s.maintenance_mode ? (s.maintenance_message || req.t('msg.maintenance')) : null });
   });
@@ -118,6 +117,11 @@ function createApp(options = {}) {
     res.setHeader('Cache-Control', 'no-cache');
     res.json(body);
   });
+  api.use(auth.attach);
+  api.use((req, res, next) => { req.lang = i18n.languageFor(req); req.t = (key, params) => i18n.tr(req.lang, key, params); next(); });
+  api.use(auth.csrf);
+  api.use((req, res, next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
+
   // maintenance mode: only staff (and the sign-in endpoints they need) get through
   api.use((req, res, next) => {
     if (!settings.all().maintenance_mode) return next();
