@@ -51,7 +51,7 @@ export default async function kidsLesson({ params, query }) {
       const nextBtn = h('button', { class: 'k-big-btn go', type: 'button', disabled: true, onclick: () => { if (++i < cards.length) show(); else advance(); } }, i + 1 < cards.length ? t('kids.next') : t('kids.lets_play'), ' ▶');
       setStage(heading('👀', t('kids.learn_title'), t('kids.repeat')),
         h('div', { class: 'k-flash', 'data-word': c.en }, badge ? h('div', { class: 'k-letter', lang: 'en' }, kind === 'letters' ? badge + badge.toLowerCase() : badge) : null, picture(c, 'huge'),
-          h('div', { class: 'k-word', lang: 'en' }, lab(c)), h('div', { class: 'k-tr' }, c.tr)),
+          h('div', { class: 'k-word', lang: 'en' }, lab(c))),
         h('div', { class: 'k-actions' }, heard, mine, nextBtn), h('p', { class: 'k-count' }, `${i + 1} / ${cards.length}`));
       setTimeout(() => say(c, kind), 250);
     };
@@ -63,7 +63,7 @@ export default async function kidsLesson({ params, query }) {
     friend.say(t('kids.say_match'));
     const pool = sample(cards, Math.min(4, cards.length)), missed = new Set();
     let picked = null, left = pool.length;
-    const pics = shuffle(pool).map((c) => h('button', { class: 'k-tile pic', type: 'button', 'data-id': c.id, 'aria-label': c.tr || c.en }, picture(c)));
+    const pics = shuffle(pool).map((c) => h('button', { class: 'k-tile pic', type: 'button', 'data-id': c.id, 'aria-label': c.en }, picture(c)));
     const words = shuffle(pool).map((c) => h('button', { class: 'k-tile word', type: 'button', 'data-id': c.id, lang: 'en' }, lab(c)));
     const clearPick = () => { picked && picked.classList.remove('picked'); picked = null; };
     const choose = (btn, side) => {
@@ -91,7 +91,7 @@ export default async function kidsLesson({ params, query }) {
       const c = qs[q]; let missed = false;
       const opts = shuffle([c, ...sample(all.filter((x) => x.id !== c.id), Math.min(choices() - 1, all.length - 1))]);
       const hear = h('button', { class: 'k-big-btn say', type: 'button', onclick: () => say(c, kind) }, '🔊 ', t('kids.listen'));
-      const buttons = opts.map((o) => { const b = h('button', { class: 'k-option', type: 'button', 'data-correct': String(o.id === c.id), 'aria-label': o.tr || o.en }, picture(o)); b.onclick = () => {
+      const buttons = opts.map((o) => { const b = h('button', { class: 'k-option', type: 'button', 'data-correct': String(o.id === c.id), 'aria-label': o.en }, picture(o)); b.onclick = () => {
         if (o.id === c.id) { b.classList.add('right'); buttons.forEach((x) => { x.disabled = true; }); cheer(); countQ(!missed); setTimeout(() => (++q < qs.length ? ask() : advance()), 900); }
         else { missed = true; wrongShake(b); b.classList.add('wrong'); }
       }; return b; });
@@ -123,7 +123,7 @@ export default async function kidsLesson({ params, query }) {
         return b;
       });
       setStage(heading(order ? '🔀' : '🔤', order ? t('kids.order_title') : t('kids.spell_title'), t('kids.spell_hint')),
-        h('div', { class: 'k-spell-pic' }, picture(c, 'big'), h('div', { class: 'k-tr' }, c.tr), h('button', { class: 'k-big-btn say small', type: 'button', onclick: () => say(c, kind) }, '🔊')),
+        h('div', { class: 'k-spell-pic' }, picture(c, 'big'), h('button', { class: 'k-big-btn say small', type: 'button', onclick: () => say(c, kind) }, '🔊')),
         h('div', { class: 'k-slots', 'data-answer': target.join(order ? ' ' : '') }, slots), h('div', { class: 'k-tiles' }, tiles), h('p', { class: 'k-count' }, `${q + 1} / ${qs.length}`));
       setTimeout(() => say(c, kind), 250);
     };
@@ -137,9 +137,8 @@ export default async function kidsLesson({ params, query }) {
     const base = shuffle(cards);
     for (let i = 0; i < Math.min(5, cards.length); i++) {
       const c = base[i % base.length], others = sample(all.filter((x) => x.id !== c.id), choices() - 1);
-      const form = kind === 'letters' ? (i % 2 ? 'letter' : 'what') : i % 2 ? 'tr' : 'what';
+      const form = kind === 'letters' && i % 2 ? 'letter' : 'what';
       if (form === 'letter') list.push({ prompt: t('kids.quiz_letter'), card: c, options: shuffle([c, ...others]).map((o) => ({ label: o.en, ok: o.id === c.id })), say: c });
-      else if (form === 'tr') list.push({ prompt: t('kids.quiz_tr', { word: c.tr }), text: c.tr, options: shuffle([c, ...others]).map((o) => ({ label: lab(o), ok: o.id === c.id })), say: null, card: null });
       else list.push({ prompt: t('kids.quiz_what'), card: c, options: shuffle([c, ...others]).map((o) => ({ label: lab(o), ok: o.id === c.id })), say: c });
     }
     for (const x of sample(questions, 2)) list.push({ prompt: x.prompt, custom: x, options: shuffle([x.correct, ...x.wrong]).map((o) => ({ label: o, ok: o === x.correct })) });

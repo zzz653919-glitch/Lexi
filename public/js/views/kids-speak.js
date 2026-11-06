@@ -62,14 +62,14 @@ export default async function kidsSpeak() {
       } }, '🎤 ', micAllowed ? t('kids.say_it') : t('kids.said_it'));
       friend.say(t('kids.speak_repeat'));
       body.replaceChildren(h('div', { class: 'k-step-head' }, h('span', { class: 'k-step-icon', 'aria-hidden': 'true' }, '🗣️'), h('div', {}, h('h2', {}, t('kids.speak.' + mode)), h('p', {}, t('kids.speak_repeat')))),
-        h('div', { class: 'k-flash', 'data-word': c.en }, picture(c, 'huge'), h('div', { class: 'k-word', lang: 'en' }, want), h('div', { class: 'k-tr' }, c.tr)),
+        h('div', { class: 'k-flash', 'data-word': c.en }, picture(c, 'huge'), h('div', { class: 'k-word', lang: 'en' }, want)),
         h('div', { class: 'k-actions' }, h('button', { class: 'k-big-btn say', type: 'button', id: 'k-hear', onclick: () => say(c, 'words') }, '🔊 ', t('kids.listen')), mic, nextBtn), fb, h('p', { class: 'k-count' }, `${i + 1} / ${items.length}`));
       setTimeout(() => say(c, 'words'), 250);
     }
     function listenQ(c) {
       const opts = shuffle([c, ...sample(poolFor('words').filter((x) => x.id !== c.id), choices() - 1)]);
       friend.say(t('kids.speak_match'));
-      const btns = opts.map((o) => h('button', { class: 'k-option', type: 'button', 'data-correct': String(o.id === c.id), 'aria-label': o.tr, onclick: (e) => {
+      const btns = opts.map((o) => h('button', { class: 'k-option', type: 'button', 'data-correct': String(o.id === c.id), 'aria-label': o.en, onclick: (e) => {
         const b = e.currentTarget;
         if (o.id === c.id) { b.classList.add('right'); btns.forEach((x) => { x.disabled = true; }); friend.react('cheer', 1200); practised++; ids.add(c.id); setTimeout(next, 900); }
         else { b.classList.add('soft'); friend.react('think', 1200); friend.say(t('kids.speak_try')); setTimeout(() => say(c, 'words'), 400); }       // a gentle hint, no penalty

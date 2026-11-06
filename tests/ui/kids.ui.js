@@ -89,7 +89,7 @@ async function playGame(page, code) {
     /* ---------- a whole lesson, with the friend reacting ---------- */
     await page.goto(s.base + '/kids'); await page.waitForSelector('#k-next'); await page.click('#k-next'); await page.waitForURL('**/kids/learn/alphabet?part=1'); await page.waitForSelector('.k-flash');
     check(await page.locator('.k-letter').innerText() === 'Aa' && (await page.locator('.k-word').innerText()) === 'Apple', 'a letter card shows Aa, a picture and the word Apple');
-    check((await page.locator('.k-tr').innerText()) === 'olma' && await page.locator('.k-big-btn.say').count() === 1, 'with the Uzbek translation and a listen button');
+    check(await page.locator('.k-tr').count() === 0 && !(await page.locator('.k-flash').innerText()).includes('olma') && await page.locator('.k-big-btn.say').count() === 1, 'no translation is shown under the word, and there is a listen button');
     check((await page.locator('.k-speech').innerText()).length > 3, 'the friend explains the task');
     await playLesson(page, { mistakeOnce: true });
     const stars = Number(await page.getAttribute('.k-result', 'data-stars'));
@@ -118,7 +118,7 @@ async function playGame(page, code) {
     await page.goto(s.base + '/kids/stories'); await page.waitForSelector('.k-book');
     check(await page.locator('.k-book').count() === 6, 'six storybooks');
     await page.click('.k-book[data-story="bunny"]'); await page.waitForSelector('.k-scene');
-    check(await page.locator('.k-prop').count() >= 2 && await page.locator('.k-story-tr').innerText() !== '', 'an illustrated page with an Uzbek translation');
+    check(await page.locator('.k-prop').count() >= 2 && await page.locator('.k-story-tr, .k-tr').count() === 0, 'an illustrated page; no translation lines in Kids');
     await page.waitForSelector('.k-w.hl', { timeout: 4000 }); check(true, 'words are highlighted while the story is read');
     check(await page.locator('.k-w').count() >= 4, 'every word can be tapped');
     for (let i = 0; i < 5; i++) { await page.click('#k-next-page'); await page.waitForFunction((n) => document.querySelector('.k-count').textContent.startsWith(String(n)), i + 2); }
