@@ -31,6 +31,18 @@ route('/achievements', view('achievements'), { auth: true });
 route('/profile', view('profile'), { auth: true });
 route('/ielts', view('ielts'), { auth: true });
 route('/kids', view('kids-home'), { auth: true });
+route('/kids/lessons', view('kids-lessons'), { auth: true });
+route('/kids/games', view('kids-games'), { auth: true });
+route('/kids/games/:code', view('kids-game'), { auth: true, focus: true });
+route('/kids/progress', view('kids-progress'), { auth: true });
+route('/kids/stories', view('kids-stories'), { auth: true });
+route('/kids/world', view('kids-world'), { auth: true });
+route('/kids/speak', view('kids-speak'), { auth: true });
+route('/kids/coloring', view('kids-coloring'), { auth: true });
+route('/kids/coloring/:picture', view('kids-coloring'), { auth: true });
+route('/kids/parents', view('kids-parents'), { auth: true });
+route('/kids/stickers', view('kids-stickers'), { auth: true });
+route('/kids/stories/:slug', view('kids-story'), { auth: true, focus: true });
 route('/kids/learn/:slug', view('kids-lesson'), { auth: true, focus: true });
 
 const root = document.getElementById('app');

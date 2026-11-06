@@ -1,5 +1,7 @@
 /* LEXIO KIDS: shared helpers (stylesheet, pictures, speech, small random helpers). */
 import { h, speak, canSpeak } from '../ui.js';
+import { get, post } from '../api.js';
+import { t } from '../i18n.js';
 
 let cssLoaded = false;
 export function loadKidsCss() {
@@ -27,16 +29,37 @@ export function picture(c, cls = '') {
   return h('span', { class: 'kpic kpic-emoji ' + cls + (count > 4 ? ' many' : ''), 'aria-hidden': 'true' }, c.pic || '⭐');
 }
 
-/* sound switch (remembered on this device) */
+/* the child's profile (companion, background, parent settings), loaded once per visit */
+export const kidsState = { profile: null };
+export const profile = () => kidsState.profile || {};
+export const choices = () => (profile().age === 'young' ? 3 : 4);     // young children get fewer answers to choose from
+export async function initKids(force = false) {
+  const [, p] = await Promise.all([loadKidsCss(), force || !kidsState.profile ? get('/kids/profile') : Promise.resolve(kidsState.profile)]);
+  kidsState.profile = p; applyBackground();
+  return p;
+}
+export function applyBackground() {
+  document.body.classList.add('kids-body');
+  document.body.className = document.body.className.replace(/\bkids-bg-\S+/g, '').trim() + ' kids-bg-' + (profile().background || 'sky');
+}
+export function leaveKids() { document.body.className = document.body.className.replace(/\bkids-(body|bg-\S+)/g, '').trim(); flushListens(); }
+
+/* every word the child listens to is counted for the daily mission (sent when a page is left or finished) */
+let pendingListens = 0;
+export const trackListen = () => { pendingListens++; };
+export function flushListens() { if (!pendingListens) return; const n = Math.min(pendingListens, 60); pendingListens = 0; post('/kids/event', { kind: 'listen', n }).catch(() => {}); }
+
+/* sound: the parent's setting AND the switch in the lesson header (remembered on this device) */
 const KEY = 'lexi.kids.sound';
-export const soundOn = () => { try { return localStorage.getItem(KEY) !== '0'; } catch (_) { return true; } };
+export const soundOn = () => { if (kidsState.profile && kidsState.profile.sound === false) return false; try { return localStorage.getItem(KEY) !== '0'; } catch (_) { return true; } };
 export const setSound = (on) => { try { localStorage.setItem(KEY, on ? '1' : '0'); } catch (_) { /* ignore */ } };
 export function say(c, kind, slow = false) {
   if (!soundOn()) return;
+  trackListen();
   if (c.audio) return speak({ url: c.audio }, slow);
   if (canSpeak()) speak({ text: spokenOf(c, kind) }, slow);
 }
-export function sayText(text, slow = false) { if (soundOn() && canSpeak()) speak({ text }, slow); }
+export function sayText(text, slow = false) { if (soundOn() && canSpeak()) { trackListen(); speak({ text }, slow); } }
 
 /* falling stars / emoji for celebrations */
 export function confetti(host, emojis = ['⭐', '🌟', '✨', '🎈', '🎉', '💛']) {
@@ -45,3 +68,22 @@ export function confetti(host, emojis = ['⭐', '🌟', '✨', '🎈', '🎉', '
   host.append(box); setTimeout(() => box.remove(), 5200);
 }
 export const MASCOTS = { leo: '/img/kids-leo.svg', bunny: '/img/kids-bunny.svg' };
+
+/* names of rewards (stickers, animals, accessories…) */
+export function rewardName(r) {
+  if (r.name) return r.name;
+  const key = r.code.startsWith('game_') ? 'kids.game.' + r.code.slice(5) : r.code.startsWith('story_') ? 'kids.story.' + r.code.slice(6) : r.kind === 'sticker' ? 'kids.r.sticker.' + r.code : r.kind === 'decor' ? '' : `kids.r.${r.kind}.${r.code}`;
+  return key ? t(key) : r.code;
+}
+/* a pop-up with what was just earned (stickers, accessories, places…) — click anywhere to close */
+export function celebrate(rewards, host = document.body) {
+  const list = (rewards || []).filter((r) => r.kind !== 'decor').slice(0, 4);
+  if (!list.length) return null;
+  const close = () => { box.remove(); };
+  const box = h('div', { class: 'k-modal k-reward-pop', role: 'dialog', 'aria-modal': 'true', 'aria-label': t('kids.new_reward'), onclick: close },
+    h('div', { class: 'k-modal-card k-reward-card' }, h('h2', {}, t('kids.new_reward')), h('div', { class: 'k-reward-list' }, list.map((r) => h('div', { class: 'k-reward', 'data-kind': r.kind, 'data-code': r.code }, h('span', { class: 'k-reward-emoji', 'aria-hidden': 'true' }, r.emoji || '⭐'), h('b', {}, rewardName(r)), h('small', {}, t('kids.kind.' + r.kind))))),
+      h('button', { class: 'k-big-btn go', type: 'button', onclick: close }, t('kids.hooray'))));
+  host.append(box); confetti(box); box.querySelector('button').focus();
+  return box;
+}
+export const minutes = (sec) => Math.round((sec || 0) / 60);

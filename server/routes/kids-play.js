@@ -32,7 +32,7 @@ module.exports = function kidsPlayRoutes({ db, auth, opts }) {
     const day = await db.get('SELECT seconds FROM kids_days WHERE user_id = ? AND local_date = ?', u.id, today);
     const s = await W.sync(db, u, 'en');
     const has = (k, c) => s.earned.has(k + ':' + c);
-    return { character: p.character, accessory: p.accessory, background: p.background, sound: !!p.sound, narration: !!p.narration, age: p.age, mic: !!p.mic, reminders: !!p.reminders, reminderTime: p.reminder_time, dailyLimitMin: p.daily_limit_min,
+    return { stars: s.stats.stars, character: p.character, accessory: p.accessory, background: p.background, sound: !!p.sound, narration: !!p.narration, age: p.age, mic: !!p.mic, reminders: !!p.reminders, reminderTime: p.reminder_time, dailyLimitMin: p.daily_limit_min,
       todaySeconds: day ? day.seconds : 0, limitReached: !!(p.daily_limit_min && day && day.seconds >= p.daily_limit_min * 60), pinSet: !!p.pin_hash, hasActivityToday: !!(await db.get(`SELECT 1 x FROM kids_days WHERE user_id = ? AND local_date = ? AND (${W.activeSql})`, u.id, today)),
       unlocked: { character: W.CHARACTERS.map((c) => c[0]).filter((c) => has('character', c)), accessory: W.ACCESSORIES.map((c) => c[0]).filter((c) => has('accessory', c)), background: W.BACKGROUNDS.map((c) => c[0]).filter((c) => has('background', c)) } };
   }
