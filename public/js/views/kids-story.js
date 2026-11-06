@@ -33,7 +33,7 @@ export default async function kidsStory({ params }) {
     const text = h('p', { class: 'k-story-text', 'data-page': String(page + 1) }, words.flatMap((w) => [w, ' ']));
     const say = () => narrate(words, p.en);
     friend.say(page === 0 ? t('kids.story_start', { title: story.title }) : '');
-    setStage(sceneEl(p.scene), h('div', { class: 'k-story-card' }, text, h('p', { class: 'k-story-tr', lang: 'uz' }, p.tr)),
+    setStage(sceneEl(p.scene), h('div', { class: 'k-story-card' }, text),
       h('div', { class: 'k-actions' },
         h('button', { class: 'k-big-btn me', type: 'button', id: 'k-prev', disabled: page === 0, 'aria-label': t('kids.prev'), onclick: () => { stopNarration(); page--; show(); } }, '◀'),
         h('button', { class: 'k-big-btn say', type: 'button', id: 'k-read', onclick: say }, '🔊 ', t('kids.read_to_me')),
@@ -49,7 +49,7 @@ export default async function kidsStory({ params }) {
       const btns = it.options.map((o) => { const b = h('button', { class: 'k-answer', type: 'button', lang: 'en', 'data-correct': String(o === it.answer) }, o);
         b.onclick = () => { if (o === it.answer) { b.classList.add('right'); btns.forEach((x) => { x.disabled = true; }); friend.react('cheer'); if (!missed) correct++; setTimeout(() => (++q < story.questions.length ? ask() : finish()), 900); } else { missed = true; b.classList.add('wrong'); friend.react('oops'); b.classList.remove('shake'); void b.offsetWidth; b.classList.add('shake'); } }; return b; });
       setStage(h('div', { class: 'k-step-head' }, h('span', { class: 'k-step-icon', 'aria-hidden': 'true' }, '❓'), h('div', {}, h('h1', {}, t('kids.questions')), h('p', {}, t('kids.story_q')))),
-        h('div', { class: 'k-quiz-card' }, h('span', { class: 'kpic kpic-emoji big', 'aria-hidden': 'true' }, story.emoji), h('h2', { class: 'k-prompt', lang: 'en' }, it.prompt), h('p', { class: 'k-tr', lang: 'uz' }, it.tr)),
+        h('div', { class: 'k-quiz-card' }, h('span', { class: 'kpic kpic-emoji big', 'aria-hidden': 'true' }, story.emoji), h('h2', { class: 'k-prompt', lang: 'en' }, it.prompt)),
         h('div', { class: 'k-answers' }, btns), h('p', { class: 'k-count' }, `${q + 1} / ${story.questions.length}`));
     };
     ask();
@@ -67,7 +67,7 @@ export default async function kidsStory({ params }) {
     if (r.newRewards && r.newRewards.length) setTimeout(() => celebrate(r.newRewards, root), 900);
   }
   root.append(h('div', { class: 'k-sky', 'aria-hidden': 'true' }, h('span', { class: 'k-cloud c1' }, '☁️')),
-    h('header', { class: 'k-top k-lesson-top' }, h('a', { class: 'k-back', href: '/kids/stories', 'aria-label': t('kids.nav.stories') }, '📖'), h('div', { class: 'k-lesson-title' }, h('span', { 'aria-hidden': 'true' }, story.emoji), ' ', h('b', { lang: 'en' }, story.title), h('small', { lang: 'uz' }, ' · ' + story.titleTr)), h('span', { class: 'k-gear-spacer' })),
+    h('header', { class: 'k-top k-lesson-top' }, h('a', { class: 'k-back', href: '/kids/stories', 'aria-label': t('kids.nav.stories') }, '📖'), h('div', { class: 'k-lesson-title' }, h('span', { 'aria-hidden': 'true' }, story.emoji), ' ', h('b', { lang: 'en' }, story.title), ), h('span', { class: 'k-gear-spacer' })),
     h('div', { class: 'k-friend-row' }, friend.el), stage);
   show();
   return { el: root, title: story.title + ' · ' + t('kids.brand'), nav: '', bare: true, cleanup: () => { stopNarration(); leaveKids(); } };

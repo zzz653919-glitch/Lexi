@@ -1516,7 +1516,6 @@
  "kids.quiz_title": "Quiz time",
  "kids.quiz_what": "What is this?",
  "kids.quiz_letter": "Which letter goes with this picture?",
- "kids.quiz_tr": "How do you say “{word}” in English?",
  "kids.saving": "Counting your stars…",
  "kids.done_title": "Hooray!",
  "kids.done_text": "You got {correct} of {total} right the first time.",
@@ -1834,5 +1833,6 @@
  "kids.pin_removed": "PIN removed.",
  "kids.pin_hint": "Leave empty and save to remove it.",
  "kids.privacy": "Privacy: LEXIO KIDS has no ads, no chat and no external links, and keeps only your child’s first name and learning progress.",
- "app.meta_description": "Learn English step by step with short lessons, daily goals and vocabulary practice."
+ "app.meta_description": "Learn English step by step with short lessons, daily goals and vocabulary practice.",
+ "kids.par.signout": "Sign out of the account"
 }

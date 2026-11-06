@@ -31,7 +31,7 @@ export const GAMES = {
         b.addEventListener('animationend', () => { if (o.id === c.id && !settled) settle(false); });
         field.append(b);
       });
-      ctx.setStage(ctx.head('🧺', t('kids.game.catcher'), t('kids.catcher_hint')), h('div', { class: 'k-target' }, picture(c, 'big'), h('div', { class: 'k-tr' }, c.tr)), field, count(ctx, k, rounds.length));
+      ctx.setStage(ctx.head('🧺', t('kids.game.catcher'), t('kids.catcher_hint')), h('div', { class: 'k-target' }, picture(c, 'big')), field, count(ctx, k, rounds.length));
     };
     play(0);
   },
@@ -39,7 +39,7 @@ export const GAMES = {
   /* Picture Match: pairs of words and pictures */
   match(ctx) {
     const pool = sample(wordsOnly(ctx.pool), ctx.young ? 4 : 6); let left = pool.length, mistakes = 0, picked = null;
-    const pics = shuffle(pool).map((c) => h('button', { class: 'k-tile pic', type: 'button', 'data-id': c.id, 'aria-label': c.tr }, picture(c)));
+    const pics = shuffle(pool).map((c) => h('button', { class: 'k-tile pic', type: 'button', 'data-id': c.id, 'aria-label': c.en }, picture(c)));
     const words = shuffle(pool).map((c) => h('button', { class: 'k-tile word', type: 'button', 'data-id': c.id, lang: 'en' }, lab(c)));
     const choose = (b, side) => {
       if (b.classList.contains('matched')) return;
@@ -60,7 +60,7 @@ export const GAMES = {
       const c = rounds[k]; let missed = false;
       const bubs = options(c, wordsOnly(ctx.pool), ctx.choices + 1).map((o, n) => { const b = h('button', { class: 'k-bubble-opt', type: 'button', 'data-correct': String(o.id === c.id), lang: 'en', style: { animationDelay: (n * 0.7) + 's', '--hue': (n * 67 + 180) % 360 } }, h('span', {}, lab(o)));
         b.onclick = () => { if (o.id === c.id) { b.classList.add('popped'); bubs.forEach((x) => { x.disabled = true; }); ctx.cheer(); say(c, 'words'); ctx.record(!missed, c.id); nextQ(ctx, k, rounds.length, ask); } else { missed = true; b.classList.add('wobble'); setTimeout(() => b.classList.remove('wobble'), 500); ctx.shake(b); } }; return b; });
-      ctx.setStage(ctx.head('🫧', t('kids.game.bubbles'), t('kids.bubbles_hint')), h('div', { class: 'k-target' }, picture(c, 'big'), h('div', { class: 'k-tr' }, c.tr), h('button', { class: 'k-big-btn say small', type: 'button', onclick: () => say(c, 'words') }, '🔊')), h('div', { class: 'k-bubble-field' }, bubs), count(ctx, k, rounds.length));
+      ctx.setStage(ctx.head('🫧', t('kids.game.bubbles'), t('kids.bubbles_hint')), h('div', { class: 'k-target' }, picture(c, 'big'), h('button', { class: 'k-big-btn say small', type: 'button', onclick: () => say(c, 'words') }, '🔊')), h('div', { class: 'k-bubble-field' }, bubs), count(ctx, k, rounds.length));
       setTimeout(() => say(c, 'words'), 250);
     };
     ask(0);
@@ -123,7 +123,7 @@ export const GAMES = {
       const tiles = shuffle(target.map((x, n) => ({ x, n }))).map((o) => { const b = h('button', { class: 'k-letter-tile', type: 'button', lang: 'en' }, o.x);
         b.onclick = () => { if (b.disabled) return; if (o.x === target[pos]) { slots[pos].textContent = o.x; slots[pos].classList.add('filled'); b.disabled = true; b.classList.add('used'); pos++; if (pos === target.length) { ctx.cheer(); say(c, 'words'); ctx.record(!missed, c.id); nextQ(ctx, k, rounds.length, build); } } else { missed = true; ctx.shake(b); } }; return b; });
       const hint = h('button', { class: 'k-big-btn me small', type: 'button', onclick: () => { missed = true; const right = tiles.find((b) => !b.disabled && b.textContent === target[pos]); if (right) { right.classList.add('hint'); setTimeout(() => right.classList.remove('hint'), 1200); } } }, '💡 ', t('kids.hint'));
-      ctx.setStage(ctx.head('🔤', t('kids.game.builder'), t('kids.builder_hint')), h('div', { class: 'k-spell-pic' }, picture(c, 'big'), h('div', { class: 'k-tr' }, c.tr), h('button', { class: 'k-big-btn say small', type: 'button', onclick: () => say(c, 'words') }, '🔊')),
+      ctx.setStage(ctx.head('🔤', t('kids.game.builder'), t('kids.builder_hint')), h('div', { class: 'k-spell-pic' }, picture(c, 'big'), h('button', { class: 'k-big-btn say small', type: 'button', onclick: () => say(c, 'words') }, '🔊')),
         h('div', { class: 'k-slots', 'data-answer': target.join('') }, slots), h('div', { class: 'k-tiles' }, tiles), hint, count(ctx, k, rounds.length));
       setTimeout(() => say(c, 'words'), 250);
     };
@@ -140,7 +140,7 @@ export const GAMES = {
       const btns = shuffle([right, ...pool]).map((L) => { const b = h('button', { class: 'k-answer letter', type: 'button', 'data-correct': String(L === right), lang: 'en' }, L);
         b.onclick = () => { if (L === right) { b.classList.add('right'); btns.forEach((x) => { x.disabled = true; }); word2.textContent = [...word].join(' '); ctx.cheer(); say(c, 'words'); ctx.record(!missed, c.id); nextQ(ctx, k, rounds.length, ask); } else { missed = true; b.classList.add('wrong'); ctx.shake(b); } }; return b; });
       const word2 = h('div', { class: 'k-puzzle-word', lang: 'en', 'data-word': word }, shown);
-      ctx.setStage(ctx.head('🧠', t('kids.game.puzzle'), t('kids.puzzle_hint')), h('div', { class: 'k-quiz-card' }, picture(c, 'big'), h('div', { class: 'k-tr' }, c.tr), word2), h('div', { class: 'k-answers four' }, btns), count(ctx, k, rounds.length));
+      ctx.setStage(ctx.head('🧠', t('kids.game.puzzle'), t('kids.puzzle_hint')), h('div', { class: 'k-quiz-card' }, picture(c, 'big'), word2), h('div', { class: 'k-answers four' }, btns), count(ctx, k, rounds.length));
       setTimeout(() => say(c, 'words'), 250);
     };
     ask(0);
