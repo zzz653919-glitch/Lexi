@@ -3,11 +3,14 @@ import { h, toast } from '../ui.js';
 import { get, post } from '../api.js';
 import { navigate } from '../app.js';
 import { t } from '../i18n.js';
-import { loadKidsCss, shuffle, sample, labelOf, badgeOf, picture, say, sayText, confetti, MASCOTS, soundOn, setSound } from '../kids/common.js';
+import { initKids, profile, choices, shuffle, sample, labelOf, badgeOf, picture, say, sayText, confetti, celebrate, leaveKids, flushListens, soundOn, setSound } from '../kids/common.js';
+import { companion } from '../kids/characters.js';
+import { kidsPage, kidsView, breakCard } from '../kids/shell.js';
 
 export default async function kidsLesson({ params, query }) {
-  await loadKidsCss();
-  document.body.classList.add('kids-body');
+  await initKids();
+  if (profile().limitReached) { const pg = kidsPage('lessons', breakCard()); return kidsView(pg.el, t('kids.nav.lessons')); }
+  const started = Date.now();
   const data = await get('/kids/categories/' + encodeURIComponent(params.slug));
   const { category: cat, cards: all, questions } = data;
   const part = Math.min(cat.parts, Math.max(1, Number(query.get('part')) || 1));
@@ -20,9 +23,11 @@ export default async function kidsLesson({ params, query }) {
   const root = h('div', { class: 'kids kids-lesson', style: { '--c': cat.color } });
   const stage = h('main', { class: 'k-stage', id: 'k-main', tabindex: '-1', 'aria-live': 'polite' });
   const dots = h('div', { class: 'k-dots', 'aria-hidden': 'true' });
+  const friend = companion({ character: profile().character, accessory: profile().accessory, size: 92, bubble: true, label: t('kids.my_friend') });
+  const tell = (key, params) => friend.say(t(key + '.' + (1 + Math.floor(Math.random() * 2)), params));
   const soundBtn = h('button', { class: 'k-gear', type: 'button', 'aria-pressed': String(soundOn()), 'aria-label': t('kids.sound'), title: t('kids.sound'), onclick: () => { const on = !soundOn(); setSound(on); soundBtn.textContent = on ? '🔊' : '🔇'; soundBtn.setAttribute('aria-pressed', String(on)); } }, soundOn() ? '🔊' : '🔇');
   root.append(h('div', { class: 'k-sky', 'aria-hidden': 'true' }, h('span', { class: 'k-cloud c1' }, '☁️'), h('span', { class: 'k-cloud c2' }, '☁️')),
-    h('header', { class: 'k-top k-lesson-top' }, h('a', { class: 'k-back', href: '/kids', 'aria-label': t('kids.back_home') }, '🏠'), h('div', { class: 'k-lesson-title' }, h('span', { 'aria-hidden': 'true' }, cat.emoji), ' ', h('b', {}, cat.title), cat.parts > 1 ? h('small', {}, ' · ' + t('kids.part', { n: part })) : null), soundBtn), dots, stage);
+    h('header', { class: 'k-top k-lesson-top' }, h('a', { class: 'k-back', href: '/kids/lessons', 'aria-label': t('kids.nav.lessons') }, '📚'), h('div', { class: 'k-lesson-title' }, h('span', { 'aria-hidden': 'true' }, cat.emoji), ' ', h('b', {}, cat.title), cat.parts > 1 ? h('small', {}, ' · ' + t('kids.part', { n: part })) : null), soundBtn), h('div', { class: 'k-friend-row' }, friend.el), dots, stage);
 
   const steps = [];
   const setStage = (...nodes) => { stage.replaceChildren(...nodes); stage.classList.remove('k-in'); void stage.offsetWidth; stage.classList.add('k-in'); };
@@ -30,12 +35,13 @@ export default async function kidsLesson({ params, query }) {
   let at = -1;
   const advance = () => { at++; if (at >= steps.length) return finish(); mark(at); steps[at].run(); window.scrollTo(0, 0); };
   const heading = (icon, text, sub) => h('div', { class: 'k-step-head' }, h('span', { class: 'k-step-icon', 'aria-hidden': 'true' }, icon), h('div', {}, h('h1', {}, text), sub ? h('p', {}, sub) : null));
-  const cheer = () => { const b = h('div', { class: 'k-cheer', 'aria-hidden': 'true' }, ['🎉', '⭐', '👏', '🌟'][Math.floor(Math.random() * 4)]); root.append(b); setTimeout(() => b.remove(), 900); };
-  const wrongShake = (el) => { el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); };
+  const cheer = () => { friend.react('cheer'); tell('kids.say_right'); const b = h('div', { class: 'k-cheer', 'aria-hidden': 'true' }, ['🎉', '⭐', '👏', '🌟'][Math.floor(Math.random() * 4)]); root.append(b); setTimeout(() => b.remove(), 900); };
+  const wrongShake = (el) => { friend.react('oops'); tell('kids.say_wrong'); el.classList.remove('shake'); void el.offsetWidth; el.classList.add('shake'); };
   const countQ = (first) => { total++; if (first) score++; };
 
   /* ---- 1. look, listen, repeat ---- */
   steps.push({ name: t('kids.learn_title'), run() {
+    friend.say(t('kids.say_start', { title: cat.title }));
     let i = 0, said = false;
     const show = () => {
       const c = cards[i]; said = false;
@@ -54,6 +60,7 @@ export default async function kidsLesson({ params, query }) {
 
   /* ---- 2. match pictures with words ---- */
   if (canPlay) steps.push({ name: t('kids.match_title'), run() {
+    friend.say(t('kids.say_match'));
     const pool = sample(cards, Math.min(4, cards.length)), missed = new Set();
     let picked = null, left = pool.length;
     const pics = shuffle(pool).map((c) => h('button', { class: 'k-tile pic', type: 'button', 'data-id': c.id, 'aria-label': c.tr || c.en }, picture(c)));
@@ -78,10 +85,11 @@ export default async function kidsLesson({ params, query }) {
 
   /* ---- 3. hear the word, tap the right picture ---- */
   if (canPlay) steps.push({ name: t('kids.pick_title'), run() {
+    friend.say(t('kids.say_pick'));
     const qs = sample(cards, Math.min(5, cards.length)); let q = 0;
     const ask = () => {
       const c = qs[q]; let missed = false;
-      const opts = shuffle([c, ...sample(all.filter((x) => x.id !== c.id), Math.min(3, all.length - 1))]);
+      const opts = shuffle([c, ...sample(all.filter((x) => x.id !== c.id), Math.min(choices() - 1, all.length - 1))]);
       const hear = h('button', { class: 'k-big-btn say', type: 'button', onclick: () => say(c, kind) }, '🔊 ', t('kids.listen'));
       const buttons = opts.map((o) => { const b = h('button', { class: 'k-option', type: 'button', 'data-correct': String(o.id === c.id), 'aria-label': o.tr || o.en }, picture(o)); b.onclick = () => {
         if (o.id === c.id) { b.classList.add('right'); buttons.forEach((x) => { x.disabled = true; }); cheer(); countQ(!missed); setTimeout(() => (++q < qs.length ? ask() : advance()), 900); }
@@ -96,6 +104,7 @@ export default async function kidsLesson({ params, query }) {
   /* ---- 4. spelling (letters) / word order (phrases and sentences) ---- */
   const spellable = cards.filter((c) => { const w = lab(c).replace(/[.!?]$/, ''); return !/\s/.test(w) ? /^[A-Za-z]{2,8}$/.test(w) : w.split(/\s+/).length <= 7; });
   if (spellable.length) steps.push({ name: t('kids.spell_title'), run() {
+    friend.say(t('kids.say_spell'));
     const qs = sample(spellable, Math.min(3, spellable.length)); let q = 0;
     const ask = () => {
       const c = qs[q], text = lab(c).replace(/[.!?]$/, ''), order = /\s/.test(text);
@@ -123,10 +132,11 @@ export default async function kidsLesson({ params, query }) {
 
   /* ---- 5. quiz ---- */
   if (canPlay) steps.push({ name: t('kids.quiz_title'), run() {
+    friend.say(t('kids.say_quiz'));
     const list = [];
     const base = shuffle(cards);
     for (let i = 0; i < Math.min(5, cards.length); i++) {
-      const c = base[i % base.length], others = sample(all.filter((x) => x.id !== c.id), 3);
+      const c = base[i % base.length], others = sample(all.filter((x) => x.id !== c.id), choices() - 1);
       const form = kind === 'letters' ? (i % 2 ? 'letter' : 'what') : i % 2 ? 'tr' : 'what';
       if (form === 'letter') list.push({ prompt: t('kids.quiz_letter'), card: c, options: shuffle([c, ...others]).map((o) => ({ label: o.en, ok: o.id === c.id })), say: c });
       else if (form === 'tr') list.push({ prompt: t('kids.quiz_tr', { word: c.tr }), text: c.tr, options: shuffle([c, ...others]).map((o) => ({ label: lab(o), ok: o.id === c.id })), say: null, card: null });
@@ -151,14 +161,13 @@ export default async function kidsLesson({ params, query }) {
   async function finish() {
     mark(steps.length);
     if (!total) { total = 1; score = 1; }
-    setStage(h('div', { class: 'k-result' }, h('img', { class: 'k-bounce', src: MASCOTS.leo, alt: '', width: 140, height: 140 }), h('p', {}, t('kids.saving'))));
+    setStage(h('div', { class: 'k-result' }, h('p', {}, t('kids.saving'))));
     let r;
-    try { r = await post(`/kids/categories/${encodeURIComponent(cat.slug)}/complete`, { part, correct: score, total }); }
-    catch (e) { toast(e.message || t('app.error_text'), 'error', 5000); r = { stars: score / total >= .9 ? 3 : score / total >= .6 ? 2 : 1, gained: 0, totalStars: null, newBadges: [] }; }
-    confetti(root);
+    try { r = await post(`/kids/categories/${encodeURIComponent(cat.slug)}/complete`, { part, correct: score, total, seconds: Math.round((Date.now() - started) / 1000) }); }
+    catch (e) { toast(e.message || t('app.error_text'), 'error', 5000); r = { stars: score / total >= .9 ? 3 : score / total >= .6 ? 2 : 1, gained: 0, totalStars: null, newBadges: [], newRewards: [] }; }
+    confetti(root); friend.react('cheer', 4000); friend.say(t('kids.say_done')); flushListens();
     const nextPart = part < cat.parts ? part + 1 : 0;
     setStage(h('div', { class: 'k-result', 'data-stars': String(r.stars) },
-      h('img', { class: 'k-bounce', src: MASCOTS.leo, alt: '', width: 140, height: 140 }),
       h('h1', {}, t('kids.done_title')),
       h('div', { class: 'k-big-stars', 'aria-label': t('kids.stars_of', { n: r.stars, max: 3 }) }, [1, 2, 3].map((i) => h('span', { class: 'k-bigstar' + (i <= r.stars ? ' on' : ''), style: { animationDelay: (i * 0.25) + 's' } }, '⭐'))),
       h('p', { class: 'k-score' }, t('kids.done_text', { correct: score, total })),
@@ -168,9 +177,10 @@ export default async function kidsLesson({ params, query }) {
         nextPart ? h('a', { class: 'k-big-btn go', id: 'k-next-part', href: `/kids/learn/${cat.slug}?part=${nextPart}` }, t('kids.next_part'), ' ▶') : null,
         h('a', { class: 'k-big-btn say', id: 'k-again', href: `/kids/learn/${cat.slug}?part=${part}` }, '🔁 ', t('kids.play_again')),
         h('a', { class: 'k-big-btn me', id: 'k-home', href: '/kids' }, '🏠 ', t('kids.back_home')))));
+    if (r.newRewards && r.newRewards.length) setTimeout(() => celebrate(r.newRewards, root), 900);
   }
 
   if (!cards.length) setStage(h('div', { class: 'k-result' }, h('p', {}, t('kids.empty')), h('a', { class: 'k-big-btn go', href: '/kids' }, t('kids.back_home'))));
   else advance();
-  return { el: root, title: cat.title + ' · ' + t('kids.brand'), nav: '', bare: true, cleanup: () => document.body.classList.remove('kids-body'), kidsBody: true };
+  return { el: root, title: cat.title + ' · ' + t('kids.brand'), nav: '', bare: true, cleanup: leaveKids };
 }

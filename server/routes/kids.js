@@ -3,6 +3,7 @@ const express = require('express');
 const K = require('../lib/kids');
 const { now, int, clamp, HttpError, bad, localDate, addDays } = require('../lib/util');
 const { publicUser } = require('./auth');
+const W = require('../lib/kids-world');
 
 module.exports = function kidsRoutes({ db, auth }) {
   const r = express.Router();
@@ -55,8 +56,11 @@ module.exports = function kidsRoutes({ db, auth }) {
     let next = null;
     for (const x of cat) { const p = x.parts.find((q) => q.stars === 0); if (p) { next = { slug: x.c.slug, part: p.part, title: K.pickTitle(x.c, L), emoji: x.c.emoji, color: x.c.color }; break; } }
     if (!next) { let low = null; for (const x of cat) for (const p of x.parts) if (p.stars < 3 && (!low || p.stars < low.p.stars)) low = { x, p }; if (low) next = { slug: low.x.c.slug, part: low.p.part, title: K.pickTitle(low.x.c, L), emoji: low.x.c.emoji, color: low.x.c.color }; }
+    const world = await W.stats(db, u), prof = await W.ensureProfile(db, u.id);
+    const mrow = await db.get('SELECT * FROM kids_days WHERE user_id = ? AND local_date = ?', u.id, today);
     res.json({
-      name: u.display_name, stars: ctx.stars, maxStars: cat.reduce((a, x) => a + x.parts.length * 3, 0), lessonsDone: ctx.lessonsDone, lessonsTotal: cat.reduce((a, x) => a + x.parts.length, 0), streak: ctx.streak,
+      character: prof.character, accessory: prof.accessory, background: prof.background, missions: W.missionsOf(mrow), missionsBonus: !!(mrow && mrow.bonus), lessonStars: ctx.stars,
+      name: u.display_name, stars: world.stars, maxStars: world.maxStars, lessonsDone: ctx.lessonsDone, lessonsTotal: cat.reduce((a, x) => a + x.parts.length, 0), streak: ctx.streak,
       today: week[6], week, next,
       categories: cat.map((x) => ({ slug: x.c.slug, title: K.pickTitle(x.c, L), emoji: x.c.emoji, color: x.c.color, kind: x.c.kind, words: x.n, parts: x.parts, stars: x.stars, maxStars: x.parts.length * 3, done: x.done })),
       badges: K.BADGES.map((b) => ({ code: b.code, emoji: b.emoji, earned: earned.has(b.code), at: earned.get(b.code) || null })),
@@ -88,17 +92,23 @@ module.exports = function kidsRoutes({ db, auth }) {
     const pct = Math.round((100 * correct) / total), stars = K.starsFor(pct), t = now(), today = localDate(new Date(), u.timezone);
     const old = await db.get('SELECT stars, best_pct FROM kids_progress WHERE user_id = ? AND category_id = ? AND part = ?', u.id, c.id, part);
     const gained = Math.max(0, stars - (old ? old.stars : 0));
+    let fresh = 0;
     await db.tx(async () => {
       await db.run(`INSERT INTO kids_progress (user_id, category_id, part, stars, best_pct, attempts, updated_at) VALUES (?,?,?,?,?,1,?)
         ON CONFLICT(user_id, category_id, part) DO UPDATE SET stars = MAX(stars, excluded.stars), best_pct = MAX(best_pct, excluded.best_pct), attempts = attempts + 1, updated_at = excluded.updated_at`, u.id, c.id, part, stars, pct, t);
-      await db.run('INSERT INTO kids_days (user_id, local_date, lessons, stars) VALUES (?,?,1,?) ON CONFLICT(user_id, local_date) DO UPDATE SET lessons = lessons + 1, stars = stars + excluded.stars', u.id, today, gained);
+      // the words of this part are now known; time and the day's counters feed the missions and the parent dashboard
+      const words = await db.all("SELECT id FROM kids_words WHERE category_id = ? AND status = 'published' ORDER BY position, id", c.id);
+      fresh = await W.learn(db, u.id, words.slice((part - 1) * sp.size, part * sp.size).map((x) => x.id));
+      await W.bump(db, u, { lessons: 1, stars: gained, newwords: fresh, seconds: clamp(int(b.seconds, 0), 0, W.LIMITS.seconds) });
     });
     const cat = await catalogue(u.id), ctx = await badgeContext(u, cat);
     const have = new Set((await db.all('SELECT code FROM kids_badges WHERE user_id = ?', u.id)).map((x) => x.code));
-    const fresh = K.BADGES.filter((x) => !have.has(x.code) && x.test(ctx));
-    for (const x of fresh) await db.run('INSERT OR IGNORE INTO kids_badges (user_id, code, earned_at) VALUES (?,?,?)', u.id, x.code, t);
+    const freshBadges = K.BADGES.filter((x) => !have.has(x.code) && x.test(ctx));
+    for (const x of freshBadges) await db.run('INSERT OR IGNORE INTO kids_badges (user_id, code, earned_at) VALUES (?,?,?)', u.id, x.code, t);
     const me = cat.find((x) => x.c.id === c.id);
-    res.json({ stars, pct, gained, totalStars: ctx.stars, categoryDone: !!(me && me.done), newBadges: fresh.map((x) => ({ code: x.code, emoji: x.emoji })) });
+    const rw = await W.sync(db, u, req.lang), mi = await W.settleMissions(db, u);
+    if (mi.allDone) rw.fresh.push(...(await W.sync(db, u, req.lang)).fresh);
+    res.json({ stars, pct, gained, totalStars: rw.stats.stars, categoryDone: !!(me && me.done), newBadges: freshBadges.map((x) => ({ code: x.code, emoji: x.emoji })), newRewards: rw.fresh, missions: mi.missions, missionsDone: mi.allDone, newWords: fresh });
   });
   return r;
 };

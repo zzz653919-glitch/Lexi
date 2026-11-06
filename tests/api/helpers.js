@@ -40,10 +40,10 @@ class Client {
     if (json && json.csrfToken) this.csrf = json.csrfToken;
     return { status: res.status, json, text, headers: res.headers };
   }
-  get(u) { return this.req('GET', u); }
-  post(u, b) { return this.req('POST', u, b === undefined ? {} : b); }
+  get(u, extra) { return this.req('GET', u, undefined, extra); }
+  post(u, b, extra) { return this.req('POST', u, b === undefined ? {} : b, extra); }
   put(u, b) { return this.req('PUT', u, b); }
-  patch(u, b) { return this.req('PATCH', u, b); }
+  patch(u, b, extra) { return this.req('PATCH', u, b, extra); }
   del(u, b) { return this.req('DELETE', u, b === undefined ? {} : b); }
   async login(email, password = 'Passw0rd!x') { const r = await this.post('/api/auth/login', { email, password }); if (r.status !== 200) throw new Error('login failed ' + r.status + ' ' + r.text); return r; }
 }
