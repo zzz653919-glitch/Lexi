@@ -101,7 +101,7 @@ html[data-motion="off"] *, html[data-motion="off"] *::before, html[data-motion="
 .ld-count { font-size: 2.4rem; font-weight: 900; color: var(--brand-ink); font-variant-numeric: tabular-nums; }
 
 /* generic */
-.ld-generic { height: 40px; grid-auto-flow: column; gap: 8px; }
+.ld-art.ld-generic { height: 40px; grid-auto-flow: column; gap: 8px; }  /* only the dots, not the whole loader (it also carries the kind class) */
 .ld.compact.ld-generic .ld-art { height: 30px; }
 .ld-dot { width: 12px; height: 12px; border-radius: 50%; background: var(--brand); animation: ld-bounce 1s ease-in-out infinite; }
 .ld-dot:nth-child(2) { background: var(--gold); animation-delay: .15s; } .ld-dot:nth-child(3) { background: var(--info); animation-delay: .3s; }

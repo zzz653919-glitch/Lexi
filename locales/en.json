@@ -1049,7 +1049,7 @@
  "load.slow": "This is taking longer than usual. Check your connection or try again.",
  "load.vocab": "Loading your vocabulary…",
  "msg.maintenance": "The site is being updated. Please check back soon.",
- "msg.reset_prepared": "If that address has an account, a reset link has been prepared.",
+ "msg.reset_prepared": "If that address has an account, we have sent an e-mail from Lexio asking you to confirm the account and set a new password.",
  "nav.achievements": "Achievements",
  "nav.admin": "Admin panel",
  "nav.admin_panel": "Admin panel",
@@ -1446,5 +1446,10 @@
  "adm.cur.kind_collocation": "Collocations",
  "adm.cur.kind_phrasal_verb": "Phrasal verbs",
  "adm.cur.kind_idiom": "Idioms",
- "adm.cur.kind_academic": "Academic words"
+ "adm.cur.kind_academic": "Academic words",
+ "mail.reset_subject": "{brand}: confirm your account and set a new password",
+ "mail.reset_intro": "Hello! We received a request to recover access to your {brand} account. Please confirm that the account is yours and choose a new password.",
+ "mail.reset_action": "Confirm the account and set a new password (the link works for {minutes} minutes):",
+ "mail.reset_ignore": "If you did not ask for this, ignore this message: your password stays the same.",
+ "mail.reset_footer": "This message was sent by the {brand} website. Please do not reply to it."
 }
