@@ -33,7 +33,7 @@ const settingsMin = (s) => JSON.parse(s.db.get("SELECT value FROM settings WHERE
 
     /* ---------- welcome ---------- */
     await register(page, s.base, 'nora@example.com');
-    check((await page.locator('.welcome .choice-card').count()) === 2, 'welcome offers the placement test and manual level choice');
+    check((await page.locator('.welcome .choice-card').count()) === 3, 'welcome offers the placement test, manual level choice and LEXIO KIDS');
     check(await page.locator('.welcome .recommended .chip').isVisible(), 'the placement test is marked as recommended');
     await page.goto(s.base + '/learn'); await page.waitForSelector('.welcome');
     check(new URL(page.url()).pathname === '/welcome', 'a learner who has not chosen a level is sent to the welcome screen from other pages');

@@ -19,6 +19,7 @@ async function ensureAll(db) {
   const flag = versionOf(content);
   if (!await db.get('SELECT 1 x FROM settings WHERE key = ?', flag)) { made = await ensureRoadmap(db, content); await db.run("INSERT OR IGNORE INTO settings (key, value) VALUES (?, 'true')", flag); }
   await require('../vocab').ensureVocab(db);
+  await require('../kids').ensureKids(db);
   return made;
 }
 module.exports = { ensure: ensureAll };

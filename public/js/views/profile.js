@@ -58,8 +58,19 @@ export default async function profile() {
     h('div', { class: 'row' }, retake, changeBtn), picker,
     lv.history.length ? h('details', { class: 'level-history' }, h('summary', {}, t('level.history')), h('ul', {}, lv.history.slice(0, 8).map((x) => h('li', {}, `${fmt.date(x.at)} · `, h('b', {}, t('level.' + x.level + '.short')), ' · ', t('level.source_' + x.source))))) : null);
 
+  /* learning mode: the standard course (placement test / levels) or LEXIO KIDS; each keeps its own progress */
+  const modeBox = h('section', { class: 'card mode-card', 'aria-labelledby': 'mode-h', id: 'mode-card' }, h('h2', { id: 'mode-h' }, t('profile.mode_title')), h('p', { class: 'muted small' }, t('profile.mode_text')),
+    h('div', { class: 'level-options', role: 'radiogroup', 'aria-label': t('profile.mode_title') }, ['standard', 'kids'].map((m) => {
+      const cur = (session.user.mode || 'standard') === m;
+      return h('button', { type: 'button', class: 'level-option', role: 'radio', 'aria-checked': String(cur), 'data-mode': m, onclick: async () => {
+        if (cur) return;
+        try { const r = await post('/me/mode', { mode: m }); session.user = r.user; toast(t('profile.mode_saved'), 'success', 2000); navigate(m === 'kids' ? '/kids' : '/', true); }
+        catch (e) { toast(e.message || t('app.error_text'), 'error', 5000); }
+      } }, h('span', { class: 'lo-text' }, h('b', {}, t('profile.mode_' + m)), h('span', { class: 'muted small' }, t('profile.mode_' + m + '_desc'))));
+    })));
+
   el.append(h('div', { class: 'page-head' }, h('div', { class: 'hello' }, avatar(u.avatar, 72), h('div', {}, h('h1', {}, u.displayName), h('p', { class: 'muted', style: { margin: 0 } }, t('profile.joined', { email: u.email, date: fmt.date(u.createdAt) })))), h('div', { class: 'chips' }, h('span', { class: 'chip bolt' }, icon('bolt'), t('stats.xp_value', { n: fmt.number(u.xpTotal) })), h('span', { class: 'chip flame' }, icon('flame'), n('count.day_streak', p.stats.streak.current)), h('span', { class: 'chip ok' }, icon('check'), n('count.lessons', p.stats.lessonsCompleted)), h('span', { class: 'chip warn' }, icon('star'), n('count.badges', p.stats.achievements)))),
-    h('div', { class: 'grid two' }, h('div', {}, levelBox, h('section', { class: 'card' }, h('h2', {}, t('profile.settings')), form)), h('div', {}, h('section', { class: 'card', style: { marginTop: 0 } }, h('h2', {}, t('profile.password')), pform),
+    h('div', { class: 'grid two' }, h('div', {}, levelBox, modeBox, h('section', { class: 'card' }, h('h2', {}, t('profile.settings')), form)), h('div', {}, h('section', { class: 'card', style: { marginTop: 0 } }, h('h2', {}, t('profile.password')), pform),
       h('section', { class: 'card' }, h('h2', {}, t('profile.appearance')), h('label', { class: 'field' }, h('span', { class: 'label' }, t('profile.animations')),
         h('select', { class: 'input', id: 'motion-pref', name: 'motion', onchange: (e) => { setPref(e.target.value); toast(t('profile.animations_saved'), 'success', 1800); } }, ['system', 'on', 'off'].map((v) => h('option', { value: v, selected: getPref() === v }, t('profile.motion_' + v)))),
         h('div', { class: 'muted small' }, t('profile.animations_hint')))),

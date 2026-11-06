@@ -29,6 +29,7 @@ function weekChart(week) {
 
 export default async function home() {
   if (!session.user) return landing();
+  if (session.user.mode === 'kids') { navigate('/kids', true); return { el: document.createElement('div'), bare: true }; }   // the account uses LEXIO KIDS
   const d = await get('/dashboard');
   const u = d.user;
   const goalPct = Math.min(100, Math.round(100 * d.today.xp / d.today.goal));

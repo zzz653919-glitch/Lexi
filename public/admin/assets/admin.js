@@ -12,6 +12,8 @@ const view = (n) => async (...a) => (await import('./views/' + n + '.js')).defau
 route('/admin', view('dashboard'), ['admin']);
 route('/admin/courses', view('courses'));
 route('/admin/curriculum', view('curriculum'));
+route('/admin/kids', view('kids'));
+route('/admin/kids/:id', view('kids-category'));
 route('/admin/courses/:id', view('course'));
 route('/admin/lessons/:id', view('lesson'));
 route('/admin/vocabulary', view('vocabulary'));
@@ -40,6 +42,7 @@ const NAV = [
   { key: 'dashboard', href: '/admin', labelKey: 'adm.nav.dashboard', icon: 'chart', roles: ['admin'] },
   { key: 'courses', href: '/admin/courses', labelKey: 'adm.nav.courses', icon: 'path' },
   { key: 'curriculum', href: '/admin/curriculum', labelKey: 'adm.nav.curriculum', icon: 'list' },
+  { key: 'kids', href: '/admin/kids', labelKey: 'adm.nav.kids', icon: 'star' },
   { key: 'vocabulary', href: '/admin/vocabulary', labelKey: 'adm.nav.vocabulary', icon: 'book' },
   { key: 'assessment', href: '/admin/assessment', labelKey: 'adm.nav.assessment', icon: 'target' },
   { key: 'users', href: '/admin/users', labelKey: 'adm.nav.users', icon: 'users', roles: ['admin'] },
