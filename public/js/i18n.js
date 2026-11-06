@@ -40,6 +40,7 @@ async function use(code, { remember = true } = {}) {
   try { await load(code); } catch (e) { if (code !== FALLBACK) { code = FALLBACK; await load(code); } else throw e; }
   current = code;
   document.documentElement.lang = code;
+  try { const m = document.querySelector('meta[name="description"]'); const d = t('app.meta_description'); if (m && d && d !== 'app.meta_description') m.setAttribute('content', d); } catch (_) { /* optional */ }
   if (remember) writeStore(code);
 }
 /* adopts a language that comes from the server (e.g. right after sign-in) without saving it back or re-rendering */

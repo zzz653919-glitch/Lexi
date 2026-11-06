@@ -1497,7 +1497,6 @@
  "kids.parents": "Ota-onalar uçun",
  "kids.parents_text": "Tovuşni yoqing yoki ŏçiring, yoki oddiy kursga qayting.",
  "kids.sound": "Tovuş",
- "kids.switch_standard": "Oddiy kursga ŏtiş",
  "kids.close": "Yopiş",
  "kids.back_home": "Boş sahifa",
  "kids.learn_title": "Qara va tingla",
@@ -1834,5 +1833,6 @@
  "kids.pin_saved": "PIN saqlandi.",
  "kids.pin_removed": "PIN oçirildi.",
  "kids.pin_hint": "Oçiriş uçun boş qoldirib saqlang.",
- "kids.privacy": "Maxfiylik: LEXIO KIDS da reklama, çat va taşqi havolalar yŏq; faqat bolaning ismi va ŏqiş natijalari saqlanadi."
+ "kids.privacy": "Maxfiylik: LEXIO KIDS da reklama, çat va taşqi havolalar yŏq; faqat bolaning ismi va ŏqiş natijalari saqlanadi.",
+ "app.meta_description": "Qisqa darslar, kunlik maqsadlar va luğat maşqlari bilan inglizça qadam-baqadam ŏrganing."
 }

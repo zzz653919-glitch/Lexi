@@ -194,8 +194,7 @@ async function playGame(page, code) {
     await page.goto(s.base + '/kids/games/memory'); await page.waitForSelector('#k-break'); check(true, 'and games are paused too');
     await page.goto(s.base + '/kids/parents'); await page.waitForSelector('#k-gate-input'); check(await page.getAttribute('#k-gate-input', 'name') === 'pin', 'a PIN replaces the question once set');
     await page.fill('#k-gate-input', '2468'); await page.click('#k-gate-ok'); await page.waitForSelector('#k-par-stats');
-    await page.click('#k-par-standard'); await page.waitForURL(s.base + '/');
-    check((await page.evaluate(() => fetch('/api/auth/me').then((r) => r.json()))).user.mode === 'standard', 'parents can switch back to the standard course');
+    check(await page.locator('#k-par-standard').count() === 0, 'there is no button that leaves Kids mode');
     check(external.length === 0, 'no request left the site ' + external.join(', '));
     check(page.problems.length === 0, 'no console problems ' + page.problems.join('; '));
 

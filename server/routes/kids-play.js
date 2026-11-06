@@ -91,7 +91,7 @@ module.exports = function kidsPlayRoutes({ db, auth, opts }) {
   const storyOf = (slug) => W.STORIES.find((s) => s.slug === slug);
   r.get('/kids/stories', user, async (req, res) => {
     const prog = new Map((await db.all('SELECT * FROM kids_story_progress WHERE user_id = ?', req.user.id)).map((p) => [p.slug, p]));
-    res.json({ stories: W.STORIES.map((s) => ({ slug: s.slug, emoji: s.emoji, color: s.color, title: pick(s, '', req.lang) || s.en, pages: s.pages.length, stars: (prog.get(s.slug) || {}).stars || 0, reads: (prog.get(s.slug) || {}).reads || 0 })).map((s) => s) });
+    res.json({ stories: W.STORIES.map((s) => ({ slug: s.slug, emoji: s.emoji, color: s.color, title: (req.lang === 'uz' && s.uz) || (req.lang === 'ru' && s.ru) || s.en, pages: s.pages.length, stars: (prog.get(s.slug) || {}).stars || 0, reads: (prog.get(s.slug) || {}).reads || 0 })).map((s) => s) });
   });
   r.get('/kids/stories/:slug', user, async (req, res) => {
     const s = need(storyOf(req.params.slug)), lg = wordLang(req);

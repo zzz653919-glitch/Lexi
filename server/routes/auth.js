@@ -32,6 +32,8 @@ function validateProfile(input, settings, { partial }) {
   if (has('startLevel')) { if (!LV.valid(input.startLevel)) errors.startLevel = 'val.start_level'; else v.start_level = input.startLevel; }
   if (has('lessonLength')) { if (!LENGTHS.includes(input.lessonLength)) errors.lessonLength = 'val.lesson_length'; else v.lesson_length = input.lessonLength; }
   if (has('leaderboardOptIn')) { if (typeof input.leaderboardOptIn !== 'boolean') errors.leaderboardOptIn = 'val.boolean'; else v.leaderboard_opt_in = input.leaderboardOptIn ? 1 : 0; }
+  // the language of the explanations and hints follows the interface language (Uzbek or Russian) unless it was chosen separately in the same request
+  if (v.ui_language && !has('translationLanguage') && TRANSLATION_LANGUAGES.includes(v.ui_language)) v.translation_language = v.ui_language;
   return { errors, values: v };
 }
 

@@ -1497,7 +1497,6 @@
  "kids.parents": "For parents",
  "kids.parents_text": "Turn the sound on or off, or go back to the standard course.",
  "kids.sound": "Sound",
- "kids.switch_standard": "Go to the standard course",
  "kids.close": "Close",
  "kids.back_home": "Home",
  "kids.learn_title": "Look and listen",
@@ -1834,5 +1833,6 @@
  "kids.pin_saved": "PIN saved.",
  "kids.pin_removed": "PIN removed.",
  "kids.pin_hint": "Leave empty and save to remove it.",
- "kids.privacy": "Privacy: LEXIO KIDS has no ads, no chat and no external links, and keeps only your child’s first name and learning progress."
+ "kids.privacy": "Privacy: LEXIO KIDS has no ads, no chat and no external links, and keeps only your child’s first name and learning progress.",
+ "app.meta_description": "Learn English step by step with short lessons, daily goals and vocabulary practice."
 }
