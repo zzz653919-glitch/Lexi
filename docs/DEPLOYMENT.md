@@ -23,6 +23,9 @@ Environment variables (set them in the host dashboard, never commit them):
 | `PORT` | set by most hosts automatically |
 | `LEXI_DATA_DIR` | directory of the database and uploads (persistent disk) |
 | `PUBLIC_URL` | public address, used in password-reset links |
+| `RESEND_API_KEY` | key of the e-mail service (Resend). With it, “I forgot my password” sends an account-confirmation e-mail from Lexio; without it the link is only written to `data/outbox/` and the log. Keep it secret: set it in the host's settings, never in the repository |
+| `MAIL_FROM` | sender address on a domain verified in the e-mail service (default `onboarding@resend.dev`, which only delivers to the service owner's own address) |
+| `MAIL_FROM_NAME` | sender name in the inbox (default `Lexio`) |
 | `COOKIE_SECURE=1`, `TRUST_PROXY=1`, `HOST` | optional overrides; cookies are marked `Secure` automatically when the request arrives over HTTPS |
 | `LEXI_NO_SEED=1` | skip creating the sample course |
 

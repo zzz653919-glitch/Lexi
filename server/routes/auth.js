@@ -2,6 +2,7 @@ const express = require('express');
 const fs = require('node:fs');
 const path = require('node:path');
 const A = require('../lib/auth');
+const mailLib = require('../lib/mailer');
 const { now, clean, HttpError, bad, randomToken, sha256, validTimezone } = require('../lib/util');
 
 const AVATARS = ['sprout', 'sun', 'moon', 'wave', 'leaf', 'star', 'bolt', 'cloud'];
@@ -91,7 +92,8 @@ module.exports = function authRoutes({ db, settings, auth, core, opts }) {
 
   r.post('/logout', async (req, res) => { await auth.destroySession(req); auth.clearCookie(res); res.json({ ok: true }); });
 
-  // Password recovery. No e-mail server is configured by default: the reset link is written to data/outbox/ and the server log.
+  // Password recovery: an account-confirmation e-mail from Lexio with the reset link is sent when a mail provider is configured (RESEND_API_KEY, see server/lib/mailer.js);
+  // otherwise the link is written to data/outbox/ and the server log.
   r.post('/forgot', async (req, res) => {
     if (!(await forgotLimit.take(req.ip))) throw new HttpError(429, 'err.rate_requests');
     const email = clean((req.body || {}).email, 254).toLowerCase();
@@ -100,8 +102,11 @@ module.exports = function authRoutes({ db, settings, auth, core, opts }) {
       const token = randomToken(32);
       await db.run('INSERT INTO password_resets (token_hash, user_id, expires_at) VALUES (?,?,?)', sha256(token), u.id, new Date(Date.now() + 3600000).toISOString());
       const link = `${opts.publicUrl || (req.protocol + '://' + req.get('host'))}/reset?token=${token}`;
-      if (opts.mailer) opts.mailer({ to: u.email, link });
-      else { try { fs.mkdirSync(outbox, { recursive: true }); fs.appendFileSync(path.join(outbox, 'password-resets.log'), `${now()}  ${u.email}  ${link}\n`, { mode: 0o600 }); } catch (_) { /* ignore */ } if (!opts.quiet) console.log(`[password reset] ${u.email}: ${link}`); }
+      const send = opts.mailer || mailLib.fromEnv();
+      if (send) {
+        // a failed e-mail must not reveal whether the address exists: the answer stays the same, the failure goes to the log
+        try { await send({ to: u.email, link, ...mailLib.recoveryMessage({ t: req.t, link, brand: 'Lexio' }) }); } catch (e) { if (!opts.quiet) console.error('[mail] recovery e-mail failed:', e.message); }
+      } else { try { fs.mkdirSync(outbox, { recursive: true }); fs.appendFileSync(path.join(outbox, 'password-resets.log'), `${now()}  ${u.email}  ${link}\n`, { mode: 0o600 }); } catch (_) { /* ignore */ } if (!opts.quiet) console.log(`[password reset] ${u.email}: ${link}`); }
     }
     res.json({ ok: true, message: req.t('msg.reset_prepared') });
   });
