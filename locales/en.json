@@ -569,7 +569,7 @@
  "app.maintenance_title": "Back soon",
  "app.not_found_text": "That page does not exist.",
  "app.not_found_title": "Page not found",
- "app.not_server": "This page must be opened from the Lexi Learn server (run “npm start”, then open the address it prints, normally http://127.0.0.1:3000). Opening the files directly or through a plain file server does not work because the API is missing.",
+ "app.not_server": "This page must be opened from the Lexio server (run “npm start”, then open the address it prints, normally http://127.0.0.1:3000). Opening the files directly or through a plain file server does not work because the API is missing.",
  "app.retry": "Retry",
  "app.skip": "Skip to content",
  "app.staff_sign_in": "Staff sign in",
@@ -825,7 +825,7 @@
  "err.missing_exercise": "Missing exercise.",
  "err.network": "Cannot reach the server. Check your connection and try again.",
  "err.no_mistakes": "No mistakes to review right now. Nice work!",
- "err.not_api": "The server answered {status} but not with data from the Lexi Learn API.",
+ "err.not_api": "The server answered {status} but not with data from the Lexio API.",
  "err.not_found": "Not found.",
  "err.out_of_hearts": "You are out of hearts. Hearts come back over time, and a vocabulary review earns one.",
  "err.placement_unavailable": "The placement test is not available right now.",
@@ -1110,7 +1110,7 @@
  "placement.write_missing": "Write the missing word",
  "plan.step_daily": "Do the daily lesson: about {items} short questions, built for your level.",
  "plan.step_maintain": "You are at the top level: keep practising to stay sharp.",
- "plan.step_next": "Practise regularly for at least {days} days to reach {level}. Lexi moves you up automatically when you are ready.",
+ "plan.step_next": "Practise regularly for at least {days} days to reach {level}. Lexio moves you up automatically when you are ready.",
  "plan.step_retest": "Retake the placement test after about {days} days to check your progress.",
  "plan.step_review": "Review the words that are due, so new words stay in memory.",
  "plan.step_roadmap": "Your starting level on the roadmap is {level}. Higher levels open only by passing the examination of the level before.",
@@ -1497,7 +1497,6 @@
  "kids.parents": "For parents",
  "kids.parents_text": "Turn the sound on or off, or go back to the standard course.",
  "kids.sound": "Sound",
- "kids.switch_standard": "Go to the standard course",
  "kids.close": "Close",
  "kids.back_home": "Home",
  "kids.learn_title": "Look and listen",
@@ -1834,5 +1833,6 @@
  "kids.pin_saved": "PIN saved.",
  "kids.pin_removed": "PIN removed.",
  "kids.pin_hint": "Leave empty and save to remove it.",
- "kids.privacy": "Privacy: LEXIO KIDS has no ads, no chat and no external links, and keeps only your child’s first name and learning progress."
+ "kids.privacy": "Privacy: LEXIO KIDS has no ads, no chat and no external links, and keeps only your child’s first name and learning progress.",
+ "app.meta_description": "Learn English step by step with short lessons, daily goals and vocabulary practice."
 }

@@ -3,6 +3,7 @@ import { h, toast } from '../ui.js';
 import { get, patch, session } from '../api.js';
 import { t } from '../i18n.js';
 import { companion, CHARACTERS } from './characters.js';
+import { switcher } from '../app.js';
 import { kidsState, profile, initKids, applyBackground, leaveKids } from './common.js';
 
 export const NAV = [
@@ -44,7 +45,7 @@ export function kidsPage(active, ...content) {
   const stars = h('b', { id: 'k-total-stars-n' }, String(p.stars || 0));
   const header = h('header', { class: 'k-top' },
     h('a', { class: 'k-logo', href: '/kids', 'aria-label': t('kids.brand') }, h('span', { class: 'k-logo-mark', 'aria-hidden': 'true' }, '🦁'), h('span', {}, 'LEXIO ', h('b', {}, 'KIDS'))),
-    h('div', { class: 'k-top-right' },
+    h('div', { class: 'k-top-right' }, h('div', { class: 'k-lang' }, switcher('compact')),
       h('button', { class: 'k-friend-btn', type: 'button', id: 'k-friend', 'aria-label': t('kids.my_friend'), title: t('kids.my_friend'), onclick: () => friendPicker(() => { ch.set({ character: profile().character, accessory: profile().accessory }); }) }, ch.el),
       h('span', { class: 'k-chip', id: 'k-total-stars' }, '⭐ ', stars),
       h('a', { class: 'k-gear', href: '/kids/parents', 'aria-label': t('kids.parents'), title: t('kids.parents') }, '⚙️')));

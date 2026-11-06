@@ -569,7 +569,7 @@
  "app.maintenance_title": "Tez orada qaytamiz",
  "app.not_found_text": "Bunday sahifa mavjud emas.",
  "app.not_found_title": "Sahifa topilmadi",
- "app.not_server": "Bu sahifa Lexi Learn serveri orqali oçilişi kerak („npm start“ ni işga tuşiring va u çiqargan manzilni oçing, odatda http://127.0.0.1:3000). Fayllarni tŏğridan-tŏğri yoki oddiy fayl serveri orqali oçiş işlamaydi, çunki API yŏq.",
+ "app.not_server": "Bu sahifa Lexio serveri orqali oçilişi kerak („npm start“ ni işga tuşiring va u çiqargan manzilni oçing, odatda http://127.0.0.1:3000). Fayllarni tŏğridan-tŏğri yoki oddiy fayl serveri orqali oçiş işlamaydi, çunki API yŏq.",
  "app.retry": "Qayta uriniş",
  "app.skip": "Asosiy qismga ŏtiş",
  "app.staff_sign_in": "Xodimlar uçun kiriş",
@@ -825,7 +825,7 @@
  "err.missing_exercise": "Maşq kŏrsatilmagan.",
  "err.network": "Serverga ulanib bŏlmadi. Internetni tekşirib, qayta urinib kŏring.",
  "err.no_mistakes": "Hozir ustida işlaş uçun xatolar yŏq. Barakalla!",
- "err.not_api": "Server {status} javobini qaytardi, lekin Lexi Learn API ma’lumoti emas.",
+ "err.not_api": "Server {status} javobini qaytardi, lekin Lexio API ma’lumoti emas.",
  "err.not_found": "Topilmadi.",
  "err.out_of_hearts": "Yuraklaringiz tugadi. Yuraklar vaqt ŏtişi bilan qaytadi, luğatni takrorlaş esa yurak beradi.",
  "err.placement_unavailable": "Saralaş testi hozirça mavjud emas.",
@@ -1110,7 +1110,7 @@
  "placement.write_missing": "Yetişmayotgan sŏzni yozing",
  "plan.step_daily": "Kunlik darsni bajaring: darajangizga moslangan taxminan {items} ta qisqa savol.",
  "plan.step_maintain": "Siz eng yuqori darajadasiz: mahoratni saqlaş uçun maşq qilişda davom eting.",
- "plan.step_next": "{level} darajasiga yetiş uçun kamida {days} kun muntazam maşq qiling. Tayyor bŏlganingizda Lexi sizni avtomatik kŏtaradi.",
+ "plan.step_next": "{level} darajasiga yetiş uçun kamida {days} kun muntazam maşq qiling. Tayyor bŏlganingizda Lexio sizni avtomatik kŏtaradi.",
  "plan.step_retest": "Taraqqiyotingizni tekşiriş uçun taxminan {days} kundan keyin testni qayta topşiring.",
  "plan.step_review": "Yangi sŏzlar esda qolişi uçun takrorlaş vaqti kelgan sŏzlarni takrorlang.",
  "plan.step_roadmap": "Yŏl xaritasidagi boşlanğiç darajangiz — {level}. Yuqoriroq darajalar faqat oldingi daraja imtihonidan ŏtgandan keyin oçiladi.",
@@ -1497,7 +1497,6 @@
  "kids.parents": "Ota-onalar uçun",
  "kids.parents_text": "Tovuşni yoqing yoki ŏçiring, yoki oddiy kursga qayting.",
  "kids.sound": "Tovuş",
- "kids.switch_standard": "Oddiy kursga ŏtiş",
  "kids.close": "Yopiş",
  "kids.back_home": "Boş sahifa",
  "kids.learn_title": "Qara va tingla",
@@ -1834,5 +1833,6 @@
  "kids.pin_saved": "PIN saqlandi.",
  "kids.pin_removed": "PIN oçirildi.",
  "kids.pin_hint": "Oçiriş uçun boş qoldirib saqlang.",
- "kids.privacy": "Maxfiylik: LEXIO KIDS da reklama, çat va taşqi havolalar yŏq; faqat bolaning ismi va ŏqiş natijalari saqlanadi."
+ "kids.privacy": "Maxfiylik: LEXIO KIDS da reklama, çat va taşqi havolalar yŏq; faqat bolaning ismi va ŏqiş natijalari saqlanadi.",
+ "app.meta_description": "Qisqa darslar, kunlik maqsadlar va luğat maşqlari bilan inglizça qadam-baqadam ŏrganing."
 }

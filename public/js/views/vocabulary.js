@@ -6,6 +6,7 @@ import { showLoader } from '../loaders.js';
 const FILTERS = ['all', 'new', 'learning', 'due', 'difficult'];
 const MODES = [['flashcards', 'cards'], ['choice', 'list'], ['typed', 'edit'], ['spelling', 'volume']];
 
+const posName = (p) => { const k = 'adm.pos.' + String(p).replace(' ', '_'); const v = t(k); return v === k ? p : v; };   // the part of speech in the interface language
 export default async function vocabulary({ query }) {
   const st = { q: query.get('q') || '', filter: query.get('filter') || 'all', page: 1, level: '', kind: '' };
   const list = h('div', { class: 'stack', 'aria-live': 'polite' });
@@ -32,7 +33,7 @@ export default async function vocabulary({ query }) {
     const status = { new: [t('vocab.filter_new'), ''], learning: [t('vocab.filter_learning'), 'info'], due: [t('vocab.filter_due'), 'warn'] }[w.status];
     const acts = h('div', { class: 'acts' }, canSpeak() || w.audio_url ? h('button', { type: 'button', class: 'icon-btn', 'aria-label': t('vocab.hear', { word: w.en }), onclick: () => speak(w.audio_url ? { url: w.audio_url } : { text: w.en }) }, icon('volume')) : null, dBtn,
       w.status === 'new' ? h('button', { type: 'button', class: 'icon-btn', 'aria-label': t('vocab.add_to_review', { word: w.en }), title: t('vocab.add_to_review_short'), onclick: async (e) => { const btn = e.currentTarget; await post('/vocabulary/add-to-review', { ids: [w.id] }); btn.disabled = true; toast(t('vocab.added_to_review'), 'success', 1800); } }, icon('plus')) : null);
-    return h('article', { class: 'card word' }, h('div', {}, h('div', { class: 'en', lang: 'en' }, w.en, w.ipa ? h('span', { class: 'ipa' }, ' /' + w.ipa + '/') : null, ' ', h('span', { class: `chip ${status[1]}`, style: { marginLeft: '6px' } }, status[0])), h('div', { class: 'uz', lang: w.translationLanguage }, w.translation, w.pos ? h('span', { class: 'muted small' }, ' · ' + w.pos) : null, w.level ? h('span', { class: 'badge', style: { marginLeft: '6px' } }, w.level) : null)), acts,
+    return h('article', { class: 'card word' }, h('div', {}, h('div', { class: 'en', lang: 'en' }, w.en, w.ipa ? h('span', { class: 'ipa' }, ' /' + w.ipa + '/') : null, ' ', h('span', { class: `chip ${status[1]}`, style: { marginLeft: '6px' } }, status[0])), h('div', { class: 'uz', lang: w.translationLanguage }, w.translation, w.pos ? h('span', { class: 'muted small' }, ' · ' + posName(w.pos)) : null, w.level ? h('span', { class: 'badge', style: { marginLeft: '6px' } }, w.level) : null)), acts,
       w.synonyms ? h('div', { class: 'muted small', lang: 'en' }, t('vocab.synonyms') + ' ' + w.synonyms) : null,
       w.example ? h('div', { class: 'ex', lang: 'en' }, w.example, w.example_translation ? h('div', { lang: w.translationLanguage }, w.example_translation) : null) : null);
   }

@@ -1,4 +1,4 @@
-/* CEFR levels used by Lexi. "A0" is Pre-A1 (complete beginner); the UI shows it as "Pre-A1". Levels are ordered by index 0..6. */
+/* CEFR levels used by Lexio. "A0" is Pre-A1 (complete beginner); the UI shows it as "Pre-A1". Levels are ordered by index 0..6. */
 const LEVELS = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'];
 const index = (code) => LEVELS.indexOf(code);
 const valid = (code) => index(code) >= 0;

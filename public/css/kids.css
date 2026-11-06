@@ -225,3 +225,10 @@ body.kids-bg-space .kids .k-h2, body.kids-bg-space .kids .k-lead, body.kids-bg-s
 .k-reward-pop { z-index: 60; } .k-modal-card .k-big-btn { justify-self: center; }
 @media (max-width: 760px) { .k-cat-bars li { grid-template-columns: 30px 1fr; } .k-cat-bars li .k-mbar, .k-cat-bars li small, .k-cat-bars li .k-stars { grid-column: 2; } .k-field { height: 300px; } .k-mem-grid { gap: 8px; } .k-bubble-opt { width: 108px; height: 108px; font-size: 1.1rem; } .k-places { grid-template-columns: 1fr; } }
 @media (max-width: 760px) { .k-hero .k-ch { width: 120px !important; height: 126px !important; } .k-speech { font-size: .98rem; } }
+
+/* the language switcher in the Kids header: flag and name, a white pill like the other round buttons */
+.k-lang .lang-switcher { position: relative; }
+.k-lang .lang-btn { background: #fff; border: 4px solid #fff; border-radius: 999px; color: #3a2a63; box-shadow: 0 5px 0 rgba(58, 42, 99, .14); font-family: inherit; font-weight: 700; padding: 4px 12px; min-height: 52px; font-size: 1rem; }
+.k-lang .lang-list { left: auto; right: 0; top: calc(100% + 8px); bottom: auto; z-index: 90; background: #fff; border: 4px solid #fff; border-radius: 22px; box-shadow: 0 10px 24px rgba(58, 42, 99, .25); min-width: 190px; }
+.k-lang .lang-option { color: #3a2a63; font-family: inherit; font-weight: 700; min-height: 48px; border-radius: 16px; } .k-lang .lang-option.active, .k-lang .lang-option:hover { background: #fff3c4; }
+@media (max-width: 520px) { .k-lang .lang-name { display: none; } .k-lang .lang-code { display: inline; } .k-lang .lang-btn { padding: 4px 8px; min-height: 48px; } .k-top-right { gap: 6px; } .k-logo span:last-child { font-size: 1rem; } }

@@ -1,4 +1,4 @@
-/* Lexi Learn - design tokens, reset, layout. Colours come from CSS variables so the brand colour can be set in the admin panel. */
+/* Lexio - design tokens, reset, layout. Colours come from CSS variables so the brand colour can be set in the admin panel. */
 :root {
   --brand: #147a54;
   --brand-dark: color-mix(in srgb, var(--brand) 74%, #000);

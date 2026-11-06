@@ -87,9 +87,13 @@ test('switching the interface language does not change course, progress, XP or v
     assert.strictEqual(titles.en, 'English Foundations'); assert.strictEqual(titles.uz, 'Ingliz tili asoslari'); assert.strictEqual(titles.ru, 'Основы английского');
     const after = await snap();
     assert.strictEqual(after.me.courseId, before.me.courseId); assert.strictEqual(after.me.xpTotal, before.me.xpTotal);
-    assert.deepStrictEqual(after.words.items.map((w) => [w.id, w.en, w.translation]), before.words.items.map((w) => [w.id, w.en, w.translation]), 'vocabulary translations follow the translation language, not the interface language');
+    assert.deepStrictEqual(after.words.items.map((w) => [w.id, w.en]), before.words.items.map((w) => [w.id, w.en]), 'the English words themselves never change');
+    assert.ok(before.words.items.every((w) => !/[а-я]/i.test(w.translation)) && after.words.items.every((w) => /[а-я]/i.test(w.translation)), 'the explanations follow the interface language: Uzbek, then Russian (English keeps the last one)');
+    assert.strictEqual(after.me.translationLanguage, 'ru');
     assert.deepStrictEqual(after.stats.streak, before.stats.streak); assert.strictEqual(after.stats.xp, before.stats.xp);
-    // the translation language is a separate setting
+    // the translation language can still be chosen separately (the next switch to Uzbek or Russian sets it again)
+    await c.patch('/api/me', { translationLanguage: 'uz' });
+    assert.ok(!/[а-я]/i.test((await c.get('/api/vocabulary?pageSize=2')).json.items[0].translation));
     await c.patch('/api/me', { translationLanguage: 'ru' });
     const ruWords = (await c.get('/api/vocabulary?pageSize=2')).json.items;
     assert.ok(/[а-я]/i.test(ruWords[0].translation) && ruWords[0].translationLanguage === 'ru');

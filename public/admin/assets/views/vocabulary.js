@@ -33,7 +33,7 @@ export default async function vocabulary({ query }) {
     const allBox = h('input', { type: 'checkbox', 'aria-label': t('adm.select_all'), onchange: (e) => { rows.forEach((r) => (e.target.checked ? selected.add(r.id) : selected.delete(r.id))); load(); } });
     holder.replaceChildren(table([
       { label: '', render: (r) => h('input', { type: 'checkbox', checked: selected.has(r.id), 'aria-label': t('adm.select_word', { word: r.en }), onchange: (e) => { e.target.checked ? selected.add(r.id) : selected.delete(r.id); showBulk(); } }) },
-      { label: t('adm.col.english'), render: (r) => h('div', {}, h('b', {}, r.en), r.pos ? h('div', { class: 'muted small' }, r.pos) : null) }, { label: t('adm.col.uzbek'), render: (r) => r.uz }, { label: t('adm.col.russian'), render: (r) => (r.translations && r.translations.ru) || '—' },
+      { label: t('adm.col.english'), render: (r) => h('div', {}, h('b', {}, r.en), r.pos ? h('div', { class: 'muted small' }, t('adm.pos.' + r.pos.replace(' ', '_'))) : null) }, { label: t('adm.col.uzbek'), render: (r) => r.uz }, { label: t('adm.col.russian'), render: (r) => (r.translations && r.translations.ru) || '—' },
       { label: t('adm.col.example'), render: (r) => h('span', { class: 'truncate muted' }, r.example || '—') }, { label: t('adm.col.level'), render: (r) => r.cefr || '—' }, { label: t('adm.col.course'), render: (r) => r.course_title || '—' }, { label: t('adm.col.status'), render: (r) => tag(r.status) },
       { label: '', cls: 'acts', render: (r) => iconBtn('edit', t('adm.edit_word', { word: r.en }), () => edit(r)) },
     ], rows, { empty: t('adm.no_words') }), pager(data, (p) => { st.page = p; load(); }));

@@ -57,8 +57,7 @@ export default async function kidsParents() {
         toggle('mic', t('kids.set.mic'), t('kids.set.mic_hint')), toggle('reminders', t('kids.set.reminders'), t('kids.set.reminders_hint')),
         h('div', { class: 'k-set-grid' }, h('label', {}, h('b', {}, t('kids.set.time')), time), h('label', {}, h('b', {}, t('kids.set.age')), age), h('label', {}, h('b', {}, t('kids.set.limit')), limit, h('small', {}, t('kids.set.limit_hint'))), h('label', {}, h('b', {}, settings.pinSet ? t('kids.pin_change') : t('kids.pin_new')), pin, pinBtn, h('small', {}, t('kids.pin_hint')))),
         h('p', { class: 'k-note' }, '🔒 ', t('kids.privacy'))),
-      h('div', { class: 'k-actions' }, h('button', { class: 'k-big-btn me', type: 'button', id: 'k-par-lock', onclick: () => { forget(); navigate('/kids', true); } }, '🔒 ', t('kids.par.lock')),
-        h('button', { class: 'k-big-btn say', type: 'button', id: 'k-par-standard', onclick: async () => { try { const r = await post('/me/mode', { mode: 'standard' }); session.user = r.user; forget(); navigate('/', true); } catch (e) { toast(e.message, 'error', 4000); } } }, t('kids.switch_standard'))));
+      h('div', { class: 'k-actions' }, h('button', { class: 'k-big-btn me', type: 'button', id: 'k-par-lock', onclick: () => { forget(); navigate('/kids', true); } }, '🔒 ', t('kids.par.lock'))));
   }
   if (saved()) dashboard(); else gate();
   return kidsView(page.el, t('kids.parents'));

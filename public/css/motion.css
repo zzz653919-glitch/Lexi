@@ -1,4 +1,4 @@
-/* Lexi motion: start-up screen, loading animations, page transitions and small feedback effects.
+/* Lexio motion: start-up screen, loading animations, page transitions and small feedback effects.
    Every element is fully visible in its normal state; the animations only start from a hidden/small state via keyframes, so with
    animations turned off (system "reduce motion", or Profile → Animations → Off) nothing is missing, it just does not move. */
 
