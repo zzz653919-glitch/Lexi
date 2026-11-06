@@ -14,7 +14,7 @@ export default async function curriculum() {
     h('div', { class: 'stat-grid' }, card(num(d.totals.lessons), t('adm.cur.lessons')), card(`${num(d.totals.published)} / ${num(d.totals.lessons)}`, t('adm.cur.published')), card(num(d.totals.drafts), t('adm.cur.drafts')),
       card(num(d.totals.topicTests), t('adm.cur.topic_tests')), card(num(d.totals.exams), t('adm.cur.exams')), card(num(d.totals.exercises), t('adm.cur.exercises')), card(num(d.vocabulary.total), t('adm.cur.words')), card(`${d.totals.levelsComplete} / ${d.levels.length}`, t('adm.cur.levels_complete'))),
     h('section', { class: 'card' }, h('h2', {}, t('adm.cur.levels')), table([
-      { label: t('adm.cur.level'), render: (l) => h('span', {}, h('b', {}, l.code), ' ', l.title) },
+      { label: t('adm.cur.level'), render: (l) => h('b', {}, l.title) },
       { label: t('adm.cur.lessons'), render: (l) => `${num(l.published)} / ${num(l.lessons)}` },
       { label: t('adm.cur.written'), render: (l) => bar(l.published, l.lessons, `${l.code} ${t('adm.cur.written')}`) },
       { label: t('adm.cur.topics'), render: (l) => num(l.topics) },
