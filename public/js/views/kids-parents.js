@@ -1,7 +1,7 @@
 /* LEXIO KIDS parent area: a grown-up sum (or the PIN) opens it; progress for parents and the child's settings. */
 import { h, toast } from '../ui.js';
 import { api, post, session } from '../api.js';
-import { navigate } from '../app.js';
+import { navigate, setUser } from '../app.js';
 import { t, lang } from '../i18n.js';
 import { initKids, profile, kidsState } from '../kids/common.js';
 import { kidsPage, kidsView } from '../kids/shell.js';
@@ -57,7 +57,9 @@ export default async function kidsParents() {
         toggle('mic', t('kids.set.mic'), t('kids.set.mic_hint')), toggle('reminders', t('kids.set.reminders'), t('kids.set.reminders_hint')),
         h('div', { class: 'k-set-grid' }, h('label', {}, h('b', {}, t('kids.set.time')), time), h('label', {}, h('b', {}, t('kids.set.age')), age), h('label', {}, h('b', {}, t('kids.set.limit')), limit, h('small', {}, t('kids.set.limit_hint'))), h('label', {}, h('b', {}, settings.pinSet ? t('kids.pin_change') : t('kids.pin_new')), pin, pinBtn, h('small', {}, t('kids.pin_hint')))),
         h('p', { class: 'k-note' }, '🔒 ', t('kids.privacy'))),
-      h('div', { class: 'k-actions' }, h('button', { class: 'k-big-btn me', type: 'button', id: 'k-par-lock', onclick: () => { forget(); navigate('/kids', true); } }, '🔒 ', t('kids.par.lock'))));
+      h('div', { class: 'k-actions' }, h('button', { class: 'k-big-btn me', type: 'button', id: 'k-par-lock', onclick: () => { forget(); navigate('/kids', true); } }, '🔒 ', t('kids.par.lock')),
+        // leaving the account is a grown-up decision: this button exists only here, behind the grown-up question / PIN
+        h('button', { class: 'k-big-btn out', type: 'button', id: 'k-par-signout', onclick: async () => { try { await api('POST', '/auth/logout', {}); forget(); setUser(null, null); session.csrf = null; navigate('/login', true); } catch (e) { toast(e.message, 'error', 4000); } } }, '🚪 ', t('kids.par.signout'))));
   }
   if (saved()) dashboard(); else gate();
   return kidsView(page.el, t('kids.parents'));

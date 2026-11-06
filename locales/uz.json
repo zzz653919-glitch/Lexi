@@ -1833,5 +1833,6 @@
  "kids.pin_removed": "PIN oçirildi.",
  "kids.pin_hint": "Oçiriş uçun boş qoldirib saqlang.",
  "kids.privacy": "Maxfiylik: LEXIO KIDS da reklama, çat va taşqi havolalar yŏq; faqat bolaning ismi va ŏqiş natijalari saqlanadi.",
- "app.meta_description": "Qisqa darslar, kunlik maqsadlar va luğat maşqlari bilan inglizça qadam-baqadam ŏrganing."
+ "app.meta_description": "Qisqa darslar, kunlik maqsadlar va luğat maşqlari bilan inglizça qadam-baqadam ŏrganing.",
+ "kids.par.signout": "Hisobdan çiqiş"
 }

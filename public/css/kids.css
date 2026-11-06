@@ -232,3 +232,5 @@ body.kids-bg-space .kids .k-h2, body.kids-bg-space .kids .k-lead, body.kids-bg-s
 .k-lang .lang-list { left: auto; right: 0; top: calc(100% + 8px); bottom: auto; z-index: 90; background: #fff; border: 4px solid #fff; border-radius: 22px; box-shadow: 0 10px 24px rgba(58, 42, 99, .25); min-width: 190px; }
 .k-lang .lang-option { color: #3a2a63; font-family: inherit; font-weight: 700; min-height: 48px; border-radius: 16px; } .k-lang .lang-option.active, .k-lang .lang-option:hover { background: #fff3c4; }
 @media (max-width: 520px) { .k-lang .lang-name { display: none; } .k-lang .lang-code { display: inline; } .k-lang .lang-btn { padding: 4px 8px; min-height: 48px; } .k-top-right { gap: 6px; } .k-logo span:last-child { font-size: 1rem; } }
+
+.k-big-btn.out { background: #ef476f; }
