@@ -1601,5 +1601,11 @@
  "adm.kids.f_prompt_uz": "Question (Uzbek)",
  "adm.kids.f_prompt_ru": "Question (Russian)",
  "adm.kids.f_correct": "Correct answer",
- "adm.kids.f_wrong": "Wrong answer {n}"
+ "adm.kids.f_wrong": "Wrong answer {n}",
+ "val.kids_locked": "Earn this first by learning.",
+ "val.kids_age": "Choose a valid age group.",
+ "val.kids_time": "Use a time like 17:00.",
+ "val.kids_pin": "The PIN must be 4 digits.",
+ "err.parent_required": "Ask a grown-up to open the parent area first.",
+ "err.parent_wrong": "That answer is not right. Please try again."
 }

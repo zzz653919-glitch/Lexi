@@ -1601,5 +1601,11 @@
  "adm.kids.f_prompt_uz": "Savol (ŏzbekça)",
  "adm.kids.f_prompt_ru": "Savol (rusça)",
  "adm.kids.f_correct": "Tŏğri javob",
- "adm.kids.f_wrong": "Notŏğri javob {n}"
+ "adm.kids.f_wrong": "Notŏğri javob {n}",
+ "val.kids_locked": "Avval ŏqib yutib oling.",
+ "val.kids_age": "Yaroqli yoş guruhini tanlang.",
+ "val.kids_time": "17:00 kabi vaqt yozing.",
+ "val.kids_pin": "PIN 4 ta raqamdan iborat bŏlişi kerak.",
+ "err.parent_required": "Avval katta kişidan ota-onalar bŏlimini oçişni sŏrang.",
+ "err.parent_wrong": "Javob notŏğri. Qayta urinib kŏring."
 }
