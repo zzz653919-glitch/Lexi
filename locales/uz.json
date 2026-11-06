@@ -1049,7 +1049,7 @@
  "load.slow": "Odatdagidan uzoqroq davom etmoqda. Internetni tekşiring yoki qayta urinib kŏring.",
  "load.vocab": "Luğatingiz yuklanmoqda…",
  "msg.maintenance": "Sayt yangilanmoqda. Iltimos, birozdan keyin qayta kiring.",
- "msg.reset_prepared": "Agar bu manzilda hisob bŏlsa, Lexio saytidan hisobni tasdiqlaş va yangi parol ŏrnatiş haqida xat yubordik.",
+ "msg.reset_prepared": "Agar bu manzilda hisob bŏlsa, Lexio saytidan hisobingizni tasdiqlaş haqida xat yubordik.",
  "nav.achievements": "Yutuqlar",
  "nav.admin": "Admin paneli",
  "nav.admin_panel": "Admin paneli",
@@ -1447,9 +1447,14 @@
  "adm.cur.kind_phrasal_verb": "Frazali fe’llar",
  "adm.cur.kind_idiom": "Idiomalar",
  "adm.cur.kind_academic": "Akademik sŏzlar",
- "mail.reset_subject": "{brand}: hisobingizni tasdiqlang va yangi parol ŏrnating",
- "mail.reset_intro": "Salom! {brand} saytidagi hisobingizga kirişni tiklaş uçun sŏrov oldik. Iltimos, hisob sizniki ekanini tasdiqlang va yangi parol tanlang.",
- "mail.reset_action": "Hisobni tasdiqlaş va yangi parol ŏrnatiş (havola {minutes} daqiqa amal qiladi):",
- "mail.reset_ignore": "Agar buni siz sŏramagan bŏlsangiz, bu xatga e’tibor bermang: parolingiz ŏzgarmaydi.",
- "mail.reset_footer": "Bu xat {brand} saytidan yuborildi. Iltimos, unga javob yozmang."
+ "mail.reset_subject": "{brand}: hisobingizni tasdiqlang",
+ "mail.reset_intro": "Salom! Kimdir {brand} saytidagi hisobingizga qayta kirmoqçi. Iltimos, accountingizni tasdiqlang: bu siz misiz?",
+ "mail.reset_action": "Ha, bu men",
+ "mail.reset_ignore": "Agar bu siz bŏlmasangiz, xatga e’tibor bermang: heç narsa ŏzgarmaydi.",
+ "mail.reset_footer": "Bu xat {brand} saytidan yuborildi. Iltimos, unga javob yozmang.",
+ "mail.reset_link": "Tugma işlamasa, bu havolani oçing ({minutes} daqiqa amal qiladi):",
+ "auth.confirm_working": "Hisobingiz tasdiqlanmoqda…",
+ "auth.confirm_set_password": "Siz saytga kirdingiz. Kelajakda kirişdan mahrum bŏlmaslik uçun yangi parol ŏrnating.",
+ "profile.recovery_hint": "Hisobni xat orqali tasdiqladingiz, şuning uçun eski parol kerak emas.",
+ "auth.confirm_title": "Hisobingizni tasdiqlang"
 }

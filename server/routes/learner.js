@@ -33,7 +33,7 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
   });
   r.post('/me/password', async (req, res) => {
     const b = req.body || {};
-    if (!A.verifyPassword(String(b.currentPassword || ''), req.user.password_hash)) throw bad('err.current_password', { currentPassword: 'val.not_correct' });
+    if (!(req.session && req.session.recovery) && !A.verifyPassword(String(b.currentPassword || ''), req.user.password_hash)) throw bad('err.current_password', { currentPassword: 'val.not_correct' });
     const pe = A.passwordProblem(b.newPassword);
     if (pe) throw bad(pe, { newPassword: pe });
     await db.tx(async () => { await db.run('UPDATE users SET password_hash = ? WHERE id = ?', A.hashPassword(b.newPassword), req.user.id); await db.run('DELETE FROM sessions WHERE user_id = ? AND token_hash != ?', req.user.id, req.session.token_hash); });
