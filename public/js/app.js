@@ -16,6 +16,7 @@ route('/login', view('auth-login'), { guest: true });
 route('/register', view('auth-register'), { guest: true });
 route('/forgot', view('auth-forgot'), { guest: true });
 route('/reset', view('auth-reset'), { guest: true });
+route('/confirm', view('auth-confirm'));
 route('/learn', view('path'), { auth: true });
 route('/attempt/:id', view('lesson'), { auth: true, focus: true });
 route('/daily/:id', async (ctx) => (await import('./views/lesson.js')).default({ ...ctx, daily: true }), { auth: true, focus: true });
@@ -182,7 +183,7 @@ export async function boot() {
     await initI18n({ user: null, config: null });
     splash.step(1, 4, t('load.prepare'));
     const [cfg, me] = await Promise.all([get('/public/config'), get('/auth/me')]);
-    session.config = cfg; session.user = me.user; session.csrf = me.csrfToken;
+    session.config = cfg; session.user = me.user; session.csrf = me.csrfToken; session.recovery = !!me.recovery;
     if (cfg.brandColor) applyBrand(cfg.brandColor);
     splash.step(2, 4);
     await initI18n({ user: me.user, config: cfg });

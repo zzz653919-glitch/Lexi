@@ -38,8 +38,8 @@ export default async function profile() {
   const cur = field({ label: t('profile.current_password'), name: 'currentPassword', type: 'password', autocomplete: 'current-password' });
   const nw = field({ label: t('profile.new_password'), name: 'newPassword', type: 'password', autocomplete: 'new-password', hint: t('profile.password_hint') });
   const perr = formErrorBox();
-  const pform = h('form', { novalidate: true }, perr, cur.el, nw.el, h('button', { class: 'btn secondary', type: 'submit' }, t('profile.change_password')));
-  wireForm(pform, { currentPassword: cur, newPassword: nw }, perr, async () => { await post('/me/password', { currentPassword: cur.value, newPassword: nw.value }); cur.value = ''; nw.value = ''; toast(t('profile.password_changed'), 'success', 2500); });
+  const pform = h('form', { novalidate: true }, perr, session.recovery ? h('p', { class: 'muted' }, t('profile.recovery_hint')) : cur.el, nw.el, h('button', { class: 'btn secondary', type: 'submit' }, t('profile.change_password')));
+  wireForm(pform, { currentPassword: cur, newPassword: nw }, perr, async () => { await post('/me/password', { currentPassword: cur.value, newPassword: nw.value }); session.recovery = false; cur.value = ''; nw.value = ''; toast(t('profile.password_changed'), 'success', 2500); });
 
   /* the learner's level: how it was set, the last placement result, retake and manual change (the test result is kept either way) */
   const levelBox = h('section', { class: 'card level-card', 'aria-labelledby': 'lvl-h' });

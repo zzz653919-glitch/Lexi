@@ -83,7 +83,7 @@ test('password recovery: token works once, expires, and signs out other sessions
     assert.strictEqual(none.status, 200, 'same answer for unknown addresses');
     assert.strictEqual((await c.post('/api/auth/forgot', { email: 'r@example.com' })).status, 200);
     const log = fs.readFileSync(path.join(s.dir, 'outbox', 'password-resets.log'), 'utf8');
-    const token = /reset\?token=([\w-]+)/.exec(log)[1];
+    const token = /(?:reset|confirm)\?token=([\w-]+)/.exec(log)[1];
     assert.strictEqual((await c.post('/api/auth/reset', { token, password: 'short' })).status, 400);
     assert.strictEqual((await c.post('/api/auth/reset', { token, password: 'NewPassw0rd' })).status, 200);
     assert.strictEqual((await c.post('/api/auth/reset', { token, password: 'Another1Pass' })).status, 400, 'the link works only once');
@@ -91,11 +91,34 @@ test('password recovery: token works once, expires, and signs out other sessions
     await new Client(s.base).login('r@example.com', 'NewPassw0rd');
     // an expired link is refused
     await c.post('/api/auth/forgot', { email: 'r@example.com' });
-    const t3 = /reset\?token=([\w-]+)\s*$/.exec(fs.readFileSync(path.join(s.dir, 'outbox', 'password-resets.log'), 'utf8'))[1];
+    const t3 = /(?:reset|confirm)\?token=([\w-]+)\s*$/.exec(fs.readFileSync(path.join(s.dir, 'outbox', 'password-resets.log'), 'utf8'))[1];
     s.db.run("UPDATE password_resets SET expires_at = '2000-01-01T00:00:00.000Z'");
     assert.strictEqual((await c.post('/api/auth/reset', { token: t3, password: 'Expired1Pass' })).status, 400, 'expired link refused');
     const t2 = 'x'.repeat(40);
     assert.strictEqual((await c.post('/api/auth/reset', { token: t2, password: 'NewPassw0rd' })).status, 400);
+  } finally { await s.stop(); }
+});
+
+test('"Yes, it is me" link signs in once and allows a new password without the old one', async () => {
+  const s = await startServer();
+  try {
+    s.createUser({ email: 'c@example.com', password: 'OldPassw0rd1' });
+    const c = new Client(s.base);
+    await c.post('/api/auth/forgot', { email: 'c@example.com' });
+    const log = fs.readFileSync(path.join(s.dir, 'outbox', 'password-resets.log'), 'utf8');
+    const token = /confirm\?token=([\w-]+)/.exec(log)[1];
+    assert.strictEqual((await c.post('/api/auth/confirm', { token: 'x'.repeat(40) })).status, 400);
+    const ok = await c.post('/api/auth/confirm', { token });
+    assert.strictEqual(ok.status, 200);
+    assert.strictEqual(ok.json.user.email, 'c@example.com', 'signed in automatically');
+    assert.strictEqual(ok.json.recovery, true);
+    assert.strictEqual((await c.get('/api/auth/me')).json.user.email, 'c@example.com', 'the cookie works');
+    assert.strictEqual((await new Client(s.base).post('/api/auth/confirm', { token })).status, 400, 'the link works only once');
+    assert.strictEqual((await c.post('/api/me/password', { newPassword: 'short' })).status, 400);
+    assert.strictEqual((await c.post('/api/me/password', { newPassword: 'BrandNew1Pass' })).status, 200, 'no old password needed');
+    const again = new Client(s.base);
+    assert.strictEqual((await again.post('/api/auth/login', { email: 'c@example.com', password: 'BrandNew1Pass' })).status, 200);
+    assert.strictEqual((await again.post('/api/me/password', { newPassword: 'Another1Pass' })).status, 400, 'a normal session still needs the old password');
   } finally { await s.stop(); }
 });
 

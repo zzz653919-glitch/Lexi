@@ -37,10 +37,10 @@ function parseCookies(header) {
 }
 
 function make(db, { secureCookies = false } = {}) {
-  async function createSession(userId, req) {
+  async function createSession(userId, req, recovery = 0) {
     const token = randomToken(32), csrf = randomToken(24);
     const expires = new Date(Date.now() + SESSION_DAYS * 86400000).toISOString();
-    await db.run('INSERT INTO sessions (token_hash, user_id, csrf_token, created_at, expires_at, ip, user_agent) VALUES (?,?,?,?,?,?,?)', sha256(token), userId, csrf, now(), expires, String(req.ip || '').slice(0, 64), String(req.get('user-agent') || '').slice(0, 200));
+    await db.run('INSERT INTO sessions (token_hash, user_id, csrf_token, created_at, expires_at, ip, user_agent, recovery) VALUES (?,?,?,?,?,?,?,?)', sha256(token), userId, csrf, now(), expires, String(req.ip || '').slice(0, 64), String(req.get('user-agent') || '').slice(0, 200), recovery ? 1 : 0);
     return { token, csrf, expires };
   }
   /* Secure when forced by COOKIE_SECURE=1 or when the request itself arrived over HTTPS (behind a proxy this needs trust proxy) */

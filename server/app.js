@@ -162,7 +162,7 @@ function createApp(options = {}) {
   app.use(express.static(PUBLIC, { index: false, redirect: false, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
   /* client-side routes of the single-page app: opening one directly (or reloading it) serves the app shell;
      any other path still gets the shell (so the app can show its own "page not found" screen) but with a real 404 status */
-  const CLIENT_ROUTES = /^\/(?:login|register|forgot|reset|learn|ielts|welcome|placement|results|daily\/[^/]+|attempt\/[^/]+|practice|vocabulary|review|leaderboard|achievements|profile)?\/?$/;
+  const CLIENT_ROUTES = /^\/(?:login|register|forgot|reset|confirm|learn|ielts|welcome|placement|results|daily\/[^/]+|attempt\/[^/]+|practice|vocabulary|review|leaderboard|achievements|profile)?\/?$/;
   app.get(/^\/(?!api\/|uploads\/).*/, (req, res, next) => {
     if (path.extname(req.path)) return next();
     res.setHeader('Cache-Control', 'no-store');

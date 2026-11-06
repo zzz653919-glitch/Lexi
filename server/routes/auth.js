@@ -42,7 +42,7 @@ module.exports = function authRoutes({ db, settings, auth, core, opts }) {
   const forgotLimit = A.limiter(db, 'forgot', 5, 3600000, opts.rateLimit);
   const outbox = path.join(opts.dataDir, 'outbox');
 
-  const meBody = (req) => ({ user: req.user ? publicUser(req.user) : null, csrfToken: req.session ? req.session.csrf_token : null });
+  const meBody = (req) => ({ user: req.user ? publicUser(req.user) : null, csrfToken: req.session ? req.session.csrf_token : null, recovery: !!(req.session && req.session.recovery) });
 
   r.get('/me', async (req, res) => res.json(meBody(req)));
 
@@ -101,7 +101,7 @@ module.exports = function authRoutes({ db, settings, auth, core, opts }) {
     if (u) {
       const token = randomToken(32);
       await db.run('INSERT INTO password_resets (token_hash, user_id, expires_at) VALUES (?,?,?)', sha256(token), u.id, new Date(Date.now() + 3600000).toISOString());
-      const link = `${opts.publicUrl || (req.protocol + '://' + req.get('host'))}/reset?token=${token}`;
+      const link = `${opts.publicUrl || (req.protocol + '://' + req.get('host'))}/confirm?token=${token}`;
       const send = opts.mailer || mailLib.fromEnv();
       if (send) {
         // a failed e-mail must not reveal whether the address exists: the answer stays the same, the failure goes to the log
@@ -109,6 +109,21 @@ module.exports = function authRoutes({ db, settings, auth, core, opts }) {
       } else { try { fs.mkdirSync(outbox, { recursive: true }); fs.appendFileSync(path.join(outbox, 'password-resets.log'), `${now()}  ${u.email}  ${link}\n`, { mode: 0o600 }); } catch (_) { /* ignore */ } if (!opts.quiet) console.log(`[password reset] ${u.email}: ${link}`); }
     }
     res.json({ ok: true, message: req.t('msg.reset_prepared') });
+  });
+
+  // "Yes, it is me": the one-time link from the e-mail signs the person in; the session may then set a new password without the old one
+  r.post('/confirm', async (req, res) => {
+    if (!(await loginLimit.take(req.ip))) throw new HttpError(429, 'err.rate_requests');
+    const row = await db.get('SELECT * FROM password_resets WHERE token_hash = ?', sha256(String((req.body || {}).token || '')));
+    if (!row || row.used_at || row.expires_at < now()) throw bad('err.reset_invalid');
+    const u = await db.get("SELECT * FROM users WHERE id = ? AND status = 'active'", row.user_id);
+    if (!u) throw bad('err.reset_invalid');
+    const claimed = await db.run('UPDATE password_resets SET used_at = ? WHERE token_hash = ? AND used_at IS NULL', now(), row.token_hash);
+    if (claimed && claimed.changes === 0) throw bad('err.reset_invalid');
+    const sess = await auth.createSession(u.id, req, 1);
+    auth.setCookie(res, sess.token);
+    req.user = u; req.session = { csrf_token: sess.csrf, recovery: 1 };
+    res.json(meBody(req));
   });
 
   r.post('/reset', async (req, res) => {

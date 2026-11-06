@@ -16,8 +16,8 @@ test('password recovery sends an account-confirmation e-mail from Lexio in the u
       const m = sent[0];
       assert.strictEqual(m.to, 'forgot@example.com');
       assert.ok(/Lexio/.test(m.subject) && /Lexio/.test(m.text) && /Lexio/.test(m.html), 'the message comes from the Lexio site');
-      assert.ok(m.link.includes('/reset?token='), 'it contains the reset link');
-      assert.ok(m.text.includes(m.link) && m.html.includes('/reset?token='));
+      assert.ok(m.link.includes('/confirm?token='), 'it contains the reset link');
+      assert.ok(m.text.includes(m.link) && m.html.includes('/confirm?token='));
       assert.ok(!/\{brand\}|\{minutes\}|mail\./.test(m.subject + m.text), 'no unresolved placeholders or keys');
     }
     // an unknown address gets the same answer and no e-mail

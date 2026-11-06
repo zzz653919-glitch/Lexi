@@ -1049,7 +1049,7 @@
  "load.slow": "This is taking longer than usual. Check your connection or try again.",
  "load.vocab": "Loading your vocabulary…",
  "msg.maintenance": "The site is being updated. Please check back soon.",
- "msg.reset_prepared": "If that address has an account, we have sent an e-mail from Lexio asking you to confirm the account and set a new password.",
+ "msg.reset_prepared": "If that address has an account, we have sent an e-mail from Lexio asking you to confirm that the account is yours.",
  "nav.achievements": "Achievements",
  "nav.admin": "Admin panel",
  "nav.admin_panel": "Admin panel",
@@ -1447,9 +1447,14 @@
  "adm.cur.kind_phrasal_verb": "Phrasal verbs",
  "adm.cur.kind_idiom": "Idioms",
  "adm.cur.kind_academic": "Academic words",
- "mail.reset_subject": "{brand}: confirm your account and set a new password",
- "mail.reset_intro": "Hello! We received a request to recover access to your {brand} account. Please confirm that the account is yours and choose a new password.",
- "mail.reset_action": "Confirm the account and set a new password (the link works for {minutes} minutes):",
- "mail.reset_ignore": "If you did not ask for this, ignore this message: your password stays the same.",
- "mail.reset_footer": "This message was sent by the {brand} website. Please do not reply to it."
+ "mail.reset_subject": "{brand}: confirm your account",
+ "mail.reset_intro": "Hello! Someone asked to get back into your {brand} account. Please confirm your account: is this you?",
+ "mail.reset_action": "Yes, it’s me",
+ "mail.reset_ignore": "If this was not you, just ignore this message: nothing will change.",
+ "mail.reset_footer": "This message was sent by the {brand} website. Please do not reply to it.",
+ "mail.reset_link": "If the button does not work, open this link (valid for {minutes} minutes):",
+ "auth.confirm_working": "Confirming your account…",
+ "auth.confirm_set_password": "You are signed in. Choose a new password so you do not lose access again.",
+ "profile.recovery_hint": "You confirmed your account by e-mail, so the old password is not needed.",
+ "auth.confirm_title": "Confirm your account"
 }
