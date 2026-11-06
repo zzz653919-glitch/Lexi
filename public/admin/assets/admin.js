@@ -54,7 +54,7 @@ function buildShell() {
   const u = session.user;
   const main = h('main', { class: 'adm-main', id: 'main', tabindex: '-1' });
   const side = h('aside', { class: 'adm-side' },
-    h('a', { class: 'brand', href: '/admin' }, h('img', { src: '/img/logo.svg', alt: '' }), session.config ? session.config.siteName : 'Lexi Learn'),
+    h('a', { class: 'brand', href: '/admin' }, h('img', { src: '/img/logo.svg', alt: '' }), session.config ? session.config.siteName : 'Lexio'),
     h('div', { class: 'tag' }, t('adm.panel_role', { role: t('adm.role.' + u.role) })),
     h('nav', { 'aria-label': t('adm.nav_label') }, NAV.filter((n) => !n.roles || n.roles.includes(u.role)).map((n) => h('a', { class: 'nav-i', href: n.href, 'data-nav': n.key }, icon(n.icon), t(n.labelKey))), h('a', { class: 'nav-i', href: '/learn' }, icon('home'), t('nav.learner_site'))),
     h('div', { class: 'spacer', style: { flex: 1 } }),

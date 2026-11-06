@@ -1,7 +1,7 @@
 {
   "name": "lexi-learn",
   "version": "2.0.0",
-  "description": "Lexi Learn — an English-learning platform (courses, lessons, exercises, XP/streaks, admin panel). Node.js + SQLite.",
+  "description": "Lexio — an English-learning platform (courses, lessons, exercises, XP/streaks, admin panel). Node.js + SQLite.",
   "private": true,
   "license": "MIT",
   "engines": {

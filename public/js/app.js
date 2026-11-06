@@ -61,7 +61,7 @@ const stats = { data: null, prev: null };
 const LOADER_KIND = [[/^\/learn/, 'progress'], [/^\/achievements/, 'progress'], [/^\/vocabulary/, 'vocab'], [/^\/(attempt|daily)\//, 'lesson'], [/^\/(placement|welcome)/, 'quiz'], [/^\/(review|practice)/, 'quiz']];
 const loaderKind = (path) => (LOADER_KIND.find(([re]) => re.test(path)) || [null, 'generic'])[1];
 let firstPaint = true;
-const siteName = () => (session.config ? session.config.siteName : 'Lexi Learn');
+const siteName = () => (session.config ? session.config.siteName : 'Lexio');
 
 export function navigate(path, replace = false) {
   if (path === location.pathname + location.search) return render();

@@ -1,4 +1,4 @@
-# Lexi Learn
+# Lexio
 
 An English-learning platform with a game-like learning path, interactive exercises, XP / streaks / hearts, a vocabulary trainer with spaced repetition,
 and a separate administrator panel for managing courses, exercises, vocabulary and users.

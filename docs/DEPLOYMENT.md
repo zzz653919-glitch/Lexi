@@ -1,7 +1,7 @@
-# Deploying Lexi Learn (public URL)
+# Deploying Lexio (public URL)
 
 ## Why a shared link did not open
-Lexi Learn is a **Node.js server** (Express + a SQLite database file), not a static site. A link only works while that server runs somewhere reachable from the internet. Running `npm start` on a personal computer exposes it only at `http://127.0.0.1:3000` (the default bind address), which nobody else can open, and the repository contained no hosting configuration. Static-only hosts (GitHub Pages, plain Vercel/Netlify static deploys) cannot run the server. Vercel *can* run it as a serverless function, but only with a hosted database (Turso) because functions have no persistent disk – see "Vercel + Turso" below.
+Lexio is a **Node.js server** (Express + a SQLite database file), not a static site. A link only works while that server runs somewhere reachable from the internet. Running `npm start` on a personal computer exposes it only at `http://127.0.0.1:3000` (the default bind address), which nobody else can open, and the repository contained no hosting configuration. Static-only hosts (GitHub Pages, plain Vercel/Netlify static deploys) cannot run the server. Vercel *can* run it as a serverless function, but only with a hosted database (Turso) because functions have no persistent disk – see "Vercel + Turso" below.
 
 ## What you need
 * A host that runs a long-lived **Node ≥ 22.5** process **and** keeps a **persistent disk/volume** (the SQLite database and uploaded audio live there). Examples: Render (paid instance + disk), Railway or Fly.io (volume), any VPS, or any Docker host.

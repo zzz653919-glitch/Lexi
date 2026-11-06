@@ -2,7 +2,7 @@ const I18N = require('../../shared/i18n-core');
 const LV = require('./levels');
 /* Site settings: defaults live here, overrides are stored in the settings table (edited in the admin panel). */
 const DEFAULTS = {
-  site_name: 'Lexi Learn',
+  site_name: 'Lexio',
   tagline: '',
   brand_color: '#147a54',
   default_language: 'uz',

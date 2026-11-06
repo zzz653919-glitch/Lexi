@@ -7,7 +7,7 @@ import { achievementIcon } from './achievements.js';
 import { levelBadge, levelName, skillName } from './level-info.js';
 
 function landing() {
-  const site = session.config ? session.config.siteName : 'Lexi Learn';
+  const site = session.config ? session.config.siteName : 'Lexio';
   const tag = (session.config && session.config.tagline) || t('app.tagline');
   const feature = (ic, title, text) => h('div', { class: 'card' }, h('div', { class: 'stat' }, h('div', { class: 'ico' }, icon(ic)), h('div', {}, h('b', { style: { fontSize: '1.05rem' } }, title), h('span', {}, text))));
   const el = h('main', { class: 'landing' },

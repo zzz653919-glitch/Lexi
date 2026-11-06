@@ -21,7 +21,7 @@ const inst = createApp({
   if (seeded && seeded.created) console.log(`Sample course created (${seeded.exercises} exercises, ${seeded.vocabulary} words). Edit or remove it in the admin panel.`);
   const admins = (await inst.db.get("SELECT COUNT(*) n FROM users WHERE role = 'admin'")).n;
   const server = inst.app.listen(port, host, () => {
-    console.log(`Lexi Learn is running at http://${host}:${port} (database: ${inst.db.url.replace(/\/\/[^@/]*@/, '//')})`);
+    console.log(`Lexio is running at http://${host}:${port} (database: ${inst.db.url.replace(/\/\/[^@/]*@/, '//')})`);
     if (!admins) console.log('No administrator exists yet. Create one with:  npm run create-admin  (or set ADMIN_EMAIL / ADMIN_PASSWORD and run it once)');
   });
   const stop = () => server.close(async () => { await inst.close(); process.exit(0); });
