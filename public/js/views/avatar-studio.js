@@ -58,7 +58,7 @@ export default async function avatarStudio({ mode = 'studio' } = {}) {
     tabBar.querySelectorAll('.av-tab').forEach((b) => { const on = b.dataset.tab === tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
     const parts = [];
     if (tab === 'style') parts.push(section(t('av.tab.style'), h('div', { class: 'av-grid' }, STYLE_NAMES.map((s) => { const span = h('span', { class: 'av-mini tall' }); span.innerHTML = renderAvatar({ style: s, look: draft.look, equipped: {}, size: 80, viewBox: '40 8 160 190', plain: true }); return tile(span, { on: draft.style === s, label: t('av.style.' + s), data: { style: s }, onclick: () => { draft.style = s; paint(); fill(); } }); }))));
-    if (tab === 'face') parts.push(section(t('av.face_shape'), h('div', { class: 'av-grid' }, Array.from({ length: boot.spec.look.shape }, (_, i) => faceTile('shape', i, labelN('shape', i))))), section(t('av.skin'), swatches('skin', SKINS, 'av.skin_n')));
+    if (tab === 'face') parts.push(section(t('av.face_shape'), h('div', { class: 'av-grid' }, Array.from({ length: boot.spec.look.shape }, (_, i) => i).filter((i) => i !== 3).map((i, pos) => faceTile('shape', i, labelN('shape', pos))))), section(t('av.skin'), swatches('skin', SKINS, 'av.skin_n')));
     if (tab === 'hair') parts.push(section(t('av.hair_style'), h('div', { class: 'av-grid' }, Array.from({ length: boot.spec.look.hairStyle }, (_, i) => faceTile('hairStyle', i, i === 0 ? t('av.none') : labelN('hair', i))))), section(t('av.hair_color'), swatches('hairColor', HAIRS, 'av.hair_n')));
     if (tab === 'eyes') parts.push(section(t('av.eye_style'), h('div', { class: 'av-grid' }, Array.from({ length: boot.spec.look.eyeStyle }, (_, i) => faceTile('eyeStyle', i, labelN('eyes', i))))), section(t('av.eye_color'), swatches('eyeColor', EYES, 'av.eye_n')));
     if (tab === 'mouth') parts.push(section(t('av.brows'), h('div', { class: 'av-grid' }, Array.from({ length: boot.spec.look.brows }, (_, i) => faceTile('brows', i, labelN('brows', i))))), section(t('av.mouth'), h('div', { class: 'av-grid' }, Array.from({ length: boot.spec.look.mouth }, (_, i) => faceTile('mouth', i, labelN('mouth', i))))));
@@ -87,7 +87,7 @@ export default async function avatarStudio({ mode = 'studio' } = {}) {
     } catch (e) { toast(e.message, 'error', 5000); }
   }
   function reset() { draft = saved ? clone(saved) : blank(); nameInput.value = draft.name; paint(); fill(); toast(t('av.reset_done'), 'info', 1800); }
-  function randomize() { const r = (n) => Math.floor(Math.random() * n), L = boot.spec.look; draft.look = { shape: r(L.shape), skin: r(L.skin), hairStyle: r(L.hairStyle), hairColor: r(L.hairColor), eyeStyle: r(L.eyeStyle), eyeColor: r(L.eyeColor), brows: r(L.brows), mouth: r(L.mouth) }; paint(); fill(); }
+  function randomize() { const r = (n) => Math.floor(Math.random() * n), L = boot.spec.look; draft.look = { shape: [0, 1, 2, 4][r(4)], skin: r(L.skin), hairStyle: r(L.hairStyle), hairColor: r(L.hairColor), eyeStyle: r(L.eyeStyle), eyeColor: r(L.eyeColor), brows: r(L.brows), mouth: r(L.mouth) }; paint(); fill(); }
   async function switchTo(a) {
     if (dirty() && !(await confirmDialog(t('av.discard_title'), t('av.discard_text'), t('av.discard'), true))) return;
     select(a); nameInput.value = draft.name; drawStrip(); paint(); fill();

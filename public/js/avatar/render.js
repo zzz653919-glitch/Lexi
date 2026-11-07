@@ -23,10 +23,13 @@ function hairBack(i, c, S, shape) {
 }
 function hairFront(i, c, S, shape) {
   const { top, w } = fit(shape), L = 120 - w - 1, R = 120 + w + 1, cy = Math.round(86 - (86 - (top - 3)) / 0.75);
-  const cap = `<path d="M${L} 88C${L - 3} ${cy} ${R + 3} ${cy} ${R} 88C${R - 12} 70 ${R - 32} 63 120 63C${L + 32} 63 ${L + 12} 70 ${L} 88Z" fill="${c}" ${S}/>`;
+  const round = `<path d="M${L} 88C${L - 3} ${cy} ${R + 3} ${cy} ${R} 88C${R - 12} 70 ${R - 32} 63 120 63C${L + 32} 63 ${L + 12} 70 ${L} 88Z" fill="${c}" ${S}/>`;
+  /* the square head has flat sides and rounded corners, so its hair is boxy too */
+  const box = `<path d="M66 94L66 64Q66 35 96 35L144 35Q174 35 174 64L174 94C168 76 150 66 120 66C90 66 72 76 66 94Z" fill="${c}" ${S}/>`;
+  const cap = shape === 2 ? box : round;
   const dy = top - 36;
   return [ '', cap, cap, cap, cap,
-    `<g fill="${c}" ${S} transform="translate(0 ${dy})"><circle cx="86" cy="48" r="19"/><circle cx="112" cy="40" r="20"/><circle cx="138" cy="42" r="20"/><circle cx="160" cy="54" r="18"/><circle cx="76" cy="66" r="15"/><circle cx="${Math.max(164, R - 2)}" cy="68" r="14"/></g>` ][i] || '';
+    `<g fill="${c}" ${S} transform="translate(0 ${dy})"><circle cx="86" cy="48" r="19"/><circle cx="112" cy="40" r="20"/><circle cx="138" cy="42" r="20"/><circle cx="160" cy="54" r="18"/><circle cx="76" cy="66" r="15"/><circle cx="${Math.max(164, R - 2)}" cy="68" r="14"/>${shape === 2 ? '<circle cx="72" cy="46" r="15"/><circle cx="168" cy="46" r="15"/><circle cx="164" cy="72" r="13"/>' : ''}</g>` ][i] || '';
 }
 function eyes(i, col, S, robot, u) {
   if (robot) return `<g class="av-eyes"><rect x="86" y="80" width="22" height="18" rx="6" fill="${col}"/><rect x="132" y="80" width="22" height="18" rx="6" fill="${col}"/><rect x="90" y="83" width="6" height="5" rx="2" fill="#fff" opacity=".8"/><rect x="136" y="83" width="6" height="5" rx="2" fill="#fff" opacity=".8"/></g>`;
