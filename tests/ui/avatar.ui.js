@@ -69,8 +69,8 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     await page.click('.av-item[data-slug="hoodie-gray"] h3'); await page.waitForSelector('.av-modal'); check(await page.locator('.av-modal svg').count() >= 1, 'an item can be tried on before buying'); await page.keyboard.press('Escape'); await page.waitForSelector('.av-modal', { state: 'detached' });
     await page.click('.av-tab[data-cat="pet"]'); await page.waitForSelector('.av-item[data-slug="pet-dragon-golden"]');
     check(await page.locator('.av-item[data-slug="pet-dragon-golden"] .av-earn').count() === 1 && await page.locator('.av-item[data-slug="pet-dragon-golden"] button').first().isDisabled(), 'some pets are earned by learning, with a progress bar, and cannot be bought');
-    check(await page.locator('.av-item[data-slug="cat-orange"]').count() === 1, 'pets and companions are for sale');
-    await page.click('.av-item[data-slug="cat-orange"] [data-act="buy"]'); await confirmYes(page); await page.waitForSelector('.av-item[data-slug="cat-orange"] [data-owned]');
+    check(await page.locator('.av-item[data-slug="pet-tabby"]').count() === 1, 'pets are for sale (every animal has its own model)');
+    await page.click('.av-item[data-slug="pet-tabby"] [data-act="buy"]'); await confirmYes(page); await page.waitForSelector('.av-item[data-slug="pet-tabby"] [data-owned]');
     check((await api(page, '/avatar/wallet')).wallet.balance === 120, 'a pet costs tokens too (160 → 120)');
 
     /* ---------- inventory, pets ---------- */
@@ -79,10 +79,10 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     await page.click('.av-tile[data-slug="tee-red"]'); await page.click('#av-save');
     await page.waitForFunction(() => /saved/i.test(document.getElementById('av-dirty').textContent));
     check((await api(page, '/avatar/bootstrap')).avatars[0].equipped.top === 'tee-red', 'owned clothing is equipped and saved');
-    await page.click('.av-tab[data-tab="pet"]'); await page.click('.av-tile[data-slug="cat-orange"]'); await page.fill('#av-petname', 'Mochi'); await page.click('.av-pose[data-pose="play"]');
+    await page.click('.av-tab[data-tab="pet"]'); await page.click('.av-tile[data-slug="pet-tabby"]'); await page.fill('#av-petname', 'Mochi'); await page.click('.av-pose[data-pose="play"]');
     check(await page.locator('.av-petname').innerText().then((x) => x.includes('Mochi')), 'a companion appears next to the character with its name');
     await page.click('#av-save'); await page.waitForFunction(() => /saved/i.test(document.getElementById('av-dirty').textContent));
-    boot = await api(page, '/avatar/bootstrap'); check(boot.avatars[0].equipped.pet === 'cat-orange' && boot.avatars[0].petName === 'Mochi' && boot.avatars[0].petPose === 'play', 'the pet, its name and pose are saved');
+    boot = await api(page, '/avatar/bootstrap'); check(boot.avatars[0].equipped.pet === 'pet-tabby' && boot.avatars[0].petName === 'Mochi' && boot.avatars[0].petPose === 'play', 'the pet, its name and pose are saved');
     await page.click('.av-tab[data-tab="accessories"]'); await page.click('.av-tile[data-slot="back"][data-none="1"]'); await page.click('.av-tab[data-tab="scene"]'); check(await page.locator('.av-tile[data-slot="background"][data-none="1"].on').count() === 1, 'accessories can be removed and backgrounds switched');
     await page.click('#av-fav'); await page.waitForSelector('.av-card .av-fav'); check(true, 'a favorite appearance can be marked');
 
@@ -150,7 +150,7 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     await ad.click('[data-tab="tx"]'); await ad.waitForSelector('button[data-user]');
     check(await ad.locator('table.tbl tbody tr').count() >= 3 && /Earned in total|earned/i.test(await ad.locator('#av-tx-totals').innerText()), 'the token ledger lists every transaction');
     await ad.click(`button[data-user="${uid}"]`); await ad.waitForSelector('#av-owned-list');
-    check(await ad.locator('#av-owned-list li[data-slug="tee-red"]').count() === 1 && await ad.locator('#av-owned-list li[data-slug="cat-orange"]').count() === 1, "a user's purchased items are visible");
+    check(await ad.locator('#av-owned-list li[data-slug="tee-red"]').count() === 1 && await ad.locator('#av-owned-list li[data-slug="pet-tabby"]').count() === 1, "a user's purchased items are visible");
     await ad.fill('#av-grant-amount', '50'); await ad.fill('#av-grant-note', 'prize'); await ad.click('#av-grant'); await ad.waitForTimeout(700);
     check((await api(ad, `/admin/avatar/users/${uid}`)).wallet.earned >= 275, 'an administrator can give tokens as a gift (recorded in the ledger)');
     check(ad.problems.length === 0, 'no console problems in the admin panel ' + ad.problems.join('; '));
