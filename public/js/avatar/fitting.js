@@ -5,7 +5,7 @@ import { h, toast, confirmDialog } from '../ui.js';
 import { post, put } from '../api.js';
 import { t } from '../i18n.js';
 import { renderAvatar, itemSvg, fitsStyle } from './render.js';
-import { A, equippedItems, rarityBadge, tokenAmount, setBalance } from './ui.js';
+import { A, equippedItems, rarityBadge, tokenAmount, setBalance, coinSvg } from './ui.js';
 
 const CATS = [['clothing', '👕'], ['accessory', '🕶️'], ['pet', '🐾'], ['special', '✨']];
 /* a dress or a costume replaces the top and the trousers, and the other way round */
@@ -35,7 +35,7 @@ export function openFitting({ item = null, buy, refresh = () => {} }) {
   const step = (dir) => { const s0 = snap(angle), list = all(angle); setAngle(dir > 0 ? list.find((v) => v > s0) : [...list].reverse().find((v) => v < s0)); };
   const setAngle = (a, instant) => { angle = a; turn.classList.toggle('drag', !!instant); turn.style.setProperty('--a', angle + 'deg'); const f = ((angle % 360) + 360) % 360; stage.dataset.view = f > 90 && f < 270 ? 'back' : 'front'; };
   function paint() {
-    const base = { style: me().style, look: me().look, equipped: trial, size: 360, petPose: pose, label: me().name };
+    const base = { style: me().style, look: me().look, equipped: trial, size: 360, petPose: pose, label: me().name, plain: !trial.background };
     front.innerHTML = renderAvatar(base); backF.innerHTML = renderAvatar({ ...base, view: 'back' });
     stage.classList.remove('pop'); void stage.offsetWidth; stage.classList.add('pop');
   }
@@ -92,7 +92,7 @@ export function openFitting({ item = null, buy, refresh = () => {} }) {
     const on = trial[it.slot] && trial[it.slot].slug === it.slug, ok = fits(it), th = h('span', { class: 'av-fit-thumb' });
     th.innerHTML = itemSvg(it, { look: me().look, style: me().style, size: 64 });
     return h('button', { type: 'button', class: 'av-fit-tile r-' + it.rarity + (on ? ' on' : '') + (sel && sel.slug === it.slug ? ' sel' : '') + (ok ? '' : ' nofit') + (it.owned ? ' owned' : ''), 'data-slug': it.slug, 'aria-pressed': String(!!on), title: ok ? it.name : t('av.fit.no_fit'), onclick: () => apply(it) },
-      th, h('b', {}, it.name), h('small', {}, !ok ? t('av.fit.no_fit') : it.owned ? '✔ ' + t('av.owned') : it.earn && !it.forSale ? t('av.earn_only') : String(it.price) + ' 🪙'), ...(on ? [h('i', { class: 'av-fit-tick', 'aria-label': t('av.fit.in_preview') }, '✓')] : []));
+      th, h('b', {}, it.name), h('small', {}, ...(!ok ? [t('av.fit.no_fit')] : it.owned ? ['✔ ' + t('av.owned')] : it.earn && !it.forSale ? [t('av.earn_only')] : [String(it.price), ' ', coinSvg()])), ...(on ? [h('i', { class: 'av-fit-tick', 'aria-label': t('av.fit.in_preview') }, '✓')] : []));
   }
   function update() {
     tabs.querySelectorAll('.av-tab').forEach((b) => { const on = b.dataset.cat === cat; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
@@ -113,7 +113,7 @@ export function openFitting({ item = null, buy, refresh = () => {} }) {
       owned ? btn('equip', t('av.fit.equip'), () => equip(sel), !av || !fits(sel) || (av && av.equipped[sel.slot] === sel.slug), 'go') : null,
       btn('save', t('av.fit.save'), saveLook, !av || !changed, 'go')].filter(Boolean));
     const un = unowned(), buyable = un.filter((it) => it.forSale);
-    note.replaceChildren(...[h('small', { class: 'av-fit-free' }, '🆓 ', t('av.fit.free')),
+    note.replaceChildren(...[h('small', { class: 'av-fit-free' }, '✔ ', t('av.fit.free')),
       un.length ? h('div', { class: 'av-fit-unowned' }, h('span', {}, t('av.fit.not_owned', { n: un.length, price: un.reduce((a, it) => a + (it.forSale ? it.price : 0), 0) })), ...(buyable.length ? [btn('buy-all', t('av.fit.buy_all', { n: buyable.length }), buyAll, false, 'go')] : [])) : null,
       !av ? h('small', {}, t('av.fit.no_character')) : null].filter(Boolean));
     const pet = trial.pet; poseBar.replaceChildren(...(pet ? ['sit', 'play', 'sleep'].map((p) => h('button', { type: 'button', class: 'av-chip' + (p === pose ? ' on' : ''), 'data-pose': p, onclick: () => { pose = p; paint(); update(); } }, t('av.pose.' + p))) : []));
@@ -131,7 +131,7 @@ export function openFitting({ item = null, buy, refresh = () => {} }) {
   const closeBtn = h('button', { type: 'button', class: 'av-btn av-fit-close', id: 'av-try-close', title: t('av.fit.close'), 'aria-label': t('av.fit.close'), onclick: () => close() }, '✕');
   const root = h('div', { class: 'av-modal av-fit', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'av-fit-h' },
     h('div', { class: 'av-fit-room' },
-      h('header', { class: 'av-fit-head' }, ...[h('h2', { id: 'av-fit-h' }, '🪞 ', t('av.fit.title')), who, bal, closeBtn].filter(Boolean)),
+      h('header', { class: 'av-fit-head' }, ...[h('h2', { id: 'av-fit-h' }, '👗 ', t('av.fit.title')), who, bal, closeBtn].filter(Boolean)),
       h('div', { class: 'av-fit-body' },
         h('section', { class: 'av-fit-left' }, stage, h('div', { class: 'av-fit-rots' }, rotL, spinBtn, rotR), poseBar),
         h('section', { class: 'av-fit-right' }, tabs, chips, grid, info, bar, note))));
