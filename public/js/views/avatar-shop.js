@@ -29,7 +29,7 @@ export default async function avatarShop() {
   }
   const card = (it) => { const thumb = h('span', { class: 'av-thumb' }); thumb.innerHTML = itemSvg(it, { ...look(), size: 110 });
     return h('article', { class: 'av-item r-' + it.rarity + (it.owned ? ' owned' : ''), 'data-slug': it.slug, 'data-rarity': it.rarity, tabindex: 0, role: 'button', 'aria-label': it.name, onclick: () => fitting(it), onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) fitting(it); } },
-      thumb, h('h3', {}, it.name), h('div', { class: 'av-item-meta' }, rarityBadge(it.rarity), h('small', {}, KIND_LABEL(it.kind))), priceLine(it), actionBtn(it), h('button', { class: 'av-btn fit', type: 'button', 'data-act': 'fit', title: t('av.fit.hint'), onclick: (e) => { e.stopPropagation(); fitting(it); } }, '🪞 ', t('av.fit'))); };
+      thumb, h('h3', {}, it.name), h('div', { class: 'av-item-meta' }, rarityBadge(it.rarity), h('small', {}, KIND_LABEL(it.kind))), priceLine(it), actionBtn(it), h('button', { class: 'av-btn fit', type: 'button', 'data-act': 'fit', title: t('av.fit.hint'), onclick: (e) => { e.stopPropagation(); fitting(it); } }, '👗 ', t('av.fit'))); };
 
   function draw() {
     tabBar.querySelectorAll('.av-tab').forEach((b) => { const on = b.dataset.cat === cat; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
