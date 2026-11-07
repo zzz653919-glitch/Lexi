@@ -151,7 +151,12 @@ function effect(item, front) {
 
 /* ---------- the whole character ---------- */
 /* opts: { style, look, equipped: {slot: item}, size, viewBox, plain (no background), pose } ; items are objects { kind, slot, art, image } */
-export function renderAvatar({ style = 'cartoon', look = {}, equipped = {}, size = 240, viewBox = '0 0 240 340', plain = false, label = '', petPose = 'sit' } = {}) {
+/* which items a character model can wear: the animal ears would poke through hats and masks, the robot has a visor instead of a face */
+const NO_FIT = { animal: ['hat', 'mask'], robot: ['glasses', 'mask'] };
+export const fitsStyle = (style, item) => !(item && (NO_FIT[style] || []).includes(item.slot));
+export function renderAvatar({ style = 'cartoon', look = {}, equipped: wanted = {}, size = 240, viewBox = '0 0 240 340', plain = false, label = '', petPose = 'sit', view = 'front' } = {}) {
+  const equipped = {}; for (const [k, v] of Object.entries(wanted || {})) if (fitsStyle(style, v)) equipped[k] = v;   // an item that does not fit is never drawn wrongly
+  const back = view === 'back';
   const u = ++counter, L = { shape: 0, skin: 2, hairStyle: 1, hairColor: 1, eyeStyle: 0, eyeColor: 0, brows: 0, mouth: 0, ...look };
   const robot = style === 'robot', animal = style === 'animal', fantasy = style === 'fantasy', threeD = false;
   const S = style === 'cartoon' ? `stroke="${INK}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"` : style === 'modern' ? 'stroke="rgba(30,20,60,.2)" stroke-width="1.6" stroke-linejoin="round"' : '';
@@ -184,13 +189,13 @@ export function renderAvatar({ style = 'cartoon', look = {}, equipped = {}, size
   const head = robot
     ? `<rect x="68" y="40" width="104" height="100" rx="26" fill="${F}" ${S}/><rect x="80" y="62" width="80" height="62" rx="16" fill="#1b2a4e"/><path d="M120 40V22" stroke="${INK}" stroke-width="4"/><circle cx="120" cy="18" r="8" fill="#ff5fa2" ${S}/>`
     : `${headShape(L.shape, F, S)}${threeD ? `<ellipse cx="102" cy="64" rx="18" ry="10" fill="#fff" opacity=".35"/>` : ''}`;
-  const faceBits = robot ? `${eyes(L.eyeStyle, '#5ef2ff', S, true, u)}${mouth(L.mouth, true)}` : `${animalFace}${eyes(L.eyeStyle, eyeC, S, false, u)}${brows(L.brows, hair)}${animal ? '' : `<path d="M116 104Q120 108 124 104" stroke="${shade(skin, .7)}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`}<ellipse cx="84" cy="109" rx="13" ry="8" fill="url(#bl${u})"/><ellipse cx="156" cy="109" rx="13" ry="8" fill="url(#bl${u})"/>${mouth(L.mouth, false)}`;
+  const faceBits = back ? (robot ? `<rect x="80" y="62" width="80" height="62" rx="16" fill="${shade(fill, .8)}" ${S}/>` : '') : robot ? `${eyes(L.eyeStyle, '#5ef2ff', S, true, u)}${mouth(L.mouth, true)}` : `${animalFace}${eyes(L.eyeStyle, eyeC, S, false, u)}${brows(L.brows, hair)}${animal ? '' : `<path d="M116 104Q120 108 124 104" stroke="${shade(skin, .7)}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`}<ellipse cx="84" cy="109" rx="13" ry="8" fill="url(#bl${u})"/><ellipse cx="156" cy="109" rx="13" ry="8" fill="url(#bl${u})"/>${mouth(L.mouth, false)}`;
   const HG = `url(#hg${u})`, sheen = L.hairStyle === 0 || L.hairStyle === 8 ? '' : `<path d="M82 62Q108 44 142 54" stroke="#fff" stroke-opacity=".42" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M150 58Q162 64 168 76" stroke="#fff" stroke-opacity=".25" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
-  const hairBk = robot ? '' : hairBack(L.hairStyle, HG, S, L.shape), hairFt = robot ? '' : hairFront(L.hairStyle, HG, S, L.shape) + sheen;
+  const hairBk = robot ? '' : hairBack(L.hairStyle, HG, S, L.shape), hairFt = robot ? '' : (back && L.hairStyle !== 0 ? headShape(L.shape, HG, S) : '') + hairFront(L.hairStyle, HG, S, L.shape) + sheen;
   const aura = fantasy ? `<ellipse cx="120" cy="190" rx="92" ry="140" fill="#c9b6f2" opacity=".28"/>${[[30, 80], [206, 120], [44, 220], [194, 250]].map(([x, y], i) => `<path class="av-tw" style="animation-delay:${i * .4}s" d="M${x} ${y - 8}l2.6 5.4 5.4 2.6-5.4 2.6-2.6 5.4-2.6-5.4-5.4-2.6 5.4-2.6z" fill="#fff6a8"/>`).join('')}` : '';
   const anim = get('animation') && get('animation').art ? get('animation').art.v : '';
   const petItem = get('pet'), petLook = petItem && !petItem.image ? petItem : null;
-  const petG = petItem ? `<g class="av-pet" transform="translate(150 244) scale(.62)"><g class="av-pet-body av-pose-${petPose}">${petItem.image ? `<image href="${petItem.image}" x="0" y="0" width="100" height="100"/>` : pet(petItem.kind, petItem.art || {}, petPose, u)}${petZ(petPose)}</g></g>` : '';
+  const petG = petItem ? `<g class="av-pet" transform="translate(${back ? 28 : 150} 244) scale(.62)"><g class="av-pet-body av-pose-${petPose}">${petItem.image ? `<image href="${petItem.image}" x="0" y="0" width="100" height="100"/>` : pet(petItem.kind, petItem.art || {}, petPose, u)}${petZ(petPose)}</g></g>` : '';
   const col = get('collectible'), collectG = col && col.art ? `<g transform="translate(30 286) scale(.9)">${col.image ? '' : (COLLECT[col.art.v] || (() => ''))(col.art)}</g>` : '';
   const filters = `<defs><filter id="fg${u}"><feColorMatrix type="matrix" values="0.345 0.678 0.127 0 0.08  0.264 0.519 0.097 0 0.03  0.09 0.177 0.033 0 0  0 0 0 1 0"/></filter><filter id="fn${u}" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="${st && st.art && st.art.c || '#5ef2ff'}"/><feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="${st && st.art && st.art.c2 || '#ff5fa2'}"/></filter><filter id="fh${u}"><feColorMatrix type="matrix" values="0.8 0.1 0.1 0 0.15  0.1 0.8 0.2 0 0.2  0.2 0.2 0.8 0 0.3  0 0 0 0.72 0"/></filter></defs>`;
   const flt = sv === 'gold' ? `filter="url(#fg${u})"` : sv === 'neon' ? `filter="url(#fn${u})"` : sv === 'ghost' ? `filter="url(#fh${u})"` : '';
@@ -198,8 +203,8 @@ export function renderAvatar({ style = 'cartoon', look = {}, equipped = {}, size
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" width="${size}" height="${Math.round(size * (viewBox.split(' ')[3] / viewBox.split(' ')[2]))}" style="width:${size}px;max-width:100%;height:auto" role="img" aria-label="${label}" class="av-svg av-style-${style}${anim ? ' av-anim-' + anim : ''}" focusable="false">${body3d}${filters}${gradDefs}
     <defs><clipPath id="cp${u}"><rect width="240" height="340" rx="26"/></clipPath></defs><g clip-path="url(#cp${u})">${plain ? '' : (bgItem && bgItem.image ? img(bgItem) : background(bgItem, u))}${effect(get('effect'), false)}${aura}</g>
     <ellipse class="av-shadow" cx="120" cy="322" rx="62" ry="9" fill="rgba(30,20,60,.18)"/>
-    <g class="av-char" ${flt}>${get('wings') ? layer('wings', (it) => CLOTHES.wings) : ''}${get('back') ? layer('back', (it) => CLOTHES.backpack) : ''}${tail}<g ${LT}>${hairBk}</g><g ${LT}>${legs}${arms}${torsoBase}</g><g ${LT}>${clothes}</g><g ${LT}>${shoes}</g>
-      <g ${LT}>${earsP}${animalBits}${head}</g>${faceBits}<g ${LT}>${hairFt}</g>${layer('mask', () => CLOTHES.mask)}${get('neck') ? layer('neck', () => CLOTHES.necklace) : ''}${layer('glasses', (it) => CLOTHES[it.kind])}${layer('headphones', () => CLOTHES.headphones)}${layer('hat', (it) => CLOTHES[it.kind])}${layer('wrist', () => CLOTHES.watch)}</g>
+    <g class="av-char" ${flt}>${get('wings') ? layer('wings', (it) => CLOTHES.wings) : ''}${get('back') && !back ? layer('back', (it) => CLOTHES.backpack) : ''}${tail}<g ${LT}>${back ? '' : hairBk}</g><g ${LT}>${legs}${arms}${torsoBase}</g><g ${LT}>${clothes}</g>${back ? `${get('back') ? layer('back', (it) => CLOTHES.backpack) : ''}<g ${LT}>${hairBk}</g>` : ''}<g ${LT}>${shoes}</g>
+      <g ${LT}>${earsP}${animalBits}${head}</g>${faceBits}<g ${LT}>${hairFt}</g>${back ? '' : layer('mask', () => CLOTHES.mask)}${get('neck') ? layer('neck', () => CLOTHES.necklace) : ''}${back ? '' : layer('glasses', (it) => CLOTHES[it.kind])}${layer('headphones', () => CLOTHES.headphones)}${layer('hat', (it) => CLOTHES[it.kind])}${layer('wrist', () => CLOTHES.watch)}</g>
     ${petG}${collectG}${effect(get('effect'), true)}</svg>`;
 }
 /* the thumbnail of a shop / inventory item: the item worn by a plain character, cropped to the part that matters */
