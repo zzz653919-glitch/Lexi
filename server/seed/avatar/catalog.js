@@ -63,13 +63,23 @@ colored('necklace', [['gold', 'rare'], ['pink', 'common'], ['teal', 'uncommon']]
 colored('wings', [['white', 'epic'], ['purple', 'epic'], ['red', 'rare']]);
 colored('mask', [['black', 'uncommon'], ['white', 'common'], ['gold', 'epic']]);
 
-colored('cat', [['orange', 'common'], ['gray', 'common'], ['black', 'uncommon']]);
-colored('dog', [['brown', 'common'], ['white', 'common'], ['gold', 'uncommon']]);
-colored('rabbit', [['white', 'common'], ['pink', 'uncommon']]);
-colored('fox', [['orange', 'uncommon'], ['white', 'rare']]);
-colored('dragon', [['green', 'epic'], ['red', 'epic']]);
+/* pets: every animal has its own model (see public/js/avatar/pets.js); art.v names the model */
+const PETS = [
+  ['tabby', 'cat', 'common', ['Orange Tabby Cat', 'Zarğaldoq çiziqli muşuk', 'Рыжий полосатый кот']], ['persian', 'cat', 'uncommon', ['Fluffy White Persian', 'Mayin oq fors muşugi', 'Пушистая белая персидская кошка']],
+  ['blackcat', 'cat', 'rare', ['Glowing-Eyed Black Cat', 'Çaqnoq kŏzli qora muşuk', 'Чёрный кот со светящимися глазами']], ['british', 'cat', 'common', ['British Shorthair', 'Britaniya qisqatuk muşugi', 'Британская короткошёрстная']],
+  ['calico', 'cat', 'uncommon', ['Calico Cat', 'Uç rangli muşuk', 'Трёхцветная кошка']], ['kitten', 'cat', 'common', ['Tiny Kitten', 'Kiçik muşukça', 'Крошечный котёнок']],
+  ['labrador', 'dog', 'common', ['Golden Labrador', 'Oltin labrador', 'Золотистый лабрадор']], ['corgi', 'dog', 'uncommon', ['Corgi', 'Korgi', 'Корги']],
+  ['shiba', 'dog', 'uncommon', ['Shiba Inu', 'Şiba-inu', 'Сиба-ину']], ['puppy', 'dog', 'common', ['Fluffy White Puppy', 'Mayin oq kuçuk', 'Пушистый белый щенок']],
+  ['shepherd', 'dog', 'uncommon', ['German Shepherd Puppy', 'Nemis çopon kuçugi', 'Щенок немецкой овчарки']], ['dachshund', 'dog', 'common', ['Brown Dachshund', 'Jigarrang taksa', 'Коричневая такса']],
+  ['bunny', 'rabbit', 'common', ['Cute Bunny', 'Yoqimli quyonça', 'Милый зайчик']], ['babyfox', 'fox', 'rare', ['Baby Fox', 'Tulki bolasi', 'Лисёнок']],
+  ['panda', 'panda', 'epic', ['Panda', 'Panda', 'Панда']], ['redpanda', 'redpanda', 'rare', ['Red Panda', 'Qizil panda', 'Красная панда']],
+  ['hamster', 'hamster', 'common', ['Hamster', 'Xomyak', 'Хомяк']], ['babydino', 'dino', 'uncommon', ['Baby Dinosaur', 'Dinozavr bolasi', 'Малыш-динозавр']],
+  ['penguin', 'penguin', 'uncommon', ['Penguin', 'Pingvin', 'Пингвин']], ['smalldragon', 'dragon', 'epic', ['Small Dragon', 'Kiçik ajdaho', 'Маленький дракон']],
+];
+for (const [v, kind, rarity, names] of PETS) add(`pet-${v}`, names, kind, rarity, { v, c: '#ffffff', c2: '#ffffff', p: 'solid' });
+/* the plain coloured pets of the first catalogue are replaced by the models above (owners keep theirs) */
+const OLD_PETS = { 'cat-orange': 'tabby', 'cat-gray': 'british', 'cat-black': 'blackcat', 'dog-brown': 'dachshund', 'dog-white': 'puppy', 'dog-gold': 'labrador', 'rabbit-white': 'bunny', 'rabbit-pink': 'bunny', 'fox-orange': 'babyfox', 'fox-white': 'babyfox', 'dragon-green': 'smalldragon', 'dragon-red': 'smalldragon', 'dino-green': 'babydino', 'dino-teal': 'babydino' };
 colored('bird', [['blue', 'common'], ['yellow', 'common']]);
-colored('dino', [['green', 'rare'], ['teal', 'rare']]);
 colored('fantasy', [['pink', 'epic'], ['purple', 'epic']]);
 /* pets that are earned by learning (not for sale) */
 add('pet-fox-ember', ['Ember Fox', 'Olovli tulki', 'Огненная лиса'], 'fox', 'rare', { c: '#e8591a', c2: '#ffd23f', p: 'solid' }, { earn: 'lessons:25', price: 0 });
@@ -87,4 +97,4 @@ for (const [v, names, rarity, c, c2] of [['gold', ['Golden style', 'Oltin uslub'
 for (const [v, names, rarity, c, c2] of [['trophy', ['Golden trophy', 'Oltin kubok', 'Золотой кубок'], 'rare', '#f2b705', '#ffe28a'], ['gem', ['Rare gem', 'Nodir qimmatbaho toş', 'Редкий самоцвет'], 'epic', '#5ef2ff', '#2f7bff'], ['star', ['Star of fame', 'Şuhrat yulduzi', 'Звезда славы'], 'epic', '#ffd23f', '#ff8a1f'], ['key', ['Golden key', 'Oltin kalit', 'Золотой ключ'], 'legendary', '#f2b705', '#e63946']]) add(`collectible-${v}`, names, 'collectible', rarity, { c, c2, v });
 
 for (const it of items) it.slot = KIND_SLOT[it.kind];
-module.exports = { ITEMS: items };
+module.exports = { ITEMS: items, OLD_PETS };

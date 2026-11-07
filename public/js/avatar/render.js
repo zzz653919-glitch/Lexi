@@ -1,4 +1,5 @@
 /* Avatar Studio drawing: every character is composed of SVG layers from parameters (face parts, style, equipped items). Original artwork, no external files. */
+import { petArt } from './pets.js';
 export const SKINS = ['#ffe0c7', '#fcd1ae', '#f1b98a', '#d99a6c', '#b97a4c', '#8d5524', '#6b3f1d', '#4a2a14'];
 export const HAIRS = ['#1c1a1a', '#3b2314', '#6b4423', '#a86b32', '#d9a441', '#f2d16b', '#c0392b', '#e86bb0', '#4a90e2', '#8e5bd9'];
 export const EYES = ['#3b2314', '#5a3a1f', '#2f7bff', '#2fb36d', '#7a8c99', '#8e5bd9', '#16b8a6', '#c0392b'];
@@ -22,10 +23,13 @@ function hairBack(i, c, S, shape) {
 }
 function hairFront(i, c, S, shape) {
   const { top, w } = fit(shape), L = 120 - w - 1, R = 120 + w + 1, cy = Math.round(86 - (86 - (top - 3)) / 0.75);
-  const cap = `<path d="M${L} 88C${L - 3} ${cy} ${R + 3} ${cy} ${R} 88C${R - 12} 70 ${R - 32} 63 120 63C${L + 32} 63 ${L + 12} 70 ${L} 88Z" fill="${c}" ${S}/>`;
+  const round = `<path d="M${L} 88C${L - 3} ${cy} ${R + 3} ${cy} ${R} 88C${R - 12} 70 ${R - 32} 63 120 63C${L + 32} 63 ${L + 12} 70 ${L} 88Z" fill="${c}" ${S}/>`;
+  /* the square head has flat sides and rounded corners, so its hair is boxy too */
+  const box = `<path d="M66 94L66 64Q66 35 96 35L144 35Q174 35 174 64L174 94C168 76 150 66 120 66C90 66 72 76 66 94Z" fill="${c}" ${S}/>`;
+  const cap = shape === 2 ? box : round;
   const dy = top - 36;
   return [ '', cap, cap, cap, cap,
-    `<g fill="${c}" ${S} transform="translate(0 ${dy})"><circle cx="86" cy="48" r="19"/><circle cx="112" cy="40" r="20"/><circle cx="138" cy="42" r="20"/><circle cx="160" cy="54" r="18"/><circle cx="76" cy="66" r="15"/><circle cx="${Math.max(164, R - 2)}" cy="68" r="14"/></g>` ][i] || '';
+    `<g fill="${c}" ${S} transform="translate(0 ${dy})"><circle cx="86" cy="48" r="19"/><circle cx="112" cy="40" r="20"/><circle cx="138" cy="42" r="20"/><circle cx="160" cy="54" r="18"/><circle cx="76" cy="66" r="15"/><circle cx="${Math.max(164, R - 2)}" cy="68" r="14"/>${shape === 2 ? '<circle cx="72" cy="46" r="15"/><circle cx="168" cy="46" r="15"/><circle cx="164" cy="72" r="13"/>' : ''}</g>` ][i] || '';
 }
 function eyes(i, col, S, robot, u) {
   if (robot) return `<g class="av-eyes"><rect x="86" y="80" width="22" height="18" rx="6" fill="${col}"/><rect x="132" y="80" width="22" height="18" rx="6" fill="${col}"/><rect x="90" y="83" width="6" height="5" rx="2" fill="#fff" opacity=".8"/><rect x="136" y="83" width="6" height="5" rx="2" fill="#fff" opacity=".8"/></g>`;
@@ -94,7 +98,8 @@ const COLLECT = {
 };
 
 /* ---------- pets: drawn in a 0..100 box ---------- */
-function pet(kind, a, pose) {
+function pet(kind, a, pose, u = 'x') {
+  const modern = petArt(kind, a, pose, u); if (modern) return modern;
   const c = a.c, d = shade(c, .78), w = a.c2 || '#fff', S = `stroke="${INK}" stroke-width="2.6" stroke-linejoin="round" stroke-linecap="round"`;
   const sleepy = pose === 'sleep', eye = (x, y) => sleepy ? `<path d="M${x - 4} ${y}Q${x} ${y + 4} ${x + 4} ${y}" stroke="${INK}" stroke-width="2.4" fill="none"/>` : `<circle cx="${x}" cy="${y}" r="3.2" fill="${INK}"/><circle cx="${x + 1}" cy="${y - 1}" r="1" fill="#fff"/>`;
   const mouthP = pose === 'play' ? `<path d="M44 52Q50 60 56 52Z" fill="#7a1f2b"/>` : `<path d="M46 52Q50 56 54 52" stroke="${INK}" stroke-width="2" fill="none" stroke-linecap="round"/>`;
@@ -115,7 +120,7 @@ function pet(kind, a, pose) {
   return art;
 }
 const petZ = (pose) => (pose === 'sleep' ? `<text x="70" y="18" font-size="16" fill="#6a5a96" font-weight="700" font-family="sans-serif">z</text><text x="80" y="8" font-size="12" fill="#6a5a96" font-weight="700" font-family="sans-serif">z</text>` : '');
-export const petSvg = (item, pose = 'sit', size = 90) => `<svg viewBox="-6 -6 112 112" width="${size}" height="${size}" style="width:${size}px;height:${size}px;max-width:100%" xmlns="http://www.w3.org/2000/svg" class="av-pet-solo"><g class="av-pet-body av-pose-${pose}">${pet(item.kind, item.art || {}, pose)}${petZ(pose)}</g></svg>`;
+export const petSvg = (item, pose = 'sit', size = 90) => `<svg viewBox="-6 -6 112 112" width="${size}" height="${size}" style="width:${size}px;height:${size}px;max-width:100%" xmlns="http://www.w3.org/2000/svg" class="av-pet-solo"><g class="av-pet-body av-pose-${pose}">${pet(item.kind, item.art || {}, pose, 's' + (++counter))}${petZ(pose)}</g></svg>`;
 
 /* ---------- backgrounds, effects, styles ---------- */
 function background(item, u) {
@@ -185,7 +190,7 @@ export function renderAvatar({ style = 'cartoon', look = {}, equipped = {}, size
   const aura = fantasy ? `<ellipse cx="120" cy="190" rx="92" ry="140" fill="#c9b6f2" opacity=".28"/>${[[30, 80], [206, 120], [44, 220], [194, 250]].map(([x, y], i) => `<path class="av-tw" style="animation-delay:${i * .4}s" d="M${x} ${y - 8}l2.6 5.4 5.4 2.6-5.4 2.6-2.6 5.4-2.6-5.4-5.4-2.6 5.4-2.6z" fill="#fff6a8"/>`).join('')}` : '';
   const anim = get('animation') && get('animation').art ? get('animation').art.v : '';
   const petItem = get('pet'), petLook = petItem && !petItem.image ? petItem : null;
-  const petG = petItem ? `<g class="av-pet" ${LT} transform="translate(150 244) scale(.62)"><g class="av-pet-body av-pose-${petPose}">${petItem.image ? `<image href="${petItem.image}" x="0" y="0" width="100" height="100"/>` : pet(petItem.kind, petItem.art || {}, petPose)}${petZ(petPose)}</g></g>` : '';
+  const petG = petItem ? `<g class="av-pet" transform="translate(150 244) scale(.62)"><g class="av-pet-body av-pose-${petPose}">${petItem.image ? `<image href="${petItem.image}" x="0" y="0" width="100" height="100"/>` : pet(petItem.kind, petItem.art || {}, petPose, u)}${petZ(petPose)}</g></g>` : '';
   const col = get('collectible'), collectG = col && col.art ? `<g transform="translate(30 286) scale(.9)">${col.image ? '' : (COLLECT[col.art.v] || (() => ''))(col.art)}</g>` : '';
   const filters = `<defs><filter id="fg${u}"><feColorMatrix type="matrix" values="0.345 0.678 0.127 0 0.08  0.264 0.519 0.097 0 0.03  0.09 0.177 0.033 0 0  0 0 0 1 0"/></filter><filter id="fn${u}" x="-30%" y="-30%" width="160%" height="160%"><feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="${st && st.art && st.art.c || '#5ef2ff'}"/><feDropShadow dx="0" dy="0" stdDeviation="9" flood-color="${st && st.art && st.art.c2 || '#ff5fa2'}"/></filter><filter id="fh${u}"><feColorMatrix type="matrix" values="0.8 0.1 0.1 0 0.15  0.1 0.8 0.2 0 0.2  0.2 0.2 0.8 0 0.3  0 0 0 0.72 0"/></filter></defs>`;
   const flt = sv === 'gold' ? `filter="url(#fg${u})"` : sv === 'neon' ? `filter="url(#fn${u})"` : sv === 'ghost' ? `filter="url(#fh${u})"` : '';

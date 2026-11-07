@@ -5,12 +5,12 @@ const STYLES = ['cartoon', 'modern', 'fantasy', 'animal', 'robot'];
 const SLOTS = ['top', 'bottom', 'dress', 'outfit', 'shoes', 'hat', 'glasses', 'headphones', 'back', 'wrist', 'neck', 'wings', 'mask', 'pet', 'background', 'effect', 'animation', 'style', 'collectible'];
 const KIND_SLOT = { tee: 'top', hoodie: 'top', jacket: 'top', shirt: 'top', pants: 'bottom', shorts: 'bottom', dress: 'dress', shoes: 'shoes', costume: 'outfit', seasonal: 'outfit',
   glasses: 'glasses', sunglasses: 'glasses', hat: 'hat', cap: 'hat', headphones: 'headphones', backpack: 'back', watch: 'wrist', necklace: 'neck', wings: 'wings', mask: 'mask',
-  cat: 'pet', dog: 'pet', rabbit: 'pet', fox: 'pet', dragon: 'pet', bird: 'pet', dino: 'pet', fantasy: 'pet',
+  cat: 'pet', dog: 'pet', rabbit: 'pet', fox: 'pet', dragon: 'pet', bird: 'pet', dino: 'pet', fantasy: 'pet', panda: 'pet', redpanda: 'pet', hamster: 'pet', penguin: 'pet',
   animation: 'animation', background: 'background', effect: 'effect', style: 'style', collectible: 'collectible' };
 const KINDS = Object.keys(KIND_SLOT);
 const CATEGORY = (kind) => (['tee', 'hoodie', 'jacket', 'shirt', 'pants', 'shorts', 'dress', 'shoes', 'costume', 'seasonal'].includes(kind) ? 'clothing'
   : ['glasses', 'sunglasses', 'hat', 'cap', 'headphones', 'backpack', 'watch', 'necklace', 'wings', 'mask'].includes(kind) ? 'accessory'
-  : ['cat', 'dog', 'rabbit', 'fox', 'dragon', 'bird', 'dino', 'fantasy'].includes(kind) ? 'pet' : 'special');
+  : ['cat', 'dog', 'rabbit', 'fox', 'dragon', 'bird', 'dino', 'fantasy', 'panda', 'redpanda', 'hamster', 'penguin'].includes(kind) ? 'pet' : 'special');
 const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
 const POSES = ['sit', 'play', 'sleep'];
 const EARN_TYPES = ['lessons', 'streak', 'xp', 'levels', 'words', 'tokens', 'missions'];

@@ -92,3 +92,6 @@
 }
 @media (max-width: 520px) { .av-grid { grid-template-columns: repeat(3, 1fr); } .av-shop-grid { grid-template-columns: repeat(2, 1fr); gap: 10px; } .av-mini { width: 62px; min-height: 62px; } .av-btn { padding: 8px 12px; } .av-nav-item { padding: 6px 10px; font-size: .85rem; } .av-balance-card .av-btn { margin-left: 0; } }
 @media (prefers-reduced-motion: reduce) { .av-eyes, .av-pet-body, .av-tw, .av-rise, .av-fall, .av-fx-flames, .av-burst-coin { animation: none; } }
+
+/* pets: larger preview in the shop */
+.av-pet-stage { display: grid; place-items: center; margin: 4px auto 8px; padding: 8px; border-radius: 22px; background: radial-gradient(circle at 50% 40%, #fff, #e9e2ff 70%); border: 3px solid rgba(255, 255, 255, .9); box-shadow: inset 0 -8px 18px rgba(106, 78, 200, .12); } .av-pet-big svg { display: block; filter: drop-shadow(0 6px 8px rgba(60, 40, 120, .22)); } .av-chips.center { justify-content: center; margin: 6px 0; }

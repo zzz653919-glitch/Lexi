@@ -3,7 +3,7 @@ import { h, toast, confirmDialog } from '../ui.js';
 import { post, put } from '../api.js';
 import { t } from '../i18n.js';
 import { navigate, refreshStats } from '../app.js';
-import { renderAvatar, itemSvg } from '../avatar/render.js';
+import { renderAvatar, itemSvg, petSvg } from '../avatar/render.js';
 import { A, loadBoot, equippedItems, avatarNav, rarityBadge, tokenAmount, setBalance, coinSvg, activeAvatar } from '../avatar/ui.js';
 
 const CATS = [['clothing', '👕'], ['accessory', '🕶️'], ['pet', '🐾'], ['special', '✨']];
@@ -61,9 +61,13 @@ export default async function avatarShop() {
     closeModal();
     const a = activeAvatar() || { name: t('av.you'), style: 'cartoon', look: {}, equipped: {}, petPose: 'sit' };
     const eq = { ...equippedItems(a.equipped), [it.slot]: it };
-    const art = h('span', { class: 'av-wrap' }); art.innerHTML = renderAvatar({ style: a.style, look: a.look, equipped: eq, size: 280, petPose: a.petPose || 'sit', label: it.name });
+    let pose = a.petPose || 'sit';
+    const art = h('span', { class: 'av-wrap' }), big = h('div', { class: 'av-pet-big', id: 'av-pet-big' });
+    const paint = () => { art.innerHTML = renderAvatar({ style: a.style, look: a.look, equipped: eq, size: it.slot === 'pet' ? 200 : 280, petPose: pose, label: it.name }); if (it.slot === 'pet') big.innerHTML = petSvg(it, pose, 190); };
+    paint();
+    const poses = it.slot === 'pet' ? h('div', { class: 'av-chips center', role: 'group', 'aria-label': t('av.pose') }, ...['sit', 'play', 'sleep'].map((p) => h('button', { type: 'button', class: 'av-chip' + (p === pose ? ' on' : ''), 'data-pose': p, onclick: (e) => { pose = p; poses.querySelectorAll('.av-chip').forEach((c) => c.classList.toggle('on', c === e.currentTarget)); paint(); } }, t('av.pose.' + p)))) : null;
     modal = h('div', { class: 'av-modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'av-try-h', onclick: (e) => { if (e.target === modal) closeModal(); } },
-      h('div', { class: 'av-modal-card' }, h('h2', { id: 'av-try-h' }, t('av.try_on')), h('div', { class: 'av-stage-card small' }, art), h('h3', {}, it.name), h('div', { class: 'av-item-meta center' }, rarityBadge(it.rarity), h('small', {}, KIND_LABEL(it.kind))), h('div', { class: 'center' }, priceLine(it)),
+      h('div', { class: 'av-modal-card' }, h('h2', { id: 'av-try-h' }, t('av.try_on')), it.slot === 'pet' ? h('div', { class: 'av-pet-stage' }, big) : null, h('div', { class: 'av-stage-card small' }, art), poses, h('h3', {}, it.name), h('div', { class: 'av-item-meta center' }, rarityBadge(it.rarity), h('small', {}, KIND_LABEL(it.kind))), h('div', { class: 'center' }, priceLine(it)),
         h('div', { class: 'av-actions center' }, actionBtn(it), h('button', { class: 'av-btn', type: 'button', id: 'av-try-close', onclick: closeModal }, t('av.close')))));
     document.addEventListener('keydown', onKey); document.body.append(modal); modal.querySelector('button').focus();
   }
