@@ -1,7 +1,7 @@
 /* Avatar Studio: what can be chosen. The free face parts are numbered options (the drawing lives in the browser); items come from the shop. */
-const LOOK = { shape: 5, skin: 8, hairStyle: 9, hairColor: 10, eyeStyle: 6, eyeColor: 8, brows: 5, mouth: 6 };
+const LOOK = { shape: 5, skin: 8, hairStyle: 6, hairColor: 10, eyeStyle: 6, eyeColor: 8, brows: 5, mouth: 6 };
 const DEFAULT_LOOK = { shape: 0, skin: 2, hairStyle: 1, hairColor: 1, eyeStyle: 0, eyeColor: 0, brows: 0, mouth: 0 };
-const STYLES = ['cartoon', 'modern', '3d', 'fantasy', 'animal', 'robot'];
+const STYLES = ['cartoon', 'modern', 'fantasy', 'animal', 'robot'];
 const SLOTS = ['top', 'bottom', 'dress', 'outfit', 'shoes', 'hat', 'glasses', 'headphones', 'back', 'wrist', 'neck', 'wings', 'mask', 'pet', 'background', 'effect', 'animation', 'style', 'collectible'];
 const KIND_SLOT = { tee: 'top', hoodie: 'top', jacket: 'top', shirt: 'top', pants: 'bottom', shorts: 'bottom', dress: 'dress', shoes: 'shoes', costume: 'outfit', seasonal: 'outfit',
   glasses: 'glasses', sunglasses: 'glasses', hat: 'hat', cap: 'hat', headphones: 'headphones', backpack: 'back', watch: 'wrist', necklace: 'neck', wings: 'wings', mask: 'mask',

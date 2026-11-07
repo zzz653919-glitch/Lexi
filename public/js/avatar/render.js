@@ -3,7 +3,7 @@ export const SKINS = ['#ffe0c7', '#fcd1ae', '#f1b98a', '#d99a6c', '#b97a4c', '#8
 export const HAIRS = ['#1c1a1a', '#3b2314', '#6b4423', '#a86b32', '#d9a441', '#f2d16b', '#c0392b', '#e86bb0', '#4a90e2', '#8e5bd9'];
 export const EYES = ['#3b2314', '#5a3a1f', '#2f7bff', '#2fb36d', '#7a8c99', '#8e5bd9', '#16b8a6', '#c0392b'];
 const METALS = ['#e8ecf5', '#cfd6e6', '#b4c6e8', '#9ad6c8', '#f3c6d9', '#f7d08a', '#c9b6f2', '#8e99ad'];
-export const STYLE_NAMES = ['cartoon', 'modern', '3d', 'fantasy', 'animal', 'robot'];
+export const STYLE_NAMES = ['cartoon', 'modern', 'fantasy', 'animal', 'robot'];
 const INK = '#2b2640';
 let counter = 0;
 const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16), f = (v) => Math.max(0, Math.min(255, Math.round(v * k))); return '#' + [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => f(v).toString(16).padStart(2, '0')).join(''); };
@@ -12,16 +12,20 @@ const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16), f = (v) => Mat
 const headShape = (i, f, S) => ([
   `<ellipse cx="120" cy="88" rx="52" ry="52" fill="${f}" ${S}/>`, `<ellipse cx="120" cy="90" rx="46" ry="58" fill="${f}" ${S}/>`, `<rect x="68" y="38" width="104" height="104" rx="30" fill="${f}" ${S}/>`,
   `<path d="M120 142C62 104 58 56 92 46C108 42 118 52 120 60C122 52 132 42 148 46C182 56 178 104 120 142Z" fill="${f}" ${S}/>`, `<ellipse cx="120" cy="92" rx="42" ry="62" fill="${f}" ${S}/>`][i] || '');
-function hairBack(i, c, S) {
-  return [ '', '', `<path d="M64 84C58 150 74 184 92 186L148 186C166 184 182 150 176 84Z" fill="${c}" ${S}/>`, `<path d="M64 84C60 130 70 142 88 144L152 144C170 142 180 130 176 84Z" fill="${c}" ${S}/>`,
-    `<path d="M168 78C204 82 210 132 188 166C178 134 178 104 166 92Z" fill="${c}" ${S}/>`, `<g fill="${c}" ${S}><circle cx="70" cy="86" r="18"/><circle cx="170" cy="86" r="18"/><circle cx="76" cy="110" r="15"/><circle cx="164" cy="110" r="15"/></g>`, '', '', '' ][i] || '';
+/* the hair is drawn from the head's own outline, so every hairstyle sits on every face shape */
+const HEAD_FIT = [{ top: 36, w: 52 }, { top: 32, w: 46 }, { top: 38, w: 52 }, { top: 44, w: 58 }, { top: 30, w: 42 }];
+const fit = (shape) => HEAD_FIT[shape] || HEAD_FIT[0];
+function hairBack(i, c, S, shape) {
+  const { w } = fit(shape), L = 120 - w - 8, R = 120 + w + 8;
+  return [ '', '', `<path d="M${L} 84C${L - 6} 150 ${L + 10} 184 92 186L148 186C${R - 10} 184 ${R + 6} 150 ${R} 84Z" fill="${c}" ${S}/>`, `<path d="M${L} 84C${L - 4} 130 ${L + 6} 142 88 144L152 144C${R - 6} 142 ${R + 4} 130 ${R} 84Z" fill="${c}" ${S}/>`,
+    `<path d="M${R - 8} 78C${R + 28} 82 ${R + 34} 132 ${R + 12} 166C${R + 2} 134 ${R + 2} 104 ${R - 10} 92Z" fill="${c}" ${S}/>`, `<g fill="${c}" ${S}><circle cx="${L + 6}" cy="86" r="18"/><circle cx="${R - 6}" cy="86" r="18"/><circle cx="${L + 12}" cy="110" r="15"/><circle cx="${R - 12}" cy="110" r="15"/></g>` ][i] || '';
 }
-function hairFront(i, c, S) {
-  const cap = `<path d="M66 82C64 36 176 36 174 82C160 64 142 58 120 58C98 58 80 64 66 82Z" fill="${c}" ${S}/>`;
-  return [ '', cap, cap, `<path d="M66 86C62 34 178 34 174 86C164 70 150 64 120 66C90 64 76 70 66 86Z" fill="${c}" ${S}/>`, cap,
-    `<g fill="${c}" ${S}><circle cx="86" cy="48" r="19"/><circle cx="112" cy="40" r="20"/><circle cx="138" cy="42" r="20"/><circle cx="160" cy="54" r="18"/><circle cx="76" cy="66" r="15"/></g>`,
-    `<path d="M66 84L72 38L90 60L100 28L116 56L132 24L142 58L160 34L166 62L176 84C160 66 142 62 120 62C98 62 80 66 66 84Z" fill="${c}" ${S}/>`,
-    `<g>${cap}<circle cx="120" cy="30" r="18" fill="${c}" ${S}/></g>`, `<path d="M104 62L110 16L120 8L130 16L136 62C128 58 112 58 104 62Z" fill="${c}" ${S}/>`][i] || '';
+function hairFront(i, c, S, shape) {
+  const { top, w } = fit(shape), L = 120 - w - 1, R = 120 + w + 1, cy = Math.round(86 - (86 - (top - 3)) / 0.75);
+  const cap = `<path d="M${L} 88C${L - 3} ${cy} ${R + 3} ${cy} ${R} 88C${R - 12} 70 ${R - 32} 63 120 63C${L + 32} 63 ${L + 12} 70 ${L} 88Z" fill="${c}" ${S}/>`;
+  const dy = top - 36;
+  return [ '', cap, cap, cap, cap,
+    `<g fill="${c}" ${S} transform="translate(0 ${dy})"><circle cx="86" cy="48" r="19"/><circle cx="112" cy="40" r="20"/><circle cx="138" cy="42" r="20"/><circle cx="160" cy="54" r="18"/><circle cx="76" cy="66" r="15"/><circle cx="${Math.max(164, R - 2)}" cy="68" r="14"/></g>` ][i] || '';
 }
 function eyes(i, col, S, robot, u) {
   if (robot) return `<g class="av-eyes"><rect x="86" y="80" width="22" height="18" rx="6" fill="${col}"/><rect x="132" y="80" width="22" height="18" rx="6" fill="${col}"/><rect x="90" y="83" width="6" height="5" rx="2" fill="#fff" opacity=".8"/><rect x="136" y="83" width="6" height="5" rx="2" fill="#fff" opacity=".8"/></g>`;
@@ -144,7 +148,7 @@ function effect(item, front) {
 /* opts: { style, look, equipped: {slot: item}, size, viewBox, plain (no background), pose } ; items are objects { kind, slot, art, image } */
 export function renderAvatar({ style = 'cartoon', look = {}, equipped = {}, size = 240, viewBox = '0 0 240 340', plain = false, label = '', petPose = 'sit' } = {}) {
   const u = ++counter, L = { shape: 0, skin: 2, hairStyle: 1, hairColor: 1, eyeStyle: 0, eyeColor: 0, brows: 0, mouth: 0, ...look };
-  const robot = style === 'robot', animal = style === 'animal', fantasy = style === 'fantasy', threeD = style === '3d';
+  const robot = style === 'robot', animal = style === 'animal', fantasy = style === 'fantasy', threeD = false;
   const S = style === 'cartoon' ? `stroke="${INK}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"` : style === 'modern' ? 'stroke="rgba(30,20,60,.2)" stroke-width="1.6" stroke-linejoin="round"' : '';
   let skin = SKINS[L.skin] || SKINS[2]; const metal = METALS[L.skin] || METALS[0];
   const hair = HAIRS[L.hairColor] || HAIRS[1], eyeC = EYES[L.eyeColor] || EYES[0];
@@ -177,7 +181,7 @@ export function renderAvatar({ style = 'cartoon', look = {}, equipped = {}, size
     : `${headShape(L.shape, F, S)}${threeD ? `<ellipse cx="102" cy="64" rx="18" ry="10" fill="#fff" opacity=".35"/>` : ''}`;
   const faceBits = robot ? `${eyes(L.eyeStyle, '#5ef2ff', S, true, u)}${mouth(L.mouth, true)}` : `${animalFace}${eyes(L.eyeStyle, eyeC, S, false, u)}${brows(L.brows, hair)}${animal ? '' : `<path d="M116 104Q120 108 124 104" stroke="${shade(skin, .7)}" stroke-width="2.4" fill="none" stroke-linecap="round"/>`}<ellipse cx="84" cy="109" rx="13" ry="8" fill="url(#bl${u})"/><ellipse cx="156" cy="109" rx="13" ry="8" fill="url(#bl${u})"/>${mouth(L.mouth, false)}`;
   const HG = `url(#hg${u})`, sheen = L.hairStyle === 0 || L.hairStyle === 8 ? '' : `<path d="M82 62Q108 44 142 54" stroke="#fff" stroke-opacity=".42" stroke-width="5" fill="none" stroke-linecap="round"/><path d="M150 58Q162 64 168 76" stroke="#fff" stroke-opacity=".25" stroke-width="3.5" fill="none" stroke-linecap="round"/>`;
-  const hairBk = robot ? '' : hairBack(L.hairStyle, HG, S), hairFt = robot ? '' : hairFront(L.hairStyle, HG, S) + sheen;
+  const hairBk = robot ? '' : hairBack(L.hairStyle, HG, S, L.shape), hairFt = robot ? '' : hairFront(L.hairStyle, HG, S, L.shape) + sheen;
   const aura = fantasy ? `<ellipse cx="120" cy="190" rx="92" ry="140" fill="#c9b6f2" opacity=".28"/>${[[30, 80], [206, 120], [44, 220], [194, 250]].map(([x, y], i) => `<path class="av-tw" style="animation-delay:${i * .4}s" d="M${x} ${y - 8}l2.6 5.4 5.4 2.6-5.4 2.6-2.6 5.4-2.6-5.4-5.4-2.6 5.4-2.6z" fill="#fff6a8"/>`).join('')}` : '';
   const anim = get('animation') && get('animation').art ? get('animation').art.v : '';
   const petItem = get('pet'), petLook = petItem && !petItem.image ? petItem : null;
