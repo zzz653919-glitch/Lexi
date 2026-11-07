@@ -46,9 +46,18 @@ const DEFAULTS = {
   xp_daily_bonus: 15,
   topic_test_pass_pct: 70,
   default_course_slug: 'lexio-roadmap',
+  // LEXIO TOKENS: what learning earns (each reward is paid once per achievement)
+  token_lesson: 10,
+  token_topic: 30,
+  token_test: 20,
+  token_mission: 15,
+  token_streak7: 50,
+  token_level: 100,
 };
 
 const SCHEMA = {
+  token_lesson: { t: 'int', min: 0, max: 5000 }, token_topic: { t: 'int', min: 0, max: 5000 }, token_test: { t: 'int', min: 0, max: 5000 },
+  token_mission: { t: 'int', min: 0, max: 5000 }, token_streak7: { t: 'int', min: 0, max: 5000 }, token_level: { t: 'int', min: 0, max: 5000 },
   site_name: { t: 'str', max: 60, min: 1 },
   tagline: { t: 'str', max: 140 },
   brand_color: { t: 'color' },

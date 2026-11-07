@@ -13,6 +13,7 @@ route('/admin', view('dashboard'), ['admin']);
 route('/admin/courses', view('courses'));
 route('/admin/curriculum', view('curriculum'));
 route('/admin/kids', view('kids'));
+route('/admin/avatar', view('avatar'), ['admin']);
 route('/admin/kids/:id', view('kids-category'));
 route('/admin/courses/:id', view('course'));
 route('/admin/lessons/:id', view('lesson'));
@@ -43,6 +44,7 @@ const NAV = [
   { key: 'courses', href: '/admin/courses', labelKey: 'adm.nav.courses', icon: 'path' },
   { key: 'curriculum', href: '/admin/curriculum', labelKey: 'adm.nav.curriculum', icon: 'list' },
   { key: 'kids', href: '/admin/kids', labelKey: 'adm.nav.kids', icon: 'star' },
+  { key: 'avatar', href: '/admin/avatar', labelKey: 'adm.nav.avatar', icon: 'user', roles: ['admin'] },
   { key: 'vocabulary', href: '/admin/vocabulary', labelKey: 'adm.nav.vocabulary', icon: 'book' },
   { key: 'assessment', href: '/admin/assessment', labelKey: 'adm.nav.assessment', icon: 'target' },
   { key: 'users', href: '/admin/users', labelKey: 'adm.nav.users', icon: 'users', roles: ['admin'] },

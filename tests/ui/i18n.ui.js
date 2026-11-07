@@ -61,7 +61,7 @@ const noOverflow = (page) => page.evaluate(() => document.documentElement.scroll
     check(s.db.get("SELECT ui_language l FROM users WHERE email='ru@example.com'").l === 'ru', 'the language is saved in the user profile');
     check(s.db.get("SELECT xp_total n FROM users WHERE email='ru@example.com'").n === xpBefore, 'switching does not change XP');
     const nav = await page.locator('.sidebar .nav a').allInnerTexts();
-    check(nav.length === 7 && !nav.some((t) => /^(Home|Courses|Profile|Practice|Vocabulary)$/i.test(t.trim())), 'the whole navigation is translated');
+    check(nav.length === 8 && !nav.some((t) => /^(Home|Courses|Profile|Practice|Vocabulary)$/i.test(t.trim())), 'the whole navigation is translated');
     // a second device (fresh browser context, English left over in its storage) gets the server-side language after sign-in
     const other = await openPage(browser, viewport, { lang: 'en' });
     other.expectedStatuses.add(401); other.setDefaultTimeout(15000);

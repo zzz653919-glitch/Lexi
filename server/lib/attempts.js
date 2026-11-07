@@ -13,7 +13,7 @@ function studyContent(json, lang) {
   return { objective: pick(c.objective) || '', explanation: pick(c.explanation) || '', tip: pick(c.tip) || '', examples: (c.examples || []).map((e) => ({ en: e.en, tr: pick(e.tr) || e.uz || '' })), vocabulary: (c.vocabulary || []).map((v) => ({ en: v.en, ipa: v.ipa || '', tr: v[lang] || v.uz || '' })) };
 }
 
-function make(db, settings, core, learning) {
+function make(db, settings, core, learning, hooks = {}) {
   const S = () => settings.all();
   const exerciseRow = async (id) => await db.get('SELECT * FROM exercises WHERE id = ?', id);
   const optionsOf = async (id) => await db.all('SELECT * FROM exercise_options WHERE exercise_id = ? ORDER BY position, id', id);
@@ -163,6 +163,7 @@ function make(db, settings, core, learning) {
     const full = await core.userById(user.id), s = S();
     const accuracy = a.total_planned ? Math.round(100 * a.correct / a.total_planned) : 0;
     let bonus = 0, perfect = 0;
+    let examPassed = null;
     const examRow = a.lesson_id ? await db.get('SELECT l.*, lv.exam_pass_pct FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE l.id = ?', a.lesson_id) : null;
     if (examRow && ['exam', 'topic_test', 'practice_test'].includes(examRow.kind)) {
       // an examination: scored here on the server from the stored answers; only a pass completes it (and opens what depends on it)
@@ -173,6 +174,7 @@ function make(db, settings, core, learning) {
       const skills = {};
       for (const r of rows) { const k = r.module || (r.type.startsWith('listen') ? 'listening' : r.type === 'reading' ? 'reading' : r.type === 'writing' ? 'writing' : r.type === 'speaking' ? 'speaking' : 'language'); const x = skills[k] || (skills[k] = { correct: 0, total: 0 }); x.total++; if (r.is_correct) x.correct++; }
       await db.run('INSERT INTO exam_results (user_id, lesson_id, attempt_id, kind, correct, total, score_pct, pass_pct, passed, skills, band, created_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)', user.id, a.lesson_id, a.id, examRow.kind, a.correct, total, score, pass, passed ? 1 : 0, JSON.stringify(skills), band, now());
+      examPassed = passed;
       if (passed) {
         bonus += await core.awardXp(full, examRow.xp_reward, 'lesson_complete', 'attempt', a.id);
         const prog = await db.get('SELECT * FROM user_progress WHERE user_id = ? AND lesson_id = ?', user.id, a.lesson_id);
@@ -199,7 +201,10 @@ function make(db, settings, core, learning) {
     const earned = await core.checkAchievements(user.id);
     const levelUp = await learning.maybeLevelUp(user.id);
     await db.run('UPDATE users SET last_active_at = ? WHERE id = ?', now(), user.id);
-    return { earned, levelUp };
+    // LEXIO TOKENS: paid only now, after a real completion, and once per achievement (the ledger refuses a repeat); never blocks the lesson
+    let tokens = null;
+    if (hooks.afterLearning) { try { tokens = await hooks.afterLearning(await core.userById(user.id), { lessonId: a.lesson_id, kind: examRow ? examRow.kind : null, attemptKind: a.kind, passed: examPassed }); } catch (e) { console.error('[tokens]', e.message); } }
+    return { earned, levelUp, tokens };
   }
 
   async function result(a, user, tl) {

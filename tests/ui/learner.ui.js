@@ -38,7 +38,7 @@ const A = require('../../server/lib/auth');
     check(new URL(page.url()).pathname === '/learn', 'choosing a level finishes onboarding and the learning path opens');
     const u = s.db.get("SELECT * FROM users WHERE email = 'anna@example.com'");
     check(u && u.role === 'learner' && u.daily_goal_xp === 20 && u.password_hash.startsWith('scrypt$'), 'account stored as learner with a hashed password and the chosen goal');
-    check((await page.locator('.sidebar .nav a').count()) === 7, 'desktop sidebar shows the 7 learner sections');
+    check((await page.locator('.sidebar .nav a').count()) === 8, 'desktop sidebar shows the 8 learner sections (with Avatar)');
     const labels = await page.locator('.sidebar .nav a').allInnerTexts();
     check(!labels.some((l) => /admin/i.test(l)), 'no admin navigation for learners');
     // sign out and in
