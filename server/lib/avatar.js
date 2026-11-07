@@ -37,7 +37,8 @@ function make({ db, settings, tokens }) {
     return out;
   }
   const cleanName = (v) => { const n = clean(v, 24); if (n.length < 1) throw bad('err.fix_fields', { name: 'val.avatar_name' }); return n; };
-  const shape = (a) => ({ id: a.id, name: a.name, style: a.style, look: JSON.parse(a.look || '{}'), equipped: JSON.parse(a.equipped || '{}'), petName: a.pet_name, petPose: a.pet_pose, favorite: !!a.favorite, updatedAt: a.updated_at });
+  const tidyLook = (l) => { for (const k of Object.keys(A.LOOK)) if (!(l[k] >= 0 && l[k] < A.LOOK[k])) l[k] = k === 'hairStyle' ? 1 : (A.DEFAULT_LOOK[k] || 0); return l; };
+  const shape = (a) => ({ id: a.id, name: a.name, style: A.STYLES.includes(a.style) ? a.style : 'cartoon', look: tidyLook(JSON.parse(a.look || '{}')), equipped: JSON.parse(a.equipped || '{}'), petName: a.pet_name, petPose: a.pet_pose, favorite: !!a.favorite, updatedAt: a.updated_at });
 
   /* ---------- what the learner has done (for earned items) ---------- */
   async function playerStats(user) {

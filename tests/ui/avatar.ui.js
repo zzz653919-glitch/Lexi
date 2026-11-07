@@ -23,7 +23,7 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     /* ---------- creating and customizing ---------- */
     await page.goto(s.base + '/avatar'); await page.waitForSelector('#av-stage svg');
     check(await page.locator('#av-new.on').count() === 1 && await page.locator('.av-tab').count() === 11, 'Avatar Studio opens a new character with eleven part tabs');
-    check(await page.locator('.av-tile[data-style]').count() === 6, 'six character styles (cute cartoon, modern 2D, 3D, fantasy, animal, robot)');
+    check(await page.locator('.av-tile[data-style]').count() === 5, 'five character styles (cute cartoon, modern 2D, fantasy, animal, robot)');
     const first = await stageHtml(page);
     await page.fill('#av-name', 'Nova');
     await page.click('.av-tile[data-style="fantasy"]');
@@ -117,7 +117,7 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
       await p.goto(s.base + '/avatar'); await p.waitForSelector('#av-stage svg');
       const sb = await p.locator('#av-stage svg').boundingBox(), tb = await p.locator('.av-tab').first().boundingBox();
       check(sb && sb.width > 150 && tb && tb.height >= 40, `${name}: a large preview and tappable tabs`);
-      await p.click('.av-tab[data-tab="hair"]'); await p.click('.av-tile[data-part="hairStyle"][data-index="6"]'); check(await p.locator('#av-save').isEnabled(), `${name}: editing works`);
+      await p.click('.av-tab[data-tab="hair"]'); await p.click('.av-tile[data-part="hairStyle"][data-index="5"]'); check(await p.locator('#av-save').isEnabled(), `${name}: editing works`);
       check(p.problems.length === 0, `${name}: no console problems ` + p.problems.join('; '));
       await p.context().close();
     }

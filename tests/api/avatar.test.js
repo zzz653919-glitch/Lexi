@@ -29,7 +29,7 @@ test('avatar studio: starter items, create / change / switch / delete characters
     const b = (await c.get('/api/avatar/bootstrap')).json;
     assert.strictEqual(b.avatars.length, 0); assert.strictEqual(b.wallet.balance, 0); assert.ok(b.items.length >= 100);
     assert.deepStrictEqual(b.items.filter((i) => i.owned).map((i) => i.slug).sort(), ['starter-jeans', 'starter-sneakers', 'starter-tee'], 'every account owns the starter clothes');
-    assert.strictEqual(b.spec.styles.length, 6); assert.strictEqual(b.spec.max, 6);
+    assert.strictEqual(b.spec.styles.length, 5); assert.strictEqual(b.spec.max, 6);
 
     assert.strictEqual((await c.post('/api/avatar/avatars', { name: '' })).status, 400);
     assert.strictEqual((await c.post('/api/avatar/avatars', { name: 'Zed', style: 'pixel' })).status, 400, 'unknown style');
