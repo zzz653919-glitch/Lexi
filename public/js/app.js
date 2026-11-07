@@ -29,6 +29,10 @@ route('/review', view('review'), { auth: true });
 route('/leaderboard', view('leaderboard'), { auth: true });
 route('/achievements', view('achievements'), { auth: true });
 route('/profile', view('profile'), { auth: true });
+route('/avatar', view('avatar-studio'), { auth: true });
+route('/avatar/inventory', async (ctx) => (await import('./views/avatar-studio.js')).default({ ...ctx, mode: 'inventory' }), { auth: true });
+route('/avatar/shop', view('avatar-shop'), { auth: true });
+route('/avatar/missions', view('avatar-missions'), { auth: true });
 route('/ielts', view('ielts'), { auth: true });
 route('/kids', view('kids-home'), { auth: true });
 route('/kids/lessons', view('kids-lessons'), { auth: true });
@@ -55,6 +59,7 @@ const NAV = [
   { key: 'review', href: '/review', label: 'nav.review', icon: 'cards', mobile: true },
   { key: 'leaderboard', href: '/leaderboard', label: 'nav.leaderboard', icon: 'trophy' },
   { key: 'achievements', href: '/achievements', label: 'nav.achievements', icon: 'star' },
+  { key: 'avatar', href: '/avatar', label: 'nav.avatar', icon: 'palette' },
   { key: 'profile', href: '/profile', label: 'nav.profile', icon: 'user', mobile: true },
 ];
 const stats = { data: null, prev: null };
@@ -113,11 +118,20 @@ function statChips(into) {
   into.append(
     flame,
     bolt,
+    s.tokens ? h('a', { class: 'chip coin', href: '/avatar/shop', title: t('av.balance'), 'data-balance': String(s.tokens.balance) }, icon('coin'), String(s.tokens.balance), h('span', { class: 'sr-only' }, ' ' + t('av.tokens'))) : null,
     s.hearts.enabled ? h('span', { class: 'chip heart', title: t('stats.hearts') }, icon('heart'), String(s.hearts.hearts), h('span', { class: 'sr-only' }, ' ' + t('stats.hearts'))) : null);
+}
+/* LEXIO TOKENS earned since the last look: one animation (the server remembers that it was shown) */
+const shownRewards = new Set();
+function rewardAnimation(data) {
+  const fresh = data && data.tokens ? data.tokens.unseen.filter((r) => !shownRewards.has(r.id)) : [];
+  if (!fresh.length) return;
+  fresh.forEach((r) => shownRewards.add(r.id));
+  import('./avatar/ui.js').then(async (m) => { await m.loadAvatarCss(); m.tokenBurst(fresh); }).catch(() => {});
 }
 export async function refreshStats() {
   if (!session.user) return;
-  try { stats.prev = stats.data; stats.data = await get('/me/stats'); if (shell) { statChips(shell.chipBox); statChips(shell.sideChips); stats.prev = null; } } catch (_) { /* optional */ }
+  try { stats.prev = stats.data; stats.data = await get('/me/stats'); if (shell) { statChips(shell.chipBox); statChips(shell.sideChips); stats.prev = null; } rewardAnimation(stats.data); } catch (_) { /* optional */ }
   return stats.data;
 }
 

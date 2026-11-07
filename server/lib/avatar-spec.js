@@ -1,0 +1,21 @@
+/* Avatar Studio: what can be chosen. The free face parts are numbered options (the drawing lives in the browser); items come from the shop. */
+const LOOK = { shape: 5, skin: 8, hairStyle: 9, hairColor: 10, eyeStyle: 6, eyeColor: 8, brows: 5, mouth: 6 };
+const DEFAULT_LOOK = { shape: 0, skin: 2, hairStyle: 1, hairColor: 1, eyeStyle: 0, eyeColor: 0, brows: 0, mouth: 0 };
+const STYLES = ['cartoon', 'modern', '3d', 'fantasy', 'animal', 'robot'];
+const SLOTS = ['top', 'bottom', 'dress', 'outfit', 'shoes', 'hat', 'glasses', 'headphones', 'back', 'wrist', 'neck', 'wings', 'mask', 'pet', 'background', 'effect', 'animation', 'style', 'collectible'];
+const KIND_SLOT = { tee: 'top', hoodie: 'top', jacket: 'top', shirt: 'top', pants: 'bottom', shorts: 'bottom', dress: 'dress', shoes: 'shoes', costume: 'outfit', seasonal: 'outfit',
+  glasses: 'glasses', sunglasses: 'glasses', hat: 'hat', cap: 'hat', headphones: 'headphones', backpack: 'back', watch: 'wrist', necklace: 'neck', wings: 'wings', mask: 'mask',
+  cat: 'pet', dog: 'pet', rabbit: 'pet', fox: 'pet', dragon: 'pet', bird: 'pet', dino: 'pet', fantasy: 'pet',
+  animation: 'animation', background: 'background', effect: 'effect', style: 'style', collectible: 'collectible' };
+const KINDS = Object.keys(KIND_SLOT);
+const CATEGORY = (kind) => (['tee', 'hoodie', 'jacket', 'shirt', 'pants', 'shorts', 'dress', 'shoes', 'costume', 'seasonal'].includes(kind) ? 'clothing'
+  : ['glasses', 'sunglasses', 'hat', 'cap', 'headphones', 'backpack', 'watch', 'necklace', 'wings', 'mask'].includes(kind) ? 'accessory'
+  : ['cat', 'dog', 'rabbit', 'fox', 'dragon', 'bird', 'dino', 'fantasy'].includes(kind) ? 'pet' : 'special');
+const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+const POSES = ['sit', 'play', 'sleep'];
+const EARN_TYPES = ['lessons', 'streak', 'xp', 'levels', 'words', 'tokens', 'missions'];
+const MAX_AVATARS = 6;
+const REWARD_KEYS = ['token_lesson', 'token_topic', 'token_test', 'token_mission', 'token_streak7', 'token_level'];
+/* the character level grows with XP (XP itself is never spent) */
+const charLevel = (xp) => { const x = Math.max(0, Number(xp) || 0), lv = 1 + Math.floor(Math.sqrt(x / 40)), at = (n) => 40 * (n - 1) * (n - 1); return { level: lv, from: at(lv), next: at(lv + 1), pct: Math.round(100 * (x - at(lv)) / (at(lv + 1) - at(lv))) }; };
+module.exports = { LOOK, DEFAULT_LOOK, STYLES, SLOTS, KIND_SLOT, KINDS, CATEGORY, RARITIES, POSES, EARN_TYPES, MAX_AVATARS, REWARD_KEYS, charLevel };

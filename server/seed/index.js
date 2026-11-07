@@ -95,4 +95,4 @@ async function ensureSample(db) {
   return { created: true, ...total };
 }
 
-module.exports = { ensureSample, ensureAssessmentContent, ensureRoadmap: (db) => require('./roadmap').ensure(db), ensureKids: (db) => require('./kids').ensureKids(db), lessonExercises };
+module.exports = { ensureSample, ensureAssessmentContent, ensureRoadmap: (db) => require('./roadmap').ensure(db), ensureKids: (db) => require('./kids').ensureKids(db), ensureAvatar: (db) => require('./avatar').ensureAvatar(db), lessonExercises };

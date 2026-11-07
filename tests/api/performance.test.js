@@ -17,7 +17,7 @@ test('busy endpoints use few database queries', async () => {
     queries = 0; await c.get('/api/public/config'); assert.strictEqual(queries, 0, 'the public settings need no query');
     queries = 0; await c.get('/api/i18n/uz'); assert.strictEqual(queries, 0, 'the interface texts need no query');
     await count('/api/auth/me', 1);                // session and account in one query
-    await count('/api/me/stats', 5);
+    await count('/api/me/stats', 8);   // streak, day, review, wallet, unseen rewards + the throttled mission check
     await count('/api/kids/profile', 6);           // read by every Kids page
     await count('/api/kids/overview', 11);
     await count('/api/kids/progress', 11);

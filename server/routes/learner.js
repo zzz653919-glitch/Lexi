@@ -5,7 +5,7 @@ const L10N = require('../lib/localize');
 const IELTS = require('../lib/ielts');
 const { now, clean, int, clamp, HttpError, bad, escapeLike, weekStart, addDays } = require('../lib/util');
 
-module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n, learning, daily: dailySummary, roadmap }) {
+module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n, learning, daily: dailySummary, roadmap, tokens, avatar }) {
   const r = express.Router();
   r.use(auth.requireUser);
 
@@ -43,8 +43,9 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
 
   r.get('/me/stats', async (req, res) => {
     const user = req.user;   // the chips of every page: the reads run together
-    const [streak, today, rc] = await Promise.all([core.streakInfo(user), core.dayInfo(user), review.counts(user)]);
-    res.json({ xpTotal: user.xp_total, streak, hearts: core.heartState(user), today, reviewDue: rc.due });
+    await avatar.maybeSync(user).catch(() => {});   // missions finished by reviewing words etc. are paid here (at most once a minute per account)
+    const [streak, today, rc, wal, fresh] = await Promise.all([core.streakInfo(user), core.dayInfo(user), review.counts(user), tokens.wallet(user.id), tokens.unseen(user.id)]);
+    res.json({ xpTotal: user.xp_total, streak, hearts: core.heartState(user), today, reviewDue: rc.due, tokens: { balance: wal.balance, earned: wal.earned, unseen: fresh } });
   });
 
   /* ---------- path, dashboard ---------- */

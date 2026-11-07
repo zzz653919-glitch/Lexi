@@ -9,7 +9,7 @@ const flat = (v) => (typeof v === 'string' ? v : null);
 const PREFIXES = [...new Set(Object.keys(dict.en).map((k) => k.split('.')[0]))];
 /* English interface texts that must not appear when the page is in uz / ru: values of the English dictionary that differ in that language */
 const englishOnly = (lang) => { const out = []; for (const [k, v] of Object.entries(dict.en)) { const e = flat(v), x = flat(dict[lang][k]); if (e && x && e !== x && e.trim().length >= 4 && /[A-Za-z]{3}/.test(e) && !k.startsWith('lang.native')) out.push(e.trim()); } return [...new Set(out)].filter((x) => !KEEP.has(x)); };
-const KEEP = new Set(['Listening', 'Reading', 'Writing', 'Speaking', 'Greetings', 'Collocations', 'Animals', 'Colors']);   // IELTS part names; course, topic and category names that are content (edited per language in the admin panel)
+const KEEP = new Set(['Listening', 'Reading', 'Writing', 'Speaking', 'Greetings', 'Collocations', 'Animals', 'Colors', 'LEXIO TOKENS', 'Clothes', 'Green meadow', 'Outer space', 'Candy land', 'Magic forest', 'Red', 'Orange', 'Yellow', 'Green', 'Blue', 'Purple', 'Pink', 'Brown', 'Black', 'White']);   // plus the English names of the colours (they are learning content in the colouring game) and of shop items (data edited in the admin panel)   // IELTS part names; course, topic and category names that are content (edited per language in the admin panel)
 const EN_ONLY = { uz: englishOnly('uz'), ru: englishOnly('ru') };
 
 /* runs in the page: raw keys and English interface text among the visible texts and attributes */
@@ -120,9 +120,9 @@ const overflow = (page) => page.evaluate(() => document.documentElement.scrollWi
 
     /* ---------- every page in every language ---------- */
     const GUEST = ['/', '/login', '/register', '/forgot'];
-    const LEARNER = ['/', '/learn', '/vocabulary', '/review', '/practice', '/leaderboard', '/achievements', '/profile', '/ielts', '/results', '/welcome'];
+    const LEARNER = ['/', '/learn', '/vocabulary', '/review', '/practice', '/leaderboard', '/achievements', '/profile', '/ielts', '/results', '/welcome', '/avatar', '/avatar/inventory', '/avatar/shop', '/avatar/missions'];
     const KIDS = ['/kids', '/kids/lessons', '/kids/games', '/kids/stories', '/kids/world', '/kids/stickers', '/kids/progress', '/kids/speak', '/kids/coloring', '/kids/coloring/cat', '/kids/parents', '/kids/learn/animals', '/kids/games/memory', '/kids/games/puzzle', '/kids/games/catcher', '/kids/stories/bunny'];
-    const ADMIN = ['/admin', '/admin/courses', '/admin/courses/' + course.id, '/admin/curriculum', '/admin/kids', '/admin/kids/1', '/admin/vocabulary', '/admin/assessment', '/admin/users', '/admin/settings', '/admin/translations'];
+    const ADMIN = ['/admin', '/admin/courses', '/admin/courses/' + course.id, '/admin/curriculum', '/admin/kids', '/admin/kids/1', '/admin/vocabulary', '/admin/assessment', '/admin/users', '/admin/settings', '/admin/translations', '/admin/avatar'];
     for (const lang of ['uz', 'ru', 'en']) {
       await setLang(lang);
       const att = (await L.post(`/api/lessons/${lesson.id}/start`, {})).json;
