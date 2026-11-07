@@ -3,7 +3,8 @@ import { h, toast, confirmDialog } from '../ui.js';
 import { post, put } from '../api.js';
 import { t } from '../i18n.js';
 import { navigate, refreshStats } from '../app.js';
-import { renderAvatar, itemSvg, petSvg } from '../avatar/render.js';
+import { itemSvg } from '../avatar/render.js';
+import { openFitting, closeFitting } from '../avatar/fitting.js';
 import { A, loadBoot, equippedItems, avatarNav, rarityBadge, tokenAmount, setBalance, coinSvg, activeAvatar } from '../avatar/ui.js';
 
 const CATS = [['clothing', '👕'], ['accessory', '🕶️'], ['pet', '🐾'], ['special', '✨']];
@@ -27,8 +28,8 @@ export default async function avatarShop() {
     return h('button', { class: 'av-btn go buy', type: 'button', 'data-act': 'buy', disabled: need > 0, title: need > 0 ? t('av.need_more', { n: need }) : '', onclick: (e) => { e.stopPropagation(); buy(it); } }, need > 0 ? t('av.need_more', { n: need }) : t('av.buy'));
   }
   const card = (it) => { const thumb = h('span', { class: 'av-thumb' }); thumb.innerHTML = itemSvg(it, { ...look(), size: 110 });
-    return h('article', { class: 'av-item r-' + it.rarity + (it.owned ? ' owned' : ''), 'data-slug': it.slug, 'data-rarity': it.rarity, tabindex: 0, role: 'button', 'aria-label': it.name, onclick: () => tryOn(it), onkeydown: (e) => { if (e.key === 'Enter') tryOn(it); } },
-      thumb, h('h3', {}, it.name), h('div', { class: 'av-item-meta' }, rarityBadge(it.rarity), h('small', {}, KIND_LABEL(it.kind))), priceLine(it), actionBtn(it)); };
+    return h('article', { class: 'av-item r-' + it.rarity + (it.owned ? ' owned' : ''), 'data-slug': it.slug, 'data-rarity': it.rarity, tabindex: 0, role: 'button', 'aria-label': it.name, onclick: () => fitting(it), onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) fitting(it); } },
+      thumb, h('h3', {}, it.name), h('div', { class: 'av-item-meta' }, rarityBadge(it.rarity), h('small', {}, KIND_LABEL(it.kind))), priceLine(it), actionBtn(it), h('button', { class: 'av-btn fit', type: 'button', 'data-act': 'fit', title: t('av.fit.hint'), onclick: (e) => { e.stopPropagation(); fitting(it); } }, '🪞 ', t('av.fit'))); };
 
   function draw() {
     tabBar.querySelectorAll('.av-tab').forEach((b) => { const on = b.dataset.cat === cat; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
@@ -39,11 +40,11 @@ export default async function avatarShop() {
     grid.replaceChildren(...(list.length ? list.map(card) : [h('p', { class: 'av-empty' }, t('av.shop_empty'))]));
   }
   async function buy(it) {
-    if (!(await confirmDialog(t('av.buy_title'), t('av.buy_text', { name: it.name, price: it.price }), t('av.buy')))) return;
+    if (!(await confirmDialog(t('av.buy_title'), t('av.buy_text', { name: it.name, price: it.price }), t('av.buy')))) return false;
     try {
       const r = await post(`/avatar/shop/${encodeURIComponent(it.slug)}/buy`, {});
       boot.items.find((x) => x.slug === it.slug).owned = true; boot.wallet = r.wallet; setBalance(r.wallet.balance); syncBalance();
-      toast(t('av.bought', { name: it.name }), 'success', 3000); celebrate(it); draw(); refreshStats();
+      toast(t('av.bought', { name: it.name }), 'success', 3000); celebrate(it); draw(); refreshStats(); return true;
     } catch (e) { toast(e.message, 'error', 5000); await loadBoot(true).then(() => { setBalance(A.boot.wallet.balance); draw(); }); }
   }
   async function wear(it) {
@@ -54,23 +55,8 @@ export default async function avatarShop() {
   function celebrate(it) { const b = h('div', { class: 'av-buy-pop', role: 'status' }, '🎉 ', it.name); document.body.append(b); setTimeout(() => b.remove(), 2200); }
 
   const syncBalance = () => { const b = document.getElementById('av-shop-balance'); if (b) b.replaceChildren(tokenAmount(boot.wallet.balance)); };
-  let modal = null;
-  function closeModal() { if (modal) { modal.remove(); modal = null; document.removeEventListener('keydown', onKey); } }
-  const onKey = (e) => { if (e.key === 'Escape') closeModal(); };
-  function tryOn(it) {
-    closeModal();
-    const a = activeAvatar() || { name: t('av.you'), style: 'cartoon', look: {}, equipped: {}, petPose: 'sit' };
-    const eq = { ...equippedItems(a.equipped), [it.slot]: it };
-    let pose = a.petPose || 'sit';
-    const art = h('span', { class: 'av-wrap' }), big = h('div', { class: 'av-pet-big', id: 'av-pet-big' });
-    const paint = () => { art.innerHTML = renderAvatar({ style: a.style, look: a.look, equipped: eq, size: it.slot === 'pet' ? 200 : 280, petPose: pose, label: it.name }); if (it.slot === 'pet') big.innerHTML = petSvg(it, pose, 190); };
-    paint();
-    const poses = it.slot === 'pet' ? h('div', { class: 'av-chips center', role: 'group', 'aria-label': t('av.pose') }, ...['sit', 'play', 'sleep'].map((p) => h('button', { type: 'button', class: 'av-chip' + (p === pose ? ' on' : ''), 'data-pose': p, onclick: (e) => { pose = p; poses.querySelectorAll('.av-chip').forEach((c) => c.classList.toggle('on', c === e.currentTarget)); paint(); } }, t('av.pose.' + p)))) : null;
-    modal = h('div', { class: 'av-modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'av-try-h', onclick: (e) => { if (e.target === modal) closeModal(); } },
-      h('div', { class: 'av-modal-card' }, h('h2', { id: 'av-try-h' }, t('av.try_on')), it.slot === 'pet' ? h('div', { class: 'av-pet-stage' }, big) : null, h('div', { class: 'av-stage-card small' }, art), poses, h('h3', {}, it.name), h('div', { class: 'av-item-meta center' }, rarityBadge(it.rarity), h('small', {}, KIND_LABEL(it.kind))), h('div', { class: 'center' }, priceLine(it)),
-        h('div', { class: 'av-actions center' }, actionBtn(it), h('button', { class: 'av-btn', type: 'button', id: 'av-try-close', onclick: closeModal }, t('av.close')))));
-    document.addEventListener('keydown', onKey); document.body.append(modal); modal.querySelector('button').focus();
-  }
+  const closeModal = closeFitting;
+  const fitting = (it) => openFitting({ item: it, buy, refresh: () => { draw(); syncBalance(); } });
 
   tabBar.append(...CATS.map(([k, e]) => h('button', { type: 'button', class: 'av-tab', role: 'tab', 'data-cat': k, 'aria-selected': 'false', onclick: () => { cat = k; kind = ''; draw(); } }, h('span', { 'aria-hidden': 'true' }, e), h('b', {}, t('av.cat.' + k)))));
   const rar = h('select', { class: 'av-select', id: 'av-rarity', 'aria-label': t('av.filter_rarity'), onchange: (e) => { rarity = e.target.value; draw(); } }, h('option', { value: '' }, t('av.all_rarities')), ...boot.spec.rarities.map((r) => h('option', { value: r }, t('av.rarity.' + r))));

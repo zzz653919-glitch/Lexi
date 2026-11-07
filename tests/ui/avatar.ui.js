@@ -73,6 +73,39 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     await page.click('.av-item[data-slug="pet-tabby"] [data-act="buy"]'); await confirmYes(page); await page.waitForSelector('.av-item[data-slug="pet-tabby"] [data-owned]');
     check((await api(page, '/avatar/wallet')).wallet.balance === 120, 'a pet costs tokens too (160 → 120)');
 
+    /* ---------- fitting room (Primerka): a free preview, nothing is saved until the learner buys and equips ---------- */
+    const equippedNow = async () => JSON.stringify((await api(page, '/avatar/bootstrap')).avatars[0].equipped);
+    const eqBefore = await equippedNow();
+    await page.goto(s.base + '/avatar/shop'); await page.waitForSelector('.av-item');
+    check(await page.locator('.av-item [data-act="fit"]').count() === await page.locator('.av-item').count(), 'every shop item has its own Try on (Primerka) button');
+    await page.click('.av-item[data-slug="hoodie-gray"] [data-act="fit"]'); await page.waitForSelector('.av-fit #av-fit-grid .av-fit-tile');
+    check(await page.locator('.av-fit-face.front svg').count() === 1 && await page.locator('.av-fit-face.back svg').count() === 1 && await page.locator('.av-fit-tile[data-slug="hoodie-gray"].on').count() === 1, 'the fitting room shows the character from the front and the back, wearing the chosen item');
+    const f0 = await page.locator('.av-fit-face.front').innerHTML();
+    await page.click('.av-fit-room .av-tab[data-cat="accessory"]'); await page.click('.av-fit-tile[data-slug="cap-blue"]'); await page.click('.av-fit-tile[data-slug="glasses-red"]');
+    await page.click('.av-fit-room .av-tab[data-cat="pet"]'); await page.click('.av-fit-tile[data-slug="pet-corgi"]');
+    await page.click('.av-fit-room .av-tab[data-cat="clothing"]'); await page.click('.av-fit-tile[data-slug="pants-black"]');
+    check(await page.locator('.av-fit-tile.on').count() >= 1 && (await page.locator('.av-fit-face.front').innerHTML()) !== f0 && await page.locator('.av-fit-face.front .av-pet').count() === 1, 'several items can be tried on together (hoodie, trousers, cap, glasses, pet) and the preview updates at once');
+    check((await api(page, '/avatar/wallet')).wallet.balance === 120 && (await equippedNow()) === eqBefore, 'trying on is free and saves nothing');
+    await page.click('.av-fit-room .av-tab[data-cat="pet"]'); await page.click('.av-fit-tile[data-slug="pet-corgi"]'); await page.click('.av-fit-actions [data-act="remove"]');
+    check(await page.locator('.av-fit-tile[data-slug="pet-corgi"].on').count() === 0 && await page.locator('.av-fit-face.front .av-pet').count() === 0, 'Remove takes the selected item off the preview');
+    await page.click('.av-fit-actions [data-act="reset"]');
+    check(await page.locator('.av-fit-tile.on').count() === 0 || (await page.locator('.av-fit-actions [data-act="reset"]').isDisabled()), 'Reset restores the saved appearance');
+    await page.click('.av-fit-room .av-tab[data-cat="clothing"]'); await page.click('.av-fit-tile[data-slug="hoodie-gray"]');
+    const turn0 = await page.getAttribute('#av-fit-stage', 'data-view'); await page.click('#av-fit-right'); await page.click('#av-fit-right'); await page.click('#av-fit-right');
+    check(turn0 === 'front' && await page.getAttribute('#av-fit-stage', 'data-view') === 'back' && await page.locator('#av-fit-turn').evaluate((e) => e.style.getPropertyValue('--a')) === '180deg', 'the character can be turned to see it from another angle (front, three-quarter, back)');
+    check(await page.locator('.av-fit-actions [data-act="equip"]').count() === 0 && await page.locator('.av-fit-actions [data-act="buy"]').count() === 1, 'an item that is not owned offers Buy, not Equip');
+    await page.click('.av-fit-room .av-tab[data-cat="clothing"]'); await page.click('.av-fit-tile[data-slug="tee-blue"]');
+    await page.click('.av-fit-actions [data-act="save"]');
+    check(await equippedNow() === eqBefore, 'saving a look never equips an item that is not owned');
+    await page.click('.av-fit-actions [data-act="buy"]'); await confirmYes(page); await page.waitForSelector('.av-fit-actions [data-act="equip"]');
+    check((await api(page, '/avatar/wallet')).wallet.balance === 80 && (await page.locator('#av-fit-balance').innerText()).includes('80'), 'only a confirmed purchase takes tokens (120 → 80) and the fitting room shows the new balance');
+    await page.click('.av-fit-actions [data-act="equip"]'); await page.waitForFunction(() => document.querySelector('.av-fit-actions [data-act="equip"]').disabled);
+    check((await api(page, '/avatar/bootstrap')).avatars[0].equipped.top === 'tee-blue', 'an owned item can be equipped from the fitting room and is saved');
+    await page.click('.av-fit-tile[data-slug="costume-hero"]'); await page.keyboard.press('Escape'); await page.waitForSelector('.av-fit', { state: 'detached' });
+    check((await equippedNow()).includes('tee-blue') && !(await equippedNow()).includes('costume-hero') && !(await equippedNow()).includes('pet-corgi'), 'leaving the fitting room drops the preview and keeps the saved appearance');
+    const fit = await page.evaluate(async () => { const R = await import('/js/avatar/render.js'); return [R.fitsStyle('animal', { slot: 'hat' }), R.fitsStyle('robot', { slot: 'glasses' }), R.fitsStyle('cartoon', { slot: 'hat' }), R.fitsStyle('animal', { slot: 'headphones' })]; });
+    check(fit.join() === 'false,false,true,true', 'items that do not fit a character model (hats on the animal ears, glasses on the robot visor) are refused');
+
     /* ---------- inventory, pets ---------- */
     await page.goto(s.base + '/avatar/inventory'); await page.waitForSelector('#av-stage svg');
     check(await page.locator('.av-tab').count() === 6 && await page.locator('.av-tile[data-slug="tee-red"]').count() === 1 && await page.locator('.av-tile[data-slug="hoodie-gray"]').count() === 0, 'the inventory shows only owned items');
@@ -96,7 +129,7 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     await T.earn(uid, { ref: 'ui:anim', amount: 25, reason: 'lesson' });
     await page.goto(s.base + '/'); await page.waitForSelector('.av-burst');
     check(await page.getAttribute('.av-burst', 'data-total') === '25' && await page.locator('.av-fall-coin').count() > 5, 'earning tokens plays a reward animation');
-    check((await page.locator('.chip.coin').first().innerText()).includes('145') && await page.locator('.chip.bolt').count() >= 1, 'the token chip shows the balance next to (separate from) XP');
+    check((await page.locator('.chip.coin').first().innerText()).includes('105') && await page.locator('.chip.bolt').count() >= 1, 'the token chip shows the balance next to (separate from) XP');
     await page.waitForSelector('.av-burst', { state: 'detached', timeout: 8000 }); await page.reload(); await page.waitForSelector('.chip.coin'); await page.waitForTimeout(900);
     check(await page.locator('.av-burst').count() === 0, 'the animation is shown only once');
 
