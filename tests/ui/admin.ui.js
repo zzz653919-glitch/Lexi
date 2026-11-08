@@ -133,9 +133,16 @@ const { check, withBrowser, openPage, summary, loginUI, startServer, Client } = 
     await page.fill('input[type=search]', 'lena'); await page.waitForFunction(() => document.querySelectorAll('.tbl tbody tr').length === 1);
     await page.click('.tbl a:has-text("Lena")'); await page.waitForSelector('.stat-grid');
     check((await page.locator('body').innerText()).includes('learner@example.com') && !(await page.content()).includes('scrypt'), 'user detail shows activity but never password data');
-    await page.click('button:has-text("Suspend")'); await page.click('dialog button.danger'); await page.waitForSelector('.badge.tag-suspended');
-    check(s.db.get("SELECT status n FROM users WHERE email = 'learner@example.com'").n === 'suspended', 'a user can be suspended (with confirmation)');
-    await page.click('button:has-text("Reactivate")'); await page.waitForSelector('.badge.tag-active'); check(true, 'and reactivated');
+    await page.click('#user-block'); await page.fill('dialog textarea', 'Cheating on tests'); await page.click('dialog button[type=submit]'); await page.waitForSelector('.badge.tag-suspended');
+    check(s.db.get("SELECT status n FROM users WHERE email = 'learner@example.com'").n === 'suspended' && s.db.get("SELECT blocked_reason n FROM users WHERE email = 'learner@example.com'").n === 'Cheating on tests', 'a user can be blocked, with a reason');
+    check((await page.locator('#user-blocked-note').innerText()).includes('Cheating on tests'), 'the user page shows that the account is blocked and why');
+    await page.click('#user-unblock'); await page.waitForSelector('.badge.tag-active'); check(s.db.get("SELECT blocked_reason n FROM users WHERE email = 'learner@example.com'").n === '', 'and unblocked (the reason is cleared)');
+    await page.click('#user-give-tokens'); await page.fill('dialog input[type=number]', '120'); await page.fill('dialog input[maxlength="100"]', 'Prize'); await page.click('dialog button[type=submit]');
+    await page.waitForFunction(() => /120/.test((document.getElementById('user-token-balance') || {}).textContent || ''));
+    check((await page.locator('#user-tokens').innerText()).includes('Prize') || (await page.locator('#user-tokens').innerText()).includes('+120'), 'an administrator can give tokens to a user; the balance and the ledger show it');
+    await page.goto(s.base + '/admin/users'); await page.waitForSelector('.tbl tbody tr');
+    check(await page.locator('[data-act="block"]').count() >= 1 && await page.locator('[data-act="tokens"]').count() >= 1, 'the users list has Block and Give tokens buttons on every row');
+    await page.fill('input[type=search]', 'lena'); await page.waitForFunction(() => document.querySelectorAll('.tbl tbody tr').length === 1); await page.click('.tbl a:has-text("Lena")'); await page.waitForSelector('.stat-grid');
     await page.selectOption('select[aria-label=Role]', 'editor'); await page.click('button:has-text("Change role")'); await page.waitForSelector('.toast');
     check(s.db.get("SELECT role n FROM users WHERE email = 'learner@example.com'").n === 'editor', 'roles are changed by an administrator');
     await page.selectOption('select[aria-label=Role]', 'learner'); await page.click('button:has-text("Change role")');
@@ -147,7 +154,7 @@ const { check, withBrowser, openPage, summary, loginUI, startServer, Client } = 
     check(true, 'progress reset after typed confirmation');
     // own row cannot be demoted
     await page.goto(s.base + '/admin/users'); await page.click('.tbl a:has-text("Boss")'); await page.waitForSelector('.stat-grid');
-    check(await page.locator('button:has-text("Suspend")').isDisabled() && await page.locator('button:has-text("Change role")').isDisabled(), 'an administrator cannot suspend or demote themselves in the UI either');
+    check(await page.locator('#user-block').isDisabled() && await page.locator('button:has-text("Change role")').isDisabled(), 'an administrator cannot suspend or demote themselves in the UI either');
 
     /* ---------- settings ---------- */
     await page.click('.adm-side a:has-text("Settings")'); await page.waitForSelector('input[name=site_name]');

@@ -248,10 +248,13 @@ test('user management: suspend, reactivate, list, detail, reset progress with co
     assert.strictEqual(detail.lessonsCompleted, 1); assert.strictEqual(detail.user.xpTotal, 150); assert.ok(!JSON.stringify(detail).includes('password'), 'never any password data');
     assert.strictEqual(detail.week.length, 7); assert.ok(detail.recent.length >= 1);
     const list = (await a.get('/api/admin/users?q=lea&role=learner&status=active&pageSize=5')).json; assert.strictEqual(list.total, 1); assert.ok(!JSON.stringify(list).includes('password'));
-    assert.strictEqual((await a.post(`/api/admin/users/${lid}/suspend`)).json.status, 'suspended');
+    const blk = (await a.post(`/api/admin/users/${lid}/suspend`, { reason: 'Shared an answer key' })).json; assert.strictEqual(blk.status, 'suspended'); assert.strictEqual(blk.blockedReason, 'Shared an answer key');
     assert.strictEqual((await l.get('/api/me/stats')).status, 401, 'suspension ends the session');
-    assert.strictEqual((await new Client(s.base).post('/api/auth/login', { email: 'learner@example.com', password: 'Passw0rd!x' })).status, 403);
-    await a.post(`/api/admin/users/${lid}/reactivate`); await l.login('learner@example.com');
+    const denied = await new Client(s.base).post('/api/auth/login', { email: 'learner@example.com', password: 'Passw0rd!x' }); assert.strictEqual(denied.status, 403); assert.match(denied.json.error, /Shared an answer key/, 'the person is told why');
+    assert.strictEqual((await a.get('/api/admin/users?status=suspended')).json.items[0].blockedReason, 'Shared an answer key');
+    const un = (await a.post(`/api/admin/users/${lid}/reactivate`)).json; assert.strictEqual(un.blockedReason, ''); await l.login('learner@example.com');
+    assert.strictEqual((await a.post(`/api/admin/avatar/users/${lid}/grant`, { amount: 75, note: 'Prize' })).status, 200);
+    assert.strictEqual((await a.get('/api/admin/users?q=lea')).json.items[0].tokens, (await a.get(`/api/admin/avatar/users/${lid}`)).json.wallet.balance, 'the users list shows the token balance (lesson reward + gift)');
     assert.strictEqual((await a.post(`/api/admin/users/${lid}/reset-progress`, {})).status, 400);
     assert.strictEqual((await a.post(`/api/admin/users/${lid}/reset-progress`, { confirmEmail: 'wrong@example.com' })).status, 400);
     assert.strictEqual((await a.post(`/api/admin/users/${lid}/reset-progress`, { confirmEmail: 'learner@example.com' })).status, 200);

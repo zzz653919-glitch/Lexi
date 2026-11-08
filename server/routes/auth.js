@@ -82,7 +82,7 @@ module.exports = function authRoutes({ db, settings, auth, core, opts }) {
     const u = A.validateEmail(email) ? await db.get('SELECT * FROM users WHERE email = ?', email) : null;
     const ok = A.verifyPassword(typeof password === 'string' ? password : '', u ? u.password_hash : A.DUMMY_HASH);
     if (!u || !ok) throw new HttpError(401, 'err.login_failed');
-    if (u.status !== 'active') throw new HttpError(403, 'err.account_suspended');
+    if (u.status !== 'active') throw new HttpError(403, u.blocked_reason ? 'err.account_blocked_reason' : 'err.account_suspended', null, { reason: u.blocked_reason });
     await loginLimit.clear(key);
     if (req.session) await auth.destroySession(req);
     const sess = await auth.createSession(u.id, req);

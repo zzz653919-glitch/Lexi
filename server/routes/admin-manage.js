@@ -149,7 +149,7 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
   });
 
   /* ---------- users (administrators only) ---------- */
-  const userSummary = (u) => ({ id: u.id, email: u.email, displayName: u.display_name, role: u.role, status: u.status, xpTotal: u.xp_total, createdAt: u.created_at, lastActiveAt: u.last_active_at, timezone: u.timezone });
+  const userSummary = (u) => ({ id: u.id, email: u.email, displayName: u.display_name, role: u.role, status: u.status, blockedReason: u.blocked_reason || '', blockedAt: u.blocked_at || null, xpTotal: u.xp_total, createdAt: u.created_at, lastActiveAt: u.last_active_at, timezone: u.timezone });
   r.get('/users', adminOnly, async (req, res) => {
     const { size, p, off } = page(req);
     const where = ['1=1'], args = [];
@@ -158,7 +158,7 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
     if (ROLES.includes(req.query.role)) { where.push('u.role = ?'); args.push(req.query.role); }
     if (['active', 'suspended'].includes(req.query.status)) { where.push('u.status = ?'); args.push(req.query.status); }
     const total = (await db.get(`SELECT COUNT(*) n FROM users u WHERE ${where.join(' AND ')}`, ...args)).n;
-    const items = (await db.all(`SELECT u.*, (SELECT COUNT(*) FROM user_progress p WHERE p.user_id = u.id) lessons FROM users u WHERE ${where.join(' AND ')} ORDER BY u.id DESC LIMIT ? OFFSET ?`, ...args, size, off)).map((u) => ({ ...userSummary(u), lessons: u.lessons }));
+    const items = (await db.all(`SELECT u.*, (SELECT COUNT(*) FROM user_progress p WHERE p.user_id = u.id) lessons, COALESCE((SELECT w.balance FROM token_wallets w WHERE w.user_id = u.id), 0) tokens FROM users u WHERE ${where.join(' AND ')} ORDER BY u.id DESC LIMIT ? OFFSET ?`, ...args, size, off)).map((u) => ({ ...userSummary(u), lessons: u.lessons, tokens: u.tokens }));
     res.json({ total, page: p, pageSize: size, items });
   });
   r.get('/users/:id', adminOnly, async (req, res) => {
@@ -180,14 +180,15 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
   r.post('/users/:id/suspend', adminOnly, async (req, res) => {
     const u = need(await db.get('SELECT * FROM users WHERE id = ?', int(req.params.id)), 'User');
     if (u.id === req.user.id) throw bad('err.cannot_suspend_self');
+    const reason = clean((req.body || {}).reason, 200);
     if (u.role === 'admin' && await adminCount() <= 1) throw bad('err.cannot_suspend_last_admin');
-    await db.tx(async () => { await db.run("UPDATE users SET status = 'suspended' WHERE id = ?", u.id); await db.run('DELETE FROM sessions WHERE user_id = ?', u.id); });
-    await audit(req, 'user.suspend', 'user', u.id, { email: u.email });
+    await db.tx(async () => { await db.run("UPDATE users SET status = 'suspended', blocked_reason = ?, blocked_at = ? WHERE id = ?", reason, new Date().toISOString(), u.id); await db.run('DELETE FROM sessions WHERE user_id = ?', u.id); });
+    await audit(req, 'user.suspend', 'user', u.id, { email: u.email, reason });
     res.json(userSummary(await db.get('SELECT * FROM users WHERE id = ?', u.id)));
   });
   r.post('/users/:id/reactivate', adminOnly, async (req, res) => {
     const u = need(await db.get('SELECT * FROM users WHERE id = ?', int(req.params.id)), 'User');
-    await db.run("UPDATE users SET status = 'active' WHERE id = ?", u.id);
+    await db.run("UPDATE users SET status = 'active', blocked_reason = '', blocked_at = NULL WHERE id = ?", u.id);
     await audit(req, 'user.reactivate', 'user', u.id, { email: u.email });
     res.json(userSummary(await db.get('SELECT * FROM users WHERE id = ?', u.id)));
   });

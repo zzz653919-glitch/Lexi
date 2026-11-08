@@ -109,3 +109,4 @@ fieldset.plain legend { font-weight: 800; font-size: .88rem; padding: 0; margin-
 }
 .tbl .tag, .tbl .chip { white-space: nowrap; overflow-wrap: normal; word-break: normal; }
 .adm-main .page-head { margin-bottom: 14px; }
+.tbl .badge { white-space: nowrap; } .tbl td.acts { white-space: normal; min-width: 230px; } .tbl td.acts .row { gap: 6px; }
