@@ -1,10 +1,19 @@
-import { h, get, post, table, tag, crumbs, toast, confirmDialog, typedConfirm, when, session, t, fmt } from '../common.js';
+import { h, get, post, table, tag, crumbs, toast, confirmDialog, typedConfirm, formDialog, when, session, t, fmt } from '../common.js';
+import { blockUser, unblockUser, giveTokens, walletOf } from './user-actions.js';
 import { barChart } from './charts.js';
 
 export default async function user({ params }) {
   const id = Number(params.id);
   const holder = h('div', {});
-  async function load() { draw(await get('/admin/users/' + id)); }
+  async function load() { wal = await walletOf(id).catch(() => null); draw(await get('/admin/users/' + id)); }
+  let wal = null;
+  const blockBtn = (u, me) => (u.status === 'active'
+    ? h('button', { class: 'btn danger small', id: 'user-block', disabled: me, onclick: async () => { if (await blockUser(u)) load(); } }, t('adm.block'))
+    : h('button', { class: 'btn small', id: 'user-unblock', onclick: async () => { if (await unblockUser(u)) load(); } }, t('adm.unblock')));
+  const tokensCard = (u) => h('section', { class: 'card', id: 'user-tokens' }, h('h2', {}, t('adm.tokens.title')),
+    wal ? h('p', {}, h('b', { id: 'user-token-balance', style: { fontSize: '1.4rem' } }, fmt.number(wal.wallet.balance)), ' ', h('span', { class: 'muted small' }, t('adm.tokens.summary', { earned: fmt.number(wal.wallet.earned), spent: fmt.number(wal.wallet.spent) }))) : null,
+    h('div', { class: 'row' }, h('button', { class: 'btn small', id: 'user-give-tokens', onclick: async () => { if (await giveTokens(u)) load(); } }, t('adm.tokens.give'))),
+    wal && wal.transactions.length ? h('div', {}, h('h3', {}, t('adm.tokens.recent')), table([{ label: t('adm.col.started'), render: (x) => when(x.created_at) }, { label: t('adm.tokens.col.what'), render: (x) => x.reason + (x.kind === 'grant' ? ' · ' + t('adm.avatar.grant') : '') }, { label: t('adm.tokens.col.amount'), render: (x) => (x.amount > 0 ? '+' : '') + x.amount }, { label: t('adm.tokens.col.balance'), render: (x) => x.balance_after }], wal.transactions, { empty: t('adm.tokens.none') })) : h('p', { class: 'muted small' }, t('adm.tokens.none')));
   function draw(d) {
     const u = d.user, me = session.user.id === u.id;
     const act = async (fn, msg) => { try { await fn(); toast(msg, 'success'); load(); } catch (e) { toast(e.message, 'error', 6000); } };
@@ -13,7 +22,9 @@ export default async function user({ params }) {
     holder.replaceChildren(
       crumbs({ href: '/admin/users', label: t('adm.nav.users') }, { label: u.displayName }),
       h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, u.displayName), h('div', { class: 'row' }, tag(u.status), h('span', { class: 'badge' }, t('adm.role.' + u.role)), h('span', { class: 'muted small' }, u.email))),
-        h('div', { class: 'row' }, u.status === 'active' ? h('button', { class: 'btn danger small', disabled: me, onclick: async () => { if (await confirmDialog(t('adm.suspend_title'), t('adm.suspend_text', { name: u.displayName }), t('adm.suspend'), true)) act(() => post(`/admin/users/${id}/suspend`), t('adm.suspended')); } }, t('adm.suspend')) : h('button', { class: 'btn small', onclick: () => act(() => post(`/admin/users/${id}/reactivate`), t('adm.reactivated')) }, t('adm.reactivate')))),
+        h('div', { class: 'row' }, blockBtn(u, me, true))),
+      u.status !== 'active' ? h('div', { class: 'card', id: 'user-blocked-note', style: { borderLeft: '6px solid #d6336c' } }, h('b', {}, t('adm.status.suspended')), h('p', { class: 'muted' }, u.blockedReason ? t('adm.blocked_reason_line', { reason: u.blockedReason }) : t('adm.blocked_no_reason')), u.blockedAt ? h('small', { class: 'muted' }, when(u.blockedAt)) : null) : null,
+      tokensCard(u),
       h('div', { class: 'stat-grid' }, [['XP', u.xpTotal], [t('stats.streak'), d.streak.current], [t('adm.longest_streak'), d.streak.longest], [t('adm.stat.completed_lessons'), d.lessonsCompleted], [t('adm.answers'), d.attempts], [t('adm.stat.accuracy'), d.accuracy == null ? '—' : d.accuracy + '%'], [t('adm.words_in_review'), d.reviewWords]].map(([l, v]) => h('div', { class: 'stat-card' }, h('b', {}, typeof v === 'number' ? fmt.number(v) : String(v)), h('span', {}, l)))),
       h('div', { class: 'grid two' },
         h('section', { class: 'card' }, h('h2', {}, t('profile.settings')), h('dl', { class: 'kv' }, h('dt', {}, t('adm.col.joined')), h('dd', {}, when(u.createdAt)), h('dt', {}, t('adm.col.last_active')), h('dd', {}, when(u.lastActiveAt)), h('dt', {}, t('profile.timezone')), h('dd', {}, u.timezone), h('dt', {}, t('stats.hearts')), h('dd', {}, d.hearts.enabled ? `${d.hearts.hearts} / ${d.hearts.max}` : t('adm.off')), h('dt', {}, t('adm.today')), h('dd', {}, `${d.today.xp} / ${d.today.goal} XP`), h('dt', {}, t('nav.achievements')), h('dd', {}, d.achievements.map((c) => t('ach.' + c + '.title')).join(', ') || t('adm.none_yet')))),

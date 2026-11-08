@@ -1,4 +1,5 @@
-import { h, get, table, tag, pager, qs, when, t, fmt } from '../common.js';
+import { h, get, table, tag, pager, qs, when, t, fmt, session } from '../common.js';
+import { blockUser, unblockUser, giveTokens } from './user-actions.js';
 
 export default async function users() {
   const st = { q: '', role: '', status: '', page: 1 };
@@ -9,8 +10,8 @@ export default async function users() {
     const data = await get('/admin/users' + qs({ ...st, pageSize: 20 }));
     holder.replaceChildren(table([
       { label: t('adm.col.user'), render: (u) => h('div', {}, h('a', { href: '/admin/users/' + u.id, style: { fontWeight: 800 } }, u.displayName), h('div', { class: 'muted small' }, u.email)) },
-      { label: t('adm.col.role'), render: (u) => t('adm.role.' + u.role) }, { label: t('adm.col.status'), render: (u) => tag(u.status) }, { label: 'XP', render: (u) => fmt.number(u.xpTotal) }, { label: t('adm.col.lessons'), render: (u) => fmt.number(u.lessons) }, { label: t('adm.col.joined'), render: (u) => when(u.createdAt) }, { label: t('adm.col.last_active'), render: (u) => when(u.lastActiveAt) },
-      { label: '', cls: 'acts', render: (u) => h('a', { class: 'btn small secondary', href: '/admin/users/' + u.id }, t('adm.view')) },
+      { label: t('adm.col.role'), render: (u) => t('adm.role.' + u.role) }, { label: t('adm.col.status'), render: (u) => tag(u.status) }, { label: 'XP', render: (u) => fmt.number(u.xpTotal) }, { label: t('adm.col.tokens'), render: (u) => fmt.number(u.tokens || 0) }, { label: t('adm.col.lessons'), render: (u) => fmt.number(u.lessons) }, { label: t('adm.col.joined'), render: (u) => when(u.createdAt) }, { label: t('adm.col.last_active'), render: (u) => when(u.lastActiveAt) },
+      { label: '', cls: 'acts', render: (u) => h('div', { class: 'row', style: { justifyContent: 'flex-end', flexWrap: 'wrap' } }, h('a', { class: 'btn small secondary', href: '/admin/users/' + u.id }, t('adm.view')), h('button', { class: 'btn small', type: 'button', 'data-act': 'tokens', 'data-user': u.id, onclick: async () => { if (await giveTokens(u)) load(); } }, t('adm.tokens.give')), u.status === 'active' ? h('button', { class: 'btn small danger', type: 'button', 'data-act': 'block', 'data-user': u.id, disabled: session.user.id === u.id, onclick: async () => { if (await blockUser(u)) load(); } }, t('adm.block')) : h('button', { class: 'btn small', type: 'button', 'data-act': 'unblock', 'data-user': u.id, onclick: async () => { if (await unblockUser(u)) load(); } }, t('adm.unblock'))) },
     ], data.items, { empty: t('adm.no_users') }), pager(data, (p) => { st.page = p; load(); }));
   }
   let timer; q.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { st.q = q.value.trim(); st.page = 1; load(); }, 300); });
