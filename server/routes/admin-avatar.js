@@ -14,7 +14,7 @@ module.exports = function adminAvatarRoutes({ db, auth, audit, settings, tokens,
   const staff = auth.requireRole('editor', 'admin'), adminOnly = auth.requireRole('admin');
   const need = (row) => { if (!row) throw new HttpError(404, 'err.not_found'); return row; };
   const slugify = (s) => String(s).toLowerCase().normalize('NFKD').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 48) || 'item';
-  const out = (it) => ({ ...it, art: JSON.parse(it.art || '{}'), category: A.CATEGORY(it.kind) });
+  const out = (it) => ({ ...it, art: JSON.parse(it.art || '{}'), category: A.categoryOf(it.kind, it.collection) });
 
   function input(b, partial) {
     const e = {}, v = {};
@@ -24,7 +24,7 @@ module.exports = function adminAvatarRoutes({ db, auth, audit, settings, tokens,
     if (!partial || has('kind')) { if (!A.KINDS.includes(b.kind)) e.kind = 'val.avatar_kind'; else { v.kind = b.kind; v.slot = A.KIND_SLOT[b.kind]; } }
     if (!partial || has('price')) { const n = int(b.price, -1); if (n < 0 || n > 100000) e.price = 'val.avatar_price'; else v.price = n; }
     if (!partial || has('rarity')) { if (!A.RARITIES.includes(b.rarity)) e.rarity = 'val.avatar_rarity'; else v.rarity = b.rarity; }
-    if (has('collection')) { const x = String(b.collection || ''); if (x && !A.COLLECTIONS[x]) e.collection = 'val.avatar_kind'; else v.collection = x; }
+    if (has('collection')) { const x = String(b.collection || ''); if (x && !A.COLLECTIONS[x] && !A.GAMES[x]) e.collection = 'val.avatar_kind'; else v.collection = x; }
     if (has('subcollection')) v.subcollection = clean(b.subcollection, 24).toLowerCase().replace(/[^a-z-]/g, '');
     if (has('status')) { if (!['active', 'disabled'].includes(b.status)) e.status = 'val.kids_status'; else v.status = b.status; }
     if (has('art')) { const a = b.art; if (!a || typeof a !== 'object' || Array.isArray(a)) e.art = 'val.avatar_art'; else {
@@ -43,7 +43,7 @@ module.exports = function adminAvatarRoutes({ db, auth, audit, settings, tokens,
     if (q) { where.push("(name_en LIKE ? ESCAPE '\\' OR slug LIKE ? ESCAPE '\\')"); args.push(`%${escapeLike(q)}%`, `%${escapeLike(q)}%`); }
     if (kind) { where.push('kind = ?'); args.push(kind); }
     const rows = await db.all(`SELECT i.*, (SELECT COUNT(*) FROM avatar_owned o WHERE o.item_id = i.id AND o.source != 'starter') owners FROM avatar_items i ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY i.position, i.id`, ...args);
-    res.json({ items: rows.map(out), kinds: A.KINDS, collections: A.COLLECTIONS, rarities: A.RARITIES, earnTypes: A.EARN_TYPES });
+    res.json({ items: rows.map(out), kinds: A.KINDS, collections: { ...A.COLLECTIONS, ...A.GAMES }, games: A.GAMES, rarities: A.RARITIES, earnTypes: A.EARN_TYPES });
   });
   r.post('/avatar/items', staff, async (req, res) => {
     const v = input(req.body || {}, false);

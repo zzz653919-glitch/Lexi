@@ -8,7 +8,7 @@ import { renderAvatar, itemSvg, fitsStyle } from './render.js';
 import { A, equippedItems, rarityBadge, tokenAmount, setBalance, coinSvg } from './ui.js';
 import { fashionFilter, PAGE, moreButton } from './filters.js';
 
-const CATS = [['clothing', '👕'], ['accessory', '🕶️'], ['pet', '🐾'], ['special', '✨']];
+const CATS = [['clothing', '👕'], ['accessory', '🕶️'], ['pet', '🐾'], ['special', '✨'], ['games', '🎮']];
 /* a dress or a costume replaces the top and the trousers, and the other way round */
 const CLEARS = { dress: ['top', 'bottom', 'outfit'], outfit: ['top', 'bottom', 'dress'], top: ['dress', 'outfit'], bottom: ['dress', 'outfit'] };
 let current = null;
@@ -103,7 +103,7 @@ export function openFitting({ item = null, buy, refresh = () => {} }) {
     tabs.querySelectorAll('.av-tab').forEach((b) => { const on = b.dataset.cat === cat; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
     const inCat = boot.items.filter((i) => i.category === cat), ks = [...new Set(inCat.map((i) => i.kind))];
     chips.replaceChildren(h('button', { type: 'button', class: 'av-chip' + (!kind ? ' on' : ''), onclick: () => { kind = ''; pages = 1; update(); } }, t('av.all')), ...ks.map((k) => h('button', { type: 'button', class: 'av-chip' + (kind === k ? ' on' : ''), 'data-kind': k, onclick: () => { kind = k; pages = 1; update(); } }, t('av.kind.' + k))));
-    ff.refresh(inCat); const list = itemsOf(), shown = list.slice(0, PAGE * pages), more = moreButton(shown.length, list.length, () => { pages++; update(); }); grid.replaceChildren(...(list.length ? shown.map(tile) : [h('p', { class: 'av-empty' }, t('av.shop_empty'))]), ...(more ? [more] : []));
+    ff.refresh(inCat); ff.showNote(cat === 'games'); const list = itemsOf(), shown = list.slice(0, PAGE * pages), more = moreButton(shown.length, list.length, () => { pages++; update(); }); grid.replaceChildren(...(list.length ? shown.map(tile) : [h('p', { class: 'av-empty' }, t('av.shop_empty'))]), ...(more ? [more] : []));
     /* the selected item */
     if (sel) {
       const owned = sel.owned || sel.starter;

@@ -57,7 +57,7 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     await T.earn(uid, { ref: 'ui:gift', amount: 200, reason: 'admin', kind: 'grant' });
     await page.goto(s.base + '/avatar/shop'); await page.waitForSelector('.av-item');
     check((await page.locator('#av-shop-balance').innerText()).includes('200'), 'the shop shows the token balance');
-    check(await page.locator('.av-tab[data-cat]').count() === 4, 'four categories: clothing, accessories, pets, special');
+    check(await page.locator('.av-tab[data-cat]').count() === 5, 'five categories: clothing, accessories, pets, special items, game skins');
     check(await page.locator('.av-item:not(.owned)').first().locator('.av-rarity, .av-price, h3, .av-thumb svg').count() >= 4, 'every item shows a picture, name, rarity and price');
     check(await page.locator('.av-item[data-slug="costume-hero"] [data-act="buy"]').isDisabled(), 'an item that costs more than the balance cannot be bought');
     await page.click('.av-item[data-slug="tee-red"] [data-act="buy"]'); await confirmYes(page);
@@ -130,6 +130,48 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     check(await page.locator('.av-tile[data-part="build"]').count() === 3, 'the Studio offers three body types');
     const before = await stageHtml(page); await page.click('.av-tile[data-part="build"][data-index="2"]'); check((await stageHtml(page)) !== before, 'choosing a body type changes the character at once');
     await page.click('.av-tile[data-part="build"][data-index="1"]');
+
+    /* ---------- gaming skins: one category per game, sub-categories, sorting, rarity (incl. mythic), try-on ---------- */
+    await page.goto(s.base + '/avatar/shop'); await page.waitForSelector('.av-item'); await page.click('.av-tab[data-cat="games"]'); await page.waitForSelector('.av-colls .av-chip[data-coll="cs2"]');
+    check(await page.locator('.av-colls .av-chip[data-coll]:not([data-coll=""])').count() === 15 && await page.locator('#av-games-note').isVisible(), 'the Game skins tab has fifteen games and says the designs are original fan-inspired ones');
+    await page.click('.av-colls [data-coll="cs2"]'); await page.waitForSelector('.av-subs .av-chip[data-sub="gloves"]');
+    check(await page.locator('.av-subs .av-chip[data-sub]:not([data-sub=""])').count() === 5, 'every game has its own sub-categories (Counter-Strike 2 style: agents, special forces, gloves, masks, military)');
+    await page.click('.av-subs [data-sub="gloves"]'); await page.waitForSelector('.av-item[data-slug^="gm-cs2-"]');
+    check(await page.locator('.av-item').count() >= 8 && await page.locator('.av-item:not([data-slug^="gm-cs2-"])').count() === 0, 'a sub-category lists only its own skins (gloves)');
+    await page.click('.av-subs [data-sub=""]'); await page.selectOption('#av-sort', 'price_desc');
+    const prices = (await page.locator('.av-item').evaluateAll((els) => els.map((e) => Number((e.querySelector('.av-price, .av-earn, .av-owned') || {}).textContent.replace(/\D/g, '')) || 0))).filter((x) => x > 0);
+    check(prices.length >= 10 && prices.every((x, i) => i === 0 || prices[i - 1] >= x), 'skins can be sorted by price');
+    await page.selectOption('#av-rarity', 'mythic'); await page.waitForSelector('.av-item[data-rarity="mythic"]');
+    check(await page.locator('.av-item:not([data-rarity="mythic"])').count() === 0 && await page.locator('.av-item[data-rarity="mythic"] .av-rarity').first().innerText().then((x) => /mythic/i.test(x)), 'the Mythic rarity exists and can be filtered');
+    await page.selectOption('#av-rarity', ''); await page.click('.av-subs [data-sub="gloves"]');
+    const beforeG = await page.locator('.av-item').first().getAttribute('data-slug'); await page.click('.av-item[data-slug^="gm-cs2-"] [data-act="fit"]'); await page.waitForSelector('.av-fit .av-fit-tile.on');
+    check(await page.locator('.av-fit-face.front svg').count() === 1 && (await page.locator('.av-fit .av-colls .av-chip.on').first().getAttribute('data-coll')) === 'cs2' && !!beforeG, 'a game skin can be tried on in the fitting room, which opens in its game');
+    await page.keyboard.press('Escape'); await page.waitForSelector('.av-fit', { state: 'detached' });
+
+    /* ---------- the 3D skin viewer: a real WebGL model, 360° turning, zoom, views, details and buttons ---------- */
+    await page.goto(s.base + '/avatar/shop'); await page.waitForSelector('.av-item'); await page.click('.av-tab[data-cat="games"]'); await page.click('.av-colls [data-coll="cs2"]'); await page.waitForSelector('.av-item[data-slug^="gm-cs2-special_forces"]');
+    const skinName = await page.locator('.av-item[data-slug^="gm-cs2-special_forces"] h3').first().innerText();
+    await page.click('.av-item[data-slug^="gm-cs2-special_forces"] h3'); await page.waitForSelector('#skin-viewer #av-v3-canvas[data-skin]', { timeout: 40000 });
+    check(await page.getAttribute('#av-v3-canvas', 'data-mode') === 'webgl' && await page.locator('#skin-viewer canvas').count() === 1, 'a click on a game skin opens a real-time WebGL 3D preview');
+    check((await page.locator('#av-v3-name').innerText()) === skinName && (await page.locator('#av-v3-game').innerText()).includes('Counter-Strike 2') && await page.locator('#av-v3-info .av-rarity').count() === 1 && /\d/.test(await page.locator('#av-v3-price').innerText()), 'it shows the skin name, game category, rarity and token price');
+    check(await page.locator('#av-v3-try').count() === 1 && await page.locator('#av-v3-buy, #av-v3-equip').count() === 1, 'with Try On, Buy (or Equip) buttons');
+    await page.click('#av-v3-side'); await page.waitForFunction(() => Math.abs(Number(document.getElementById('av-v3-canvas').dataset.azimuth) - 90) <= 3, null, { timeout: 5000 });
+    await page.click('#av-v3-back'); await page.waitForFunction(() => Math.abs(Number(document.getElementById('av-v3-canvas').dataset.azimuth) - 180) <= 3, null, { timeout: 5000 });
+    await page.click('#av-v3-front'); await page.waitForFunction(() => { const a = Number(document.getElementById('av-v3-canvas').dataset.azimuth); return a <= 3 || a >= 357; }, null, { timeout: 5000 });
+    check(true, 'the character turns to the front, side and back views');
+    await page.click('#av-v3-right'); await page.waitForFunction(() => { const a = Number(document.getElementById('av-v3-canvas').dataset.azimuth); return a > 20 && a < 70; }, null, { timeout: 5000 });
+    check(true, 'and can be turned step by step (full 360° with the mouse or finger)');
+    const z0 = Number(await page.getAttribute('#av-v3-canvas', 'data-zoom')); await page.click('#av-v3-zoom-in'); await page.click('#av-v3-zoom-in'); const z1 = Number(await page.getAttribute('#av-v3-canvas', 'data-zoom')); await page.click('#av-v3-zoom-out'); await page.click('#av-v3-zoom-out'); await page.click('#av-v3-zoom-out'); const z2 = Number(await page.getAttribute('#av-v3-canvas', 'data-zoom'));
+    check(z1 > z0 && z2 < z1, 'zoom in and zoom out work');
+    const firstSlug = await page.getAttribute('#av-v3-canvas', 'data-skin'); await page.click('#av-v3-next'); await page.waitForFunction((x) => document.getElementById('av-v3-canvas').dataset.skin !== x, firstSlug, { timeout: 30000 });
+    check(true, 'the next / previous skin of the list opens without closing the preview');
+    await page.click('#av-v3-try'); await page.waitForSelector('.av-fit .av-fit-tile.on'); check(await page.locator('#skin-viewer').count() === 0, 'Try On opens the fitting room with the skin');
+    await page.keyboard.press('Escape'); await page.waitForSelector('.av-fit', { state: 'detached' });
+    await page.evaluate(() => { HTMLCanvasElement.prototype.getContext = () => null; });   // a device without WebGL
+    await page.click('.av-item[data-slug^="gm-cs2-special_forces"] h3'); await page.waitForSelector('#av-v3-card[data-mode="fallback"]');
+    await page.click('#av-v3-back'); await page.waitForFunction(() => document.getElementById('av-v3-card').dataset.azimuth === '180');
+    check(await page.locator('#av-v3-card svg').count() === 2 && await page.locator('#av-v3-try').count() === 1, 'without WebGL a turning picture with the same views and buttons is shown');
+    await page.keyboard.press('Escape'); await page.waitForSelector('#skin-viewer', { state: 'detached' });
 
     /* ---------- the leaderboard shows the characters; a click shows the name and the character ---------- */
     s.db.run('UPDATE users SET leaderboard_opt_in = 1 WHERE id = ?', uid); s.db.run("INSERT INTO xp_transactions (user_id, amount, reason, ref_type, ref_id, local_date, created_at) VALUES (?, 5, 'exercise', 'x', 1, ?, ?)", uid, new Date().toISOString().slice(0, 10), new Date().toISOString());

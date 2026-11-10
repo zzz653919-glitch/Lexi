@@ -1,6 +1,7 @@
 /* Headwear, footwear, neckwear and back items of the fashion collection. Like the outfits they are data-driven:
    art.v picks the shape, art.c / art.c2 / art.c3 the colours. All artwork is original. */
 import { dk } from './geo.js';
+import { gearHat, gearShoe, gearNeck, gearBack, GEAR_HATS, GEAR_SHOES, GEAR_NECKS, GEAR_BACKS } from './gear.js';
 
 const T = (c, w = 2.2) => `stroke="${dk(c, .45)}" stroke-width="${w}" stroke-linejoin="round" stroke-linecap="round"`;
 const rep = (n, f) => Array.from({ length: n }, (_, i) => f(i)).join('');
@@ -8,6 +9,7 @@ const rep = (n, f) => Array.from({ length: n }, (_, i) => f(i)).join('');
 /* ---------- hats: the head is centred at (120, 88), its top is near y 36 ---------- */
 export const HATS = ['doppi', 'beret', 'flatcap', 'tophat', 'fedora', 'cowboy', 'turban', 'fez', 'straw', 'beanie', 'bobble', 'santa', 'witch', 'wizard', 'crown', 'tiara', 'knighthelm', 'spacehelm', 'footballhelm', 'vikinghelm', 'kabuto', 'tricorn', 'sailor', 'graduation', 'bunnyears', 'catears', 'halo', 'laurel', 'party', 'cloakhood', 'headband', 'flower', 'hardhat', 'bowband', 'chefhat', 'kippa'];
 export function drawHat(a) {
+  const gh = gearHat(a); if (gh) return gh;
   const c = a.c || '#c0392b', c2 = a.c2 || '#ffffff', c3 = a.c3 || dk(c, .7), S = T(c), g = '#ffd23f';
   switch (a.v) {
     case 'doppi': return `<g><path d="M70 66Q72 36 120 34Q168 36 170 66Q120 76 70 66Z" fill="${c}" ${S}/><path d="M72 62Q120 72 168 62L168 68Q120 80 72 68Z" fill="${c2}" ${S}/>${rep(9, (i) => `<path d="M${80 + i * 10} 66l5 -6 5 6" fill="none" stroke="${c}" stroke-width="2.2"/>`)}${rep(4, (i) => `<path d="M${92 + i * 18} 46l5 7-5 7-5-7z" fill="${c2}" opacity=".9"/>`)}</g>`;
@@ -53,6 +55,7 @@ export function drawHat(a) {
 /* ---------- shoes: two feet at x 88..122 and 124..158, soles near y 316-322 ---------- */
 export const SHOES = ['sneaker', 'highsneaker', 'boot', 'highboot', 'cowboy', 'sandal', 'geta', 'loafer', 'cleat', 'skate', 'clog', 'slipper', 'ballet', 'spaceboot', 'rainboot', 'hiking'];
 export function drawShoe(a) {
+  const gs = gearShoe(a); if (gs) return gs;
   const c = a.c || '#2b2b3a', c2 = a.c2 || '#ffffff', S = T(c);
   const pair = (f) => [88, 124].map((x) => f(x)).join('');
   switch (a.v) {
@@ -78,6 +81,7 @@ export function drawShoe(a) {
 /* ---------- neckwear (over the clothes, around y 146-200) ---------- */
 export const NECKS = ['scarf', 'bowtie', 'medal', 'pearls', 'bandana', 'ruff', 'lei', 'chain', 'cravat', 'ribbon', 'furcollar', 'amulet', 'tie', 'stripescarf'];
 export function drawNeck(a) {
+  const gn = gearNeck(a); if (gn) return gn;
   const c = a.c || '#e63946', c2 = a.c2 || '#ffffff', S = T(c), g = '#ffd23f';
   switch (a.v) {
     case 'bowtie': return `<g><path d="M120 156L100 144V168ZM120 156L140 144V168Z" fill="${c}" ${S}/><circle cx="120" cy="156" r="5" fill="${dk(c, .7)}" ${S}/></g>`;
@@ -100,6 +104,7 @@ export function drawNeck(a) {
 /* ---------- things worn on the back ---------- */
 export const BACKS = ['cape', 'longcape', 'quiver', 'jetpack', 'satchel', 'guitar', 'fairycape', 'shield'];
 export function drawBack(a) {
+  const gb = gearBack(a); if (gb) return gb;
   const c = a.c || '#c0392b', c2 = a.c2 || '#ffd23f', S = T(c);
   switch (a.v) {
     case 'longcape': return `<g><path d="M94 150L40 322Q120 340 200 322L146 150Z" fill="${c}" ${S}/><path d="M120 154L200 322Q150 336 120 336Z" fill="#1b1240" opacity=".16"/><path d="M94 150L40 322" stroke="${c2}" stroke-width="4" fill="none"/><circle cx="96" cy="152" r="5" fill="${c2}" stroke="#8a6200" stroke-width="1.6"/><circle cx="144" cy="152" r="5" fill="${c2}" stroke="#8a6200" stroke-width="1.6"/></g>`;
@@ -112,3 +117,6 @@ export function drawBack(a) {
     default: return `<g><path d="M96 152L58 290Q120 312 182 290L144 152Z" fill="${c}" ${S}/><path d="M120 156L182 290Q150 304 120 306Z" fill="#1b1240" opacity=".16"/><circle cx="98" cy="153" r="4.6" fill="${c2}" stroke="#8a6200" stroke-width="1.6"/><circle cx="142" cy="153" r="4.6" fill="${c2}" stroke="#8a6200" stroke-width="1.6"/></g>`;
   }
 }
+
+/* every design the admin panel can choose from */
+export const ALL_HATS = [...HATS, ...GEAR_HATS], ALL_SHOES = [...SHOES, ...GEAR_SHOES], ALL_NECKS = [...NECKS, ...GEAR_NECKS], ALL_BACKS = [...BACKS, ...GEAR_BACKS];

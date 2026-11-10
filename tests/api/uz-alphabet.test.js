@@ -16,7 +16,7 @@ test('the four letters of the new Uzbek alphabet', () => {
 
 test('interface texts are in the new alphabet', () => {
   const uz = require('../../locales/uz.json');
-  const text = JSON.stringify(Object.entries(uz).filter(([k]) => !k.startsWith('lang.native.')).map(([, v]) => v)).replace(/Asia\/Tashkent/g, '');
+  const text = JSON.stringify(Object.entries(uz).filter(([k]) => !k.startsWith('lang.native.')).map(([, v]) => v)).replace(/Asia\/Tashkent/g, '').replace(/Overwatch/g, '');   // a game title is a proper name
   assert.doesNotMatch(text, /[oOgG][‘ʻ'`]|sh|ch/i);
   assert.strictEqual(uz['lang.native.uz'], 'Ŏzbekça');
 });
