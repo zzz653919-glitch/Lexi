@@ -171,3 +171,10 @@
 
 .av-fit .av-tab:not(.on) { background: rgba(255, 255, 255, .1); color: #fff; border: 2px solid rgba(255, 255, 255, .28); } .av-fit .av-tab { box-shadow: none; } .av-fit .av-tab.on { box-shadow: 0 4px 0 #e0a800; color: #3a2a00; }
 .av-fit-stage { background: radial-gradient(ellipse at 50% 45%, rgba(255, 255, 255, .34), rgba(255, 255, 255, .08) 70%); }
+
+/* ---- Avatar section: badges become medals, tokens become coins ---- */
+.av-badge { position: relative; }
+.av-badge > span:first-child { display: grid; place-items: center; width: 54px; height: 54px; margin: 0 auto 4px; border-radius: 50%; font-size: 1.6rem; background: radial-gradient(circle at 32% 26%, #fff6c4 0, #ffd95a 32%, #e8a800 66%, #a86b00 100%); box-shadow: 0 0 0 3px #f6c93a, 0 0 0 5px #8a5a00, inset 0 3px 5px rgba(255, 255, 255, .7), inset 0 -5px 8px rgba(110, 60, 0, .4), 0 6px 12px rgba(0, 0, 0, .35); }
+.av-badge:not(.on) > span:first-child { background: radial-gradient(circle at 32% 26%, #6c7389 0, #4a5066 48%, #2b3044 100%); box-shadow: 0 0 0 3px #5a617a, 0 0 0 5px #2a2f42, inset 0 3px 5px rgba(255, 255, 255, .22), inset 0 -5px 8px rgba(0, 0, 0, .5); }
+.av-coin { filter: drop-shadow(0 1px 1px rgba(90, 50, 0, .55)); }
+.av-thumb svg, .av-fit-thumb svg { filter: drop-shadow(0 4px 4px rgba(40, 20, 90, .25)); }

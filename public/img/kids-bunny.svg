@@ -1,12 +1,12 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Bobo the bunny">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Bobo the bunny"><defs><radialGradient id="lgkidsbunny_0" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#f3e8ff"/><stop offset="1" stop-color="#c2bacc"/></radialGradient><radialGradient id="lgkidsbunny_1" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#ffd7fb"/><stop offset=".5" stop-color="#ffb3d1"/><stop offset="1" stop-color="#cc8fa7"/></radialGradient><radialGradient id="lgkidsbunny_2" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#ff85ae"/><stop offset=".5" stop-color="#ff6f91"/><stop offset="1" stop-color="#cc5974"/></radialGradient><radialGradient id="lgkidsbunny_3" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#473262"/><stop offset=".5" stop-color="#3b2a52"/><stop offset="1" stop-color="#2f2242"/></radialGradient><radialGradient id="lgkidsbunny_4" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#cccccc"/></radialGradient><radialGradient id="lgkidsbunny_5" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#ffbeeb"/><stop offset=".5" stop-color="#ff9ec4"/><stop offset="1" stop-color="#cc7e9d"/></radialGradient><filter id="lskidsbunny" x="-12%" y="-12%" width="130%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#1b1240" flood-opacity=".28"/></filter></defs><g filter="url(#lskidsbunny)">
   <g stroke="#5b3b7a" stroke-width="5" stroke-linejoin="round" stroke-linecap="round">
-    <ellipse cx="68" cy="52" rx="19" ry="48" fill="#f3e8ff"/><ellipse cx="132" cy="52" rx="19" ry="48" fill="#f3e8ff"/>
-    <ellipse cx="68" cy="56" rx="8" ry="32" fill="#ffb3d1" stroke="none"/><ellipse cx="132" cy="56" rx="8" ry="32" fill="#ffb3d1" stroke="none"/>
-    <circle cx="100" cy="124" r="64" fill="#f3e8ff"/>
-    <path d="M94 128 q6 -6 12 0 q-6 8 -12 0z" fill="#ff6f91"/>
+    <ellipse cx="68" cy="52" rx="19" ry="48" fill="url(#lgkidsbunny_0)"/><ellipse cx="132" cy="52" rx="19" ry="48" fill="url(#lgkidsbunny_0)"/>
+    <ellipse cx="68" cy="56" rx="8" ry="32" fill="url(#lgkidsbunny_1)" stroke="none"/><ellipse cx="132" cy="56" rx="8" ry="32" fill="url(#lgkidsbunny_1)" stroke="none"/>
+    <circle cx="100" cy="124" r="64" fill="url(#lgkidsbunny_0)"/>
+    <path d="M94 128 q6 -6 12 0 q-6 8 -12 0z" fill="url(#lgkidsbunny_2)"/>
     <path d="M100 134 v8 M86 144 q14 10 28 0" fill="none"/>
   </g>
-  <g fill="#3b2a52"><circle cx="76" cy="116" r="8"/><circle cx="124" cy="116" r="8"/></g>
-  <g fill="#fff"><circle cx="78.5" cy="112.5" r="3"/><circle cx="126.5" cy="112.5" r="3"/></g>
-  <g fill="#ff9ec4" opacity=".6"><ellipse cx="62" cy="138" rx="10" ry="6"/><ellipse cx="138" cy="138" rx="10" ry="6"/></g>
-</svg>
+  <g fill="url(#lgkidsbunny_3)"><circle cx="76" cy="116" r="8"/><circle cx="124" cy="116" r="8"/></g>
+  <g fill="url(#lgkidsbunny_4)"><circle cx="78.5" cy="112.5" r="3"/><circle cx="126.5" cy="112.5" r="3"/></g>
+  <g fill="url(#lgkidsbunny_5)" opacity=".6"><ellipse cx="62" cy="138" rx="10" ry="6"/><ellipse cx="138" cy="138" rx="10" ry="6"/></g>
+</g></svg>

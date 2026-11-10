@@ -234,3 +234,10 @@ body.kids-bg-space .kids .k-h2, body.kids-bg-space .kids .k-lead, body.kids-bg-s
 @media (max-width: 520px) { .k-lang .lang-name { display: none; } .k-lang .lang-code { display: inline; } .k-lang .lang-btn { padding: 4px 8px; min-height: 48px; } .k-top-right { gap: 6px; } .k-logo span:last-child { font-size: 1rem; } }
 
 .k-big-btn.out { background: #ef476f; }
+
+/* ---- Kids: every emoji and picture sits on a soft shadow so it reads as a little 3D object ---- */
+.k-nav-item > span:first-child, .k-mission-emoji, .k-sticker-art, .k-ch, .k-tile-emoji, .k-card .emoji { filter: drop-shadow(0 3px 2px rgba(60, 30, 100, .3)); }
+.k-nav-item, .k-card, .k-sticker, .k-big-btn { box-shadow: inset 0 2px 0 rgba(255, 255, 255, .7), inset 0 -4px 8px rgba(120, 90, 200, .12), 0 8px 18px rgba(60, 40, 120, .18); }
+.k-nav-item.on { box-shadow: inset 0 2px 0 rgba(255, 255, 255, .7), inset 0 -5px 8px rgba(160, 100, 0, .22), 0 5px 0 #e0a800, 0 10px 18px rgba(120, 80, 0, .25); }
+.k-companion .k-ch svg { filter: drop-shadow(0 6px 6px rgba(60, 30, 100, .3)); }
+
