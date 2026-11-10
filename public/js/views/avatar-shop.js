@@ -6,9 +6,10 @@ import { navigate, refreshStats } from '../app.js';
 import { itemSvg } from '../avatar/render.js';
 import { openFitting, closeFitting } from '../avatar/fitting.js';
 import { fashionFilter, PAGE, moreButton } from '../avatar/filters.js';
+import { openSkinViewer, closeSkinViewer } from '../avatar/viewer3d.js';
 import { A, loadBoot, equippedItems, avatarNav, rarityBadge, tokenAmount, setBalance, coinSvg, activeAvatar } from '../avatar/ui.js';
 
-const CATS = [['clothing', '👕'], ['accessory', '🕶️'], ['pet', '🐾'], ['special', '✨']];
+const CATS = [['clothing', '👕'], ['accessory', '🕶️'], ['pet', '🐾'], ['special', '✨'], ['games', '🎮']];
 const KIND_LABEL = (k) => t('av.kind.' + k);
 
 export default async function avatarShop() {
@@ -30,7 +31,7 @@ export default async function avatarShop() {
     return h('button', { class: 'av-btn go buy', type: 'button', 'data-act': 'buy', disabled: need > 0, title: need > 0 ? t('av.need_more', { n: need }) : '', onclick: (e) => { e.stopPropagation(); buy(it); } }, need > 0 ? t('av.need_more', { n: need }) : t('av.buy'));
   }
   const card = (it) => { const thumb = h('span', { class: 'av-thumb' }); thumb.innerHTML = itemSvg(it, { ...look(), size: 110 });
-    return h('article', { class: 'av-item r-' + it.rarity + (it.owned ? ' owned' : ''), 'data-slug': it.slug, 'data-rarity': it.rarity, tabindex: 0, role: 'button', 'aria-label': it.name, onclick: () => fitting(it), onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) fitting(it); } },
+    return h('article', { class: 'av-item r-' + it.rarity + (it.owned ? ' owned' : ''), 'data-slug': it.slug, 'data-rarity': it.rarity, tabindex: 0, role: 'button', 'aria-label': it.name, onclick: () => open(it), onkeydown: (e) => { if (e.key === 'Enter' && e.target === e.currentTarget) open(it); } },
       thumb, h('h3', {}, it.name), h('div', { class: 'av-item-meta' }, rarityBadge(it.rarity), h('small', {}, KIND_LABEL(it.kind))), priceLine(it), actionBtn(it), h('button', { class: 'av-btn fit', type: 'button', 'data-act': 'fit', title: t('av.fit.hint'), onclick: (e) => { e.stopPropagation(); fitting(it); } }, '👗 ', t('av.fit'))); };
 
   function draw() {
@@ -38,8 +39,9 @@ export default async function avatarShop() {
     const inCat = boot.items.filter((i) => i.category === cat);
     const ks = [...new Set(inCat.map((i) => i.kind))];
     kinds.replaceChildren(h('button', { type: 'button', class: 'av-chip' + (!kind ? ' on' : ''), 'data-kind': '', onclick: () => { kind = ''; pages = 1; draw(); } }, t('av.all')), ...ks.map((k) => h('button', { type: 'button', class: 'av-chip' + (kind === k ? ' on' : ''), 'data-kind': k, onclick: () => { kind = k; pages = 1; draw(); } }, KIND_LABEL(k))));
-    ff.refresh(inCat);
+    ff.refresh(inCat); ff.showNote(cat === 'games');
     const list = ff.apply(inCat.filter((i) => (!kind || i.kind === kind) && (!rarity || i.rarity === rarity) && (own === 'all' || (own === 'owned') === i.owned)));
+    lastList = list;
     const shown = list.slice(0, PAGE * pages), more = moreButton(shown.length, list.length, () => { pages++; draw(); });
     grid.replaceChildren(...(list.length ? shown.map(card) : [h('p', { class: 'av-empty' }, t('av.shop_empty'))]), ...(more ? [more] : []));
   }
@@ -59,7 +61,10 @@ export default async function avatarShop() {
   function celebrate(it) { const b = h('div', { class: 'av-buy-pop', role: 'status' }, '🎉 ', it.name); document.body.append(b); setTimeout(() => b.remove(), 2200); }
 
   const syncBalance = () => { const b = document.getElementById('av-shop-balance'); if (b) b.replaceChildren(tokenAmount(boot.wallet.balance)); };
-  const closeModal = closeFitting;
+  const closeModal = () => { closeFitting(); closeSkinViewer(); };
+  let lastList = [];
+  const preview3d = (it) => openSkinViewer({ item: it, list: lastList.filter((x) => x.category === 'games'), buy, wear, tryOn: fitting, refresh: () => { draw(); syncBalance(); } });
+  const open = (it) => (it.category === 'games' ? preview3d(it) : fitting(it));
   const fitting = (it) => openFitting({ item: it, buy, refresh: () => { draw(); syncBalance(); } });
 
   tabBar.append(...CATS.map(([k, e]) => h('button', { type: 'button', class: 'av-tab', role: 'tab', 'data-cat': k, 'aria-selected': 'false', onclick: () => { cat = k; kind = ''; pages = 1; ff.reset(); draw(); } }, h('span', { 'aria-hidden': 'true' }, e), h('b', {}, t('av.cat.' + k)))));

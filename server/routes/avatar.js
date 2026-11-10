@@ -22,7 +22,7 @@ module.exports = function avatarRoutes({ db, auth, tokens, avatar, settings }) {
 
   const itemBody = (it, lang, ownedIds, st) => {
     const rule = it.earn_rule ? avatar.progressOf(it.earn_rule, st) : null;
-    return { id: it.id, slug: it.slug, name: pick(it, lang), kind: it.kind, slot: it.slot, category: A.CATEGORY(it.kind), collection: it.collection || '', sub: it.subcollection || '', price: it.price, rarity: it.rarity, art: JSON.parse(it.art || '{}'), image: it.image_url, starter: !!it.starter,
+    return { id: it.id, slug: it.slug, name: pick(it, lang), kind: it.kind, slot: it.slot, category: A.categoryOf(it.kind, it.collection), collection: it.collection || '', sub: it.subcollection || '', price: it.price, rarity: it.rarity, art: JSON.parse(it.art || '{}'), image: it.image_url, starter: !!it.starter,
       forSale: !it.earn_rule && !it.starter && it.status === 'active', earn: rule, owned: ownedIds.has(it.id), disabled: it.status !== 'active' };
   };
 
@@ -32,7 +32,7 @@ module.exports = function avatarRoutes({ db, auth, tokens, avatar, settings }) {
     const items = await db.all("SELECT * FROM avatar_items WHERE status = 'active' OR id IN (SELECT item_id FROM avatar_owned WHERE user_id = ?) ORDER BY position, id", u.id);
     const ownedIds = new Set(ownedList.map((o) => o.id));
     const list = avatars.map(avatar.shape);
-    res.json({ spec: { look: A.LOOK, collections: A.COLLECTIONS, styles: A.STYLES, slots: A.SLOTS, poses: A.POSES, max: A.MAX_AVATARS, rarities: A.RARITIES, badges: avatar.BADGE_CODES }, wallet: wal, avatars: list, activeId: await activeId(u, list),
+    res.json({ spec: { look: A.LOOK, collections: A.COLLECTIONS, games: A.GAMES, styles: A.STYLES, slots: A.SLOTS, poses: A.POSES, max: A.MAX_AVATARS, rarities: A.RARITIES, badges: avatar.BADGE_CODES }, wallet: wal, avatars: list, activeId: await activeId(u, list),
       items: items.map((it) => itemBody(it, lang, ownedIds, st)), badges: badges.map((b) => b.code), name: u.display_name });
   });
 

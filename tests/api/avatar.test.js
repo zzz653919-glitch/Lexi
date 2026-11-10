@@ -17,7 +17,7 @@ test('avatar catalogue: 125 original items in every category, names in three lan
   for (const i of ITEMS) { assert.ok(i.en && i.uz && i.ru, i.slug); assert.ok(AS.KINDS.includes(i.kind) && AS.RARITIES.includes(i.rarity) && AS.SLOTS.includes(i.slot), i.slug); assert.ok(i.starter || i.earn || i.price > 0, i.slug + ' has a price'); assert.doesNotMatch(i.uz, /[oOgG][‘ʻ'`]|sh|ch/i, i.uz); }
   for (const k of ['tee', 'hoodie', 'jacket', 'shirt', 'pants', 'shorts', 'dress', 'shoes', 'costume', 'seasonal', 'glasses', 'sunglasses', 'hat', 'cap', 'headphones', 'backpack', 'watch', 'necklace', 'wings', 'mask', 'cat', 'dog', 'rabbit', 'fox', 'dragon', 'bird', 'dino', 'fantasy', 'animation', 'background', 'effect', 'style', 'collectible'])
     assert.ok(ITEMS.some((i) => i.kind === k), 'the shop has ' + k);
-  for (const r of AS.RARITIES) assert.ok(ITEMS.some((i) => i.rarity === r), r);
+  for (const r of AS.RARITIES) assert.ok(ITEMS.concat(require('../../server/seed/avatar').GAME_ITEMS).some((i) => i.rarity === r), r);
   assert.ok(ITEMS.filter((i) => i.earn).length >= 4, 'pets that are earned');
 });
 
@@ -35,6 +35,26 @@ test('fashion collection: hundreds of original items in twelve collections, vali
   }
   for (const c of ['traditional', 'sports', 'formal', 'fantasy', 'historical', 'futuristic', 'gaming', 'fandom', 'seasonal', 'streetwear', 'luxury']) assert.ok(FASHION.filter((i) => i.collection === c).length >= 20, c + ' is a big collection');
   for (const sub of ['uzbek', 'japanese', 'korean', 'chinese', 'indian', 'arab', 'african', 'european']) assert.ok(FASHION.some((i) => i.collection === 'traditional' && i.subcollection === sub), 'traditional / ' + sub);
+});
+
+test('gaming skins: one category per game with sub-categories, original designs, all rarities, no game names in the items', () => {
+  const { GAME_ITEMS } = require('../../server/seed/avatar');
+  const A = require('../../server/lib/avatar-spec');
+  assert.strictEqual(Object.keys(A.GAMES).length, 15, 'fifteen games');
+  assert.ok(GAME_ITEMS.length >= 400, 'hundreds of game skins');
+  assert.strictEqual(new Set(GAME_ITEMS.map((i) => i.slug)).size, GAME_ITEMS.length, 'unique slugs');
+  for (const g of Object.keys(A.GAMES)) {
+    const own = GAME_ITEMS.filter((i) => i.collection === g); assert.ok(own.length >= 20, g + ' is a real collection');
+    for (const sub of A.GAMES[g]) assert.ok(own.some((i) => i.subcollection === sub), `${g} / ${sub} has items`);
+    for (const k of ['fashion', 'headwear']) assert.ok(own.some((i) => i.kind === k), `${g} has ${k}`);
+  }
+  for (const i of GAME_ITEMS) {
+    assert.ok(A.GAMES[i.collection].includes(i.subcollection) && A.KINDS.includes(i.kind) && A.RARITIES.includes(i.rarity), i.slug); assert.strictEqual(A.categoryOf(i.kind, i.collection), 'games');
+    assert.ok(i.en && i.uz && i.ru && i.price > 0, i.slug); assert.doesNotMatch(i.uz, /[oOgG][‘ʻ'`]|sh|ch/i, i.uz);
+    assert.doesNotMatch(i.en + ' ' + i.ru, /steve|alex|creeper|enderman|fortnite|pubg|valorant|roblox|minecraft|terraria|overwatch|apex|dota|counter-strike|call of duty|among us|free fire|league of legends|sas |gign|phoenix/i, 'no trademarked names in items: ' + i.en);
+  }
+  for (const r of ['common', 'rare', 'epic', 'legendary', 'mythic']) assert.ok(GAME_ITEMS.some((i) => i.rarity === r), 'game skins have ' + r);
+  for (const g of Object.keys(A.GAMES)) assert.ok(GAME_ITEMS.some((i) => i.collection === g && i.rarity === 'mythic'), g + ' has a mythic skin');
 });
 
 test('avatar studio: starter items, create / change / switch / delete characters, validated on the server', async () => {
@@ -176,12 +196,16 @@ test('admin avatar management: items, images, prices, rarity, token rewards, led
     // create / validate / edit / delete
     assert.strictEqual((await admin.post('/api/admin/avatar/items', { name_en: 'X', kind: 'tee', price: -5, rarity: 'common' })).status, 400);
     assert.strictEqual((await admin.post('/api/admin/avatar/items', { name_en: 'X', kind: 'sofa', price: 5, rarity: 'common' })).status, 400);
-    assert.strictEqual((await admin.post('/api/admin/avatar/items', { name_en: 'X', kind: 'tee', price: 5, rarity: 'mythic' })).status, 400);
+    assert.strictEqual((await admin.post('/api/admin/avatar/items', { name_en: 'X', kind: 'tee', price: 5, rarity: 'godlike' })).status, 400);
     /* the collection grows from the admin panel: a design preset, three colours, an emblem, a number, a collection and a sub-collection */
     const fx = await admin.post('/api/admin/avatar/items', { name_en: 'Tashkent Derby Kit', name_uz: 'Toşkent derbisi formasi', name_ru: 'Форма ташкентского дерби', kind: 'fashion', price: 120, rarity: 'rare', collection: 'sports', subcollection: 'football', art: { v: 'jersey_fb', c: '#2f7bff', c2: '#ffffff', c3: '#243a7a', p: 'stripes', e: 'star', n: 10 } });
     assert.strictEqual(fx.status, 201); assert.strictEqual(fx.json.slot, 'outfit'); assert.strictEqual(fx.json.category, 'clothing'); assert.strictEqual(fx.json.collection, 'sports'); assert.strictEqual(fx.json.subcollection, 'football');
     assert.deepStrictEqual(fx.json.art, { v: 'jersey_fb', c: '#2f7bff', c2: '#ffffff', c3: '#243a7a', p: 'stripes', e: 'star', n: 10 });
     assert.strictEqual((await admin.post('/api/admin/avatar/items', { name_en: 'Bad', kind: 'fashion', price: 5, rarity: 'common', collection: 'nonsense' })).status, 400, 'only known collections');
+    const gs = await admin.post('/api/admin/avatar/items', { name_en: 'Desert Squad Mask', kind: 'facewear', price: 500, rarity: 'mythic', collection: 'cs2', subcollection: 'masks', art: { v: 'gasmask', c: '#7a8a3a', c2: '#222222' } });
+    assert.strictEqual(gs.status, 201); assert.strictEqual(gs.json.slot, 'mask'); assert.strictEqual(gs.json.category, 'games', 'a game skin lives in the Game skins tab'); assert.strictEqual(gs.json.rarity, 'mythic');
+    assert.strictEqual((await admin.patch('/api/admin/avatar/items/' + gs.json.id, { price: 700, rarity: 'legendary' })).json.price, 700, 'skins are edited in the admin panel');
+    assert.strictEqual((await admin.del('/api/admin/avatar/items/' + gs.json.id)).status, 200, 'and removed (an item nobody owns)');
     assert.ok((await admin.get('/api/admin/avatar/items')).json.collections.sports.includes('football'), 'the admin form can list the collections');
     const shopItem = (await (await learner(s, 'shopper@example.com')).get('/api/avatar/bootstrap')).json.items.find((i) => i.slug === fx.json.slug);
     assert.ok(shopItem && shopItem.collection === 'sports' && shopItem.sub === 'football' && shopItem.forSale, 'the new item appears in the shop under its collection');

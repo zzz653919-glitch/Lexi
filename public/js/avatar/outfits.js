@@ -8,7 +8,7 @@ const clip = (d, inner) => { const id = 'fc' + (++uid); return `<clipPath id="${
 const rep = (n, f) => Array.from({ length: n }, (_, i) => f(i)).join('');
 
 /* ---------- patterns: drawn over the whole body area, then clipped to the garment ---------- */
-export const PATTERNS = ['solid', 'stripes', 'pinstripe', 'dots', 'check', 'plaid', 'diamond', 'waves', 'stars', 'flowers', 'camo', 'ikat', 'tribal', 'kente', 'circuit', 'hex', 'scales', 'chevrons', 'xmas', 'bones', 'graffiti', 'leaves', 'sparkle'];
+export const PATTERNS = ['solid', 'stripes', 'pinstripe', 'dots', 'check', 'plaid', 'diamond', 'waves', 'stars', 'flowers', 'camo', 'ikat', 'tribal', 'kente', 'circuit', 'hex', 'scales', 'chevrons', 'xmas', 'bones', 'graffiti', 'leaves', 'sparkle', 'pixels', 'lava', 'digital', 'gems'];
 const star = (x, y, r, c) => `<path d="M${x} ${y - r}l${r * .3} ${r * .62} ${r * .7} ${r * .1}-${r * .52} ${r * .48} ${r * .14} ${r * .7}-${r * .62}-${r * .34}-${r * .62} ${r * .34} ${r * .14}-${r * .7}-${r * .52}-${r * .48} ${r * .7}-${r * .1}z" fill="${c}"/>`;
 function pattern(p, c, c3) {
   const X0 = 40, X1 = 200, Y0 = 138, Y1 = 322;
@@ -35,6 +35,10 @@ function pattern(p, c, c3) {
     case 'graffiti': return rep(9, (i) => `<circle cx="${X0 + ((i * 47) % 150) + 6}" cy="${Y0 + ((i * 31) % 170) + 8}" r="${6 + (i % 3) * 3}" fill="${['#ffd23f', c, c3, '#5ef2ff'][i % 4]}" opacity=".85"/><path d="M${X0 + ((i * 47) % 140)} ${Y0 + ((i * 29) % 160) + 10}q14 -16 28 0" fill="none" stroke="${['#ff5fa2', '#fff', c][i % 3]}" stroke-width="3" stroke-linecap="round" opacity=".9"/>`);
     case 'leaves': return rep(7, (j) => rep(6, (i) => `<path d="M${X0 + 14 + i * 28 + (j % 2) * 14} ${Y0 + 18 + j * 26}q-8 -8 0 -16q8 8 0 16z" fill="${(i + j) % 2 ? c : c3}" opacity=".85"/>`));
     case 'sparkle': return rep(8, (j) => rep(7, (i) => star(X0 + 8 + i * 24 + (j % 2) * 12 + ((i * j) % 3) * 3, Y0 + 8 + j * 24, 3 + (i + j) % 3, c))).replace(/fill="/g, 'opacity=".9" fill="');
+    case 'pixels': return rep(20, (j) => rep(16, (i) => { const h = (i * 37 + j * 91 + (i * j) % 7 * 13) % 10; return h < 3 ? '' : `<rect x="${X0 + i * 10}" y="${Y0 + j * 10}" width="10" height="10" fill="${h < 6 ? c : h < 8 ? c3 : '#fff'}" opacity="${h < 6 ? .55 : h < 8 ? .6 : .18}"/>`; }));
+    case 'lava': return rep(20, (j) => rep(16, (i) => { const h = (i * 41 + j * 73 + (i * j) % 5 * 17) % 11; return h < 4 ? '' : `<rect x="${X0 + i * 10}" y="${Y0 + j * 10}" width="10" height="10" fill="${h < 8 ? c3 : c}" opacity="${h < 8 ? .6 : .9}"/>`; }));
+    case 'digital': return rep(20, (j) => rep(16, (i) => { const h = (i * 29 + j * 53 + (i + j) % 4 * 11) % 9; return h < 3 ? '' : `<rect x="${X0 + i * 10}" y="${Y0 + j * 10}" width="10" height="10" fill="${h < 6 ? c : c3}" opacity=".7"/>`; }));
+    case 'gems': return rep(8, (j) => rep(7, (i) => `<path d="M${X0 + 10 + i * 22 + (j % 2) * 11} ${Y0 + 6 + j * 24}l7 -7 7 7 -7 9z" fill="${c}" stroke="#fff" stroke-opacity=".7" stroke-width="1.2" opacity=".9"/>`));
     default: return '';
   }
 }
@@ -70,6 +74,7 @@ const LONG = {
   gown: 'M89 150Q120 139 151 150L156 200L160 232Q172 268 184 290Q120 310 56 290Q68 268 80 232L84 200Z',
   column: 'M89 150Q120 139 151 150L156 200L158 240Q160 290 156 306Q120 316 84 306Q80 290 82 240L84 200Z',
   ball: 'M89 150Q120 139 151 150L155 196L158 222Q190 270 206 304Q120 324 34 304Q50 270 82 222L85 196Z',
+  bean: 'M92 150Q120 138 148 150Q172 162 170 226Q170 296 150 314H90Q70 296 70 226Q68 162 92 150Z',
   mini: 'M89 150Q120 139 151 150L156 200L160 224Q168 244 174 258Q120 272 66 258Q72 244 80 224L84 200Z',
 };
 const SKIRT = { skirt: 'M86 214Q120 224 154 214L168 270Q120 284 72 270Z', pleat: 'M86 214Q120 224 154 214L170 274Q120 288 70 274Z', kilt: 'M87 216Q120 226 153 216L160 262Q120 272 80 262Z' };
@@ -208,6 +213,42 @@ export const PRESETS = {
   fur_coat: { sl: 'long', lo: 'pants', nk: 'turtle', ext: ['fur', 'buttons', 'trim'], ln: 280 },
   sequin_dress: { sl: 'long', lo: 'gown', nk: 'boat', p: 'sparkle', ext: ['trim'] },
   couture_cape: { sl: 'none', lo: 'column', nk: 'boat', ext: ['cape', 'jewel', 'trim'], p: 'diamond' },
+  /* gaming: original, fan-inspired designs */
+  ct_gear: { sl: 'long', lo: 'pants', nk: 'collar', ext: ['tactical', 'pockets', 'patches'], ln: 246 },
+  t_gear: { sl: 'long', lo: 'pants', nk: 'collar', ext: ['vest', 'pockets', 'strap'], p: 'camo', ln: 250 },
+  sas_gear: { sl: 'long', lo: 'pants', nk: 'turtle', ext: ['armor', 'pockets', 'harness'], same: true },
+  urban_unit: { sl: 'long', lo: 'pants', nk: 'collar', ext: ['tactical', 'patches', 'belt2'], ln: 250 },
+  arctic_gear: { sl: 'long', lo: 'pants', nk: 'hood', ext: ['zip', 'pockets', 'quilt'], p: 'digital', ln: 262 },
+  ember_raider: { sl: 'long', lo: 'pants', nk: 'collar', ext: ['vest', 'pockets', 'buckles'], ln: 252 },
+  agent_suit: { sl: 'long', lo: 'pants', nk: 'mandarin', ext: ['panel', 'pockets', 'harness', 'patches'], ln: 252 },
+  special_forces: { sl: 'long', lo: 'pants', nk: 'turtle', ext: ['armor', 'tactical', 'pauldrons', 'patches'], same: true },
+  fatigues: { sl: 'long', lo: 'pants', nk: 'collar', p: 'digital', ext: ['pockets', 'buttons'], ln: 250, plLower: true },
+  ghillie: { sl: 'long', lo: 'pants', nk: 'hood', p: 'leaves', ext: ['pockets'], ln: 268, plLower: true },
+  block_hero: { sl: 'short', lo: 'pants', nk: 'round', p: 'pixels', ext: ['pixelhem'], plLower: true },
+  block_mob: { sl: 'long', lo: 'pants', nk: 'none', p: 'pixels', same: true, plLower: true, ext: ['cuffs'] },
+  block_armor: { sl: 'long', lo: 'pants', nk: 'turtle', p: 'pixels', ext: ['armor', 'pauldrons', 'pixelhem'], plLower: true },
+  nether_armor: { sl: 'long', lo: 'pants', nk: 'turtle', p: 'lava', ext: ['armor', 'pauldrons', 'pixelhem'], plLower: true },
+  diamond_armor: { sl: 'long', lo: 'pants', nk: 'turtle', p: 'gems', ext: ['armor', 'pauldrons'] },
+  neon_hero: { sl: 'long', lo: 'pants', nk: 'mandarin', ext: ['neon', 'cape', 'panel', 'emblem'], e: 'bolt' },
+  blocky_tee: { sl: 'short', lo: 'pants', nk: 'round', ext: ['emblem', 'pockets'], e: 'star', ln: 246 },
+  agent_coat: { sl: 'long', lo: 'pants', nk: 'mandarin', ext: ['neon', 'zip', 'panel', 'cuffs'], ln: 278 },
+  operator_gear: { sl: 'long', lo: 'pants', nk: 'turtle', ext: ['armor', 'tactical', 'pauldrons', 'patches', 'pockets'], same: true },
+  hardsuit: { sl: 'long', lo: 'pants', nk: 'turtle', p: 'hex', ext: ['armor', 'pauldrons', 'neon', 'panel'], e: 'gear' },
+  stalker_suit: { sl: 'long', lo: 'pants', nk: 'hood', ext: ['harness', 'panel', 'neon', 'cape'], same: true },
+  hero_visor: { sl: 'long', lo: 'pants', nk: 'mandarin', ext: ['neon', 'emblem', 'belt2', 'cuffs'], e: 'sun' },
+  engineer: { sl: 'long', lo: 'pants', nk: 'collar', ext: ['overalls', 'pockets', 'gloves-trim'], ln: 252 },
+  support_medic: { sl: 'long', lo: 'pants', nk: 'mandarin', ext: ['panel', 'emblem', 'belt2', 'cuffs'], e: 'cross', same: true },
+  champion_plate: { sl: 'long', lo: 'pants', nk: 'turtle', ext: ['armor', 'pauldrons', 'cape', 'emblem', 'tabard'], e: 'crown', mail: true },
+  arcane_robe: { sl: 'wide', lo: 'robe', nk: 'v', w: 'sash', p: 'gems', ext: ['trim', 'trimhem', 'emblem'], e: 'moon' },
+  blade_assassin: { sl: 'long', lo: 'pants', nk: 'hood', w: 'belt', ext: ['harness', 'buckles', 'cape'], ln: 262 },
+  jungle_hunter: { sl: 'long', lo: 'pants', nk: 'v', w: 'belt', p: 'leaves', ext: ['vest', 'strap', 'buckles'], ln: 258 },
+  warlord: { sl: 'long', lo: 'pants', nk: 'turtle', ext: ['armor', 'pauldrons', 'cape', 'fur', 'belt2'], mail: true },
+  mystic_robe: { sl: 'wide', lo: 'robe', nk: 'hood', w: 'rope', p: 'waves', ext: ['trim', 'trimhem', 'emblem'], e: 'sun' },
+  pixel_armor: { sl: 'long', lo: 'pants', nk: 'round', p: 'pixels', ext: ['armor', 'pauldrons', 'pixelhem'], plLower: true },
+  molten_armor: { sl: 'long', lo: 'pants', nk: 'turtle', p: 'lava', ext: ['armor', 'pauldrons', 'neon'], plLower: true },
+  jungle_armor: { sl: 'long', lo: 'pants', nk: 'turtle', p: 'leaves', ext: ['armor', 'pauldrons'], plLower: true },
+  adventurer_tunic: { sl: 'long', lo: 'pants', nk: 'v', w: 'belt', ln: 264, p: 'pixels', ext: ['trim', 'pixelhem'] },
+  crew_capsule: { sl: 'long', lo: 'bean', nk: 'none', ext: ['pockets', 'zip', 'cuffs'], same: true },
   gold_tux: { sl: 'long', lo: 'pants', nk: 'bow', ext: ['lapel', 'buttons', 'satin', 'cuffs'], ln: 254, same: false },
 };
 export const PRESET_KEYS = Object.keys(PRESETS);
@@ -217,7 +258,7 @@ export function drawFashion(a, S, F) {
   const pr = PRESETS[a.v] || PRESETS.plain, ext = new Set(pr.ext || []);
   const c = a.c || '#4a90e2', c2 = a.c2 || '#ffffff', c3 = a.c3 || (pr.same ? c : dk(c, .6)), p = a.p && a.p !== 'solid' ? a.p : (a.p === 'solid' ? '' : pr.p || ''), emb = a.e && a.e !== 'none' ? a.e : pr.e || '';
   const white = '#f6f6fa', top = pr.white ? white : c, line = dk(c, .5);
-  const longKey = ['robe', 'kimono', 'gown', 'column', 'ball', 'mini'].includes(pr.lo) ? (pr.lo === 'kimono' && pr.noWide ? 'kimono' : pr.lo) : '';
+  const longKey = ['robe', 'kimono', 'gown', 'column', 'ball', 'mini', 'bean'].includes(pr.lo) ? (pr.lo === 'kimono' && pr.noWide ? 'kimono' : pr.lo) : '';
   const skirtKey = SKIRT[pr.lo] ? pr.lo : '';
   const ln = pr.ln || (skirtKey ? 226 : 236);
   const out = [];
@@ -261,6 +302,7 @@ export function drawFashion(a, S, F) {
   if (!longKey) out.push(folds(top));
   /* trims along the bottom of long garments */
   if (longKey && (ext.has('trimhem') || ext.has('trim'))) { const yb = longKey === 'mini' ? 258 : longKey === 'kimono' ? 298 : longKey === 'robe' ? 302 : longKey === 'column' ? 304 : longKey === 'ball' ? 302 : 288; const w = longKey === 'ball' ? 86 : longKey === 'gown' ? 62 : longKey === 'robe' ? 56 : longKey === 'column' ? 36 : longKey === 'mini' ? 52 : 38; out.push(`<path d="M${120 - w} ${yb}Q120 ${yb + 16} ${120 + w} ${yb}L${120 + w + 2} ${yb + 6}Q120 ${yb + 24} ${120 - w - 2} ${yb + 6}Z" fill="${c2}" ${S}/>`); }
+  if (ext.has('pixelhem')) out.push(`<g fill="${dk(top, .6)}">${rep(7, (i) => `<rect x="${86 + i * 10}" y="${ln - 6}" width="10" height="${i % 2 ? 6 : 10}"/>`)}</g>`);
   if (ext.has('scallop')) out.push(`<path d="M68 300${rep(7, (i) => `q9 14 18 0`)}" fill="${top}" ${S}/>`);
   /* 4 waist */
   const wy = pr.w === 'ribbon' ? 176 : longKey === 'column' || longKey === 'ball' || longKey === 'gown' || longKey === 'mini' ? 206 : 214;

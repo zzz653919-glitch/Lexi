@@ -168,4 +168,4 @@ const TAGS = {
 const COSTUME_TAGS = { astronaut: ['futuristic', 'space'], knight: ['fantasy', 'knights'], wizard: ['fantasy', 'wizards'], pirate: ['historical', 'renaissance'], chef: ['everyday', 'work'], hero: ['fandom', 'superheroes'], winter: ['seasonal', 'winter'], summer: ['seasonal', 'summer'], spring: ['seasonal', 'spring'], autumn: ['seasonal', 'autumn'] };
 const tagFor = (it) => (it.kind === 'costume' || it.kind === 'seasonal' ? COSTUME_TAGS[(it.art || {}).v] : TAGS[it.kind]) || null;
 
-module.exports = { FASHION: items, tagFor, COLLECTIONS: A.COLLECTIONS };
+module.exports = { FASHION: items, tagFor, COLLECTIONS: A.COLLECTIONS, PAL, PRICE, cap };
