@@ -89,3 +89,10 @@
 .ach-card .ico svg { width: 30px; height: 30px; }
 .switch { display: flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 700; }
 .switch input { width: 24px; height: 24px; accent-color: var(--brand); flex: none; }
+
+/* leaderboard: characters and the pop-up */
+.board li.lb-row { cursor: pointer; transition: background .15s, transform .15s; } .board li.lb-row:hover { background: var(--surface-2); transform: translateX(2px); } .board li.lb-row:focus-visible { outline: 3px solid var(--brand); outline-offset: 2px; border-radius: 12px; }
+.lb-char { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 50%; overflow: hidden; background: radial-gradient(circle at 50% 35%, #fff, #e6defa 80%); border: 3px solid #cbbcf5; box-shadow: 0 3px 8px rgba(0, 0, 0, .3); }
+
+.lb-row.r1 .lb-char { border-color: #ffc83d; box-shadow: 0 0 0 2px #8a5a00, 0 0 14px rgba(255, 200, 60, .6); } .lb-row.r2 .lb-char { border-color: #d5dbe8; box-shadow: 0 0 0 2px #5a617a, 0 0 12px rgba(200, 210, 230, .5); } .lb-row.r3 .lb-char { border-color: #e39a5a; box-shadow: 0 0 0 2px #7a4a22, 0 0 12px rgba(227, 154, 90, .5); }
+.lb-card { display: grid; gap: 10px; justify-items: center; } .lb-stage { display: grid; place-items: center; width: min(280px, 100%); border-radius: 24px; overflow: hidden; background: radial-gradient(ellipse at 50% 40%, rgba(255, 255, 255, .3), rgba(255, 255, 255, .06) 70%); border: 2px solid rgba(255, 255, 255, .25); padding: 6px; } .lb-stage svg { max-width: 100%; height: auto; } .lb-none { min-height: 140px; }

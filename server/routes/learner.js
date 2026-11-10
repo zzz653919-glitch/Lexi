@@ -144,8 +144,24 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     const rows = await db.all(`SELECT u.id, u.display_name, u.avatar, COALESCE(SUM(x.amount),0) xp FROM users u LEFT JOIN xp_transactions x ON x.user_id = u.id AND x.created_at >= ?
       WHERE u.status = 'active' AND u.leaderboard_opt_in = 1 GROUP BY u.id HAVING xp > 0 ORDER BY xp DESC, u.id LIMIT 20`, since);
     const me = await core.userById(req.user.id);
+    /* the learners' characters (opted-in people only): the active one, with the pictures of what it wears */
+    const ids = rows.map((u) => u.id), chars = new Map();
+    if (ids.length) {
+      const q = ids.map(() => '?').join(',');
+      const [avs, states, totals] = await Promise.all([db.all(`SELECT * FROM avatars WHERE user_id IN (${q}) ORDER BY id`, ...ids), db.all(`SELECT user_id, active_avatar_id FROM avatar_state WHERE user_id IN (${q})`, ...ids), db.all(`SELECT id, xp_total FROM users WHERE id IN (${q})`, ...ids)]);
+      const active = new Map(states.map((x) => [x.user_id, x.active_avatar_id])), xpOf = new Map(totals.map((x) => [x.id, x.xp_total]));
+      const pickOne = new Map(); for (const a of avs) { if (!pickOne.has(a.user_id) || a.id === active.get(a.user_id)) pickOne.set(a.user_id, a); }
+      const parse = (x, d) => { try { return JSON.parse(x || ''); } catch (_) { return d; } };
+      const slugs = [...new Set([...pickOne.values()].flatMap((a) => Object.values(parse(a.equipped, {}))))];
+      const items = slugs.length ? await db.all(`SELECT slug, slot, kind, art, image_url FROM avatar_items WHERE slug IN (${slugs.map(() => '?').join(',')})`, ...slugs) : [];
+      const bySlug = new Map(items.map((i) => [i.slug, { slot: i.slot, kind: i.kind, art: parse(i.art, {}), image: i.image_url || '' }]));
+      for (const [uid, a] of pickOne) {
+        const eq = {}; for (const [slot, slug] of Object.entries(parse(a.equipped, {}))) if (bySlug.has(slug)) eq[slot] = bySlug.get(slug);
+        chars.set(uid, { name: a.name, style: ['cartoon', 'modern', 'fantasy', 'animal', 'robot'].includes(a.style) ? a.style : 'cartoon', look: parse(a.look, {}), equipped: eq, petName: a.pet_name || '', petPose: a.pet_pose || 'sit', xpTotal: xpOf.get(uid) || 0 });
+      }
+    }
     res.json({ enabled: true, weekStarts: since.slice(0, 10), optedIn: !!me.leaderboard_opt_in,
-      items: rows.map((u, i) => ({ rank: i + 1, displayName: u.display_name, avatar: u.avatar, xp: u.xp, you: u.id === me.id })) });
+      items: rows.map((u, i) => { const c = chars.get(u.id); return { rank: i + 1, displayName: u.display_name, avatar: u.avatar, xp: u.xp, you: u.id === me.id, character: c ? { name: c.name, style: c.style, look: c.look, equipped: c.equipped, petName: c.petName, petPose: c.petPose, level: require('../lib/avatar-spec').charLevel(c.xpTotal).level } : null }; }) });
   });
 
   return r;

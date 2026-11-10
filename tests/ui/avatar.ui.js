@@ -106,6 +106,14 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     const fit = await page.evaluate(async () => { const R = await import('/js/avatar/render.js'); return [R.fitsStyle('animal', { slot: 'hat' }), R.fitsStyle('robot', { slot: 'glasses' }), R.fitsStyle('cartoon', { slot: 'hat' }), R.fitsStyle('animal', { slot: 'headphones' })]; });
     check(fit.join() === 'false,false,true,true', 'items that do not fit a character model (hats on the animal ears, glasses on the robot visor) are refused');
 
+    /* ---------- the leaderboard shows the characters; a click shows the name and the character ---------- */
+    s.db.run('UPDATE users SET leaderboard_opt_in = 1 WHERE id = ?', uid); s.db.run("INSERT INTO xp_transactions (user_id, amount, reason, ref_type, ref_id, local_date, created_at) VALUES (?, 5, 'exercise', 'x', 1, ?, ?)", uid, new Date().toISOString().slice(0, 10), new Date().toISOString());
+    await page.goto(s.base + '/leaderboard'); await page.waitForSelector('.lb-row');
+    check(await page.locator('.lb-row .lb-char svg').count() >= 1, 'the leaderboard shows the learners\' characters');
+    await page.click('.lb-row'); await page.waitForSelector('#lb-card svg');
+    check((await page.locator('dialog[open] h2').innerText()).length > 0 && await page.locator('#lb-card .chip').count() >= 2, 'a click on a person shows their name, character and weekly XP');
+    await page.keyboard.press('Escape'); await page.waitForSelector('dialog[open]', { state: 'detached' });
+
     /* ---------- inventory, pets ---------- */
     await page.goto(s.base + '/avatar/inventory'); await page.waitForSelector('#av-stage svg');
     check(await page.locator('.av-tab').count() === 6 && await page.locator('.av-tile[data-slug="tee-red"]').count() === 1 && await page.locator('.av-tile[data-slug="hoodie-gray"]').count() === 0, 'the inventory shows only owned items');
