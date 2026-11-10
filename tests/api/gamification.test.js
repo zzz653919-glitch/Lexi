@@ -79,14 +79,19 @@ test('daily goal and achievements are calculated from real records', async () =>
 });
 
 test('leaderboard: opt-in only, no private data, weekly XP order', async () => {
-  const s = await startServer();
+  const s = await startServer({ seedKids: true });
   try {
     const a = await learner(s, 'a@example.com', { name: 'Alice' }), b = await learner(s, 'b@example.com', { name: 'Bob' }), hidden = await learner(s, 'h@example.com', { name: 'Hidden' });
     await finishNext(s, a); await finishNext(s, b); await finishNext(s, hidden);
     await finishNext(s, a); // Alice earns more
     await a.patch('/api/me', { leaderboardOptIn: true }); await b.patch('/api/me', { leaderboardOptIn: true });
+    await a.get('/api/avatar/bootstrap');
+    assert.strictEqual((await a.post('/api/avatar/avatars', { name: 'Nova', style: 'fantasy', look: { shape: 1, skin: 3, hairStyle: 2, hairColor: 4, eyeStyle: 1, eyeColor: 2, brows: 1, mouth: 1 }, equipped: { top: 'starter-tee', bottom: 'starter-jeans' } })).status, 201);
     const lb = (await b.get('/api/leaderboard')).json;
     assert.deepStrictEqual(lb.items.map((x) => x.displayName), ['Alice', 'Bob']);
+    const ch = lb.items[0].character; assert.strictEqual(ch.name, 'Nova'); assert.strictEqual(ch.style, 'fantasy'); assert.strictEqual(ch.equipped.top.kind, 'tee'); assert.ok(ch.equipped.top.art && ch.level >= 1, 'a click on a person can show their character');
+    assert.strictEqual(lb.items[1].character, null, 'a learner without a character has none');
+    assert.ok(!('xpTotal' in ch), 'the total XP is not exposed');
     assert.ok(lb.items[0].xp > lb.items[1].xp); assert.ok(lb.items.find((x) => x.displayName === 'Bob').you);
     const text = JSON.stringify(lb);
     assert.ok(!text.includes('@example.com') && !text.includes('Hidden') && !/"id"/.test(text), 'no e-mail addresses, ids or opted-out users');
