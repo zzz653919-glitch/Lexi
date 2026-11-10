@@ -1,4 +1,4 @@
-/* The 3D skin viewer: a real-time WebGL model of the learner's character wearing a skin, with 360° turning, zoom, front / side / back views
+/* The 3D skin viewer: a real-time WebGL model of the learner's character wearing a skin, with free turning, zoom, front / side / back views
    and the skin's details and buttons. The model is BUILT FROM THE SKIN'S OWN DRAWING: every shape of the front and of the back picture
    is extruded into a solid piece, stacked in drawing order, lit and shaded (three.js, loaded only when a preview is opened). It is a
    relief-style model, not a sculpted mesh, and it follows every colour, pattern and design of the skin. Without WebGL a turning 2.5D card is shown. */
@@ -158,7 +158,7 @@ export async function openSkinViewer({ item, list = [], buy, wear, tryOn, refres
   const mk = (id, label, fn, cls) => btn(id, label, fn, cls);
   views.append(mk('av-v3-front', t('av.v3.front'), () => view(0)), mk('av-v3-side', t('av.v3.side'), () => view(90)), mk('av-v3-back', t('av.v3.back'), () => view(180)), mk('av-v3-left', '◀ ' + t('av.v3.turn'), () => { if (ctx && !ctx.fallback) { const cur0 = ctx.controls.getAzimuthalAngle() / RAD; ctx.tweenTo(cur0 - 45); } else view(-45); }, 'rot'), mk('av-v3-right', t('av.v3.turn') + ' ▶', () => { if (ctx && !ctx.fallback) { const cur0 = ctx.controls.getAzimuthalAngle() / RAD; ctx.tweenTo(cur0 + 45); } else view(45); }, 'rot'),
     mk('av-v3-zoom-out', '−', () => ctx && ctx.setDist(1.25), 'zoom'), mk('av-v3-zoom-in', '+', () => ctx && ctx.setDist(.8), 'zoom'),
-    mk('av-v3-auto', '⟳ 360°', (e) => { auto = !auto; e.currentTarget.classList.toggle('on', auto); e.currentTarget.setAttribute('aria-pressed', String(auto)); }, 'auto'), mk('av-v3-reset', t('av.v3.reset'), () => { auto = false; document.getElementById('av-v3-auto').classList.remove('on'); if (ctx && !ctx.fallback) { ctx.place(0, Math.PI / 2 - .04, ctx.fit()); ctx.state(); } else if (ctx) ctx.reset(); }));
+    mk('av-v3-reset', t('av.v3.reset'), () => { auto = false; if (ctx && !ctx.fallback) { ctx.place(0, Math.PI / 2 - .04, ctx.fit()); ctx.state(); } else if (ctx) ctx.reset(); }));
 
   const owned = () => it.owned || it.starter;
   const compat = () => fitsStyle((activeAvatar() || { style: 'cartoon' }).style, it);

@@ -148,7 +148,7 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     check(await page.locator('.av-fit-face.front svg').count() === 1 && (await page.locator('.av-fit .av-colls .av-chip.on').first().getAttribute('data-coll')) === 'cs2' && !!beforeG, 'a game skin can be tried on in the fitting room, which opens in its game');
     await page.keyboard.press('Escape'); await page.waitForSelector('.av-fit', { state: 'detached' });
 
-    /* ---------- the 3D skin viewer: a real WebGL model, 360° turning, zoom, views, details and buttons ---------- */
+    /* ---------- the 3D skin viewer: a real WebGL model, turning, zoom, views, details and buttons ---------- */
     await page.goto(s.base + '/avatar/shop'); await page.waitForSelector('.av-item'); await page.click('.av-tab[data-cat="games"]'); await page.click('.av-colls [data-coll="cs2"]'); await page.waitForSelector('.av-item[data-slug^="gm-cs2-special_forces"]');
     const skinName = await page.locator('.av-item[data-slug^="gm-cs2-special_forces"] h3').first().innerText();
     await page.click('.av-item[data-slug^="gm-cs2-special_forces"] h3'); await page.waitForSelector('#skin-viewer #av-v3-canvas[data-skin]', { timeout: 40000 });
@@ -160,7 +160,7 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     await page.click('#av-v3-front'); await page.waitForFunction(() => { const a = Number(document.getElementById('av-v3-canvas').dataset.azimuth); return a <= 3 || a >= 357; }, null, { timeout: 5000 });
     check(true, 'the character turns to the front, side and back views');
     await page.click('#av-v3-right'); await page.waitForFunction(() => { const a = Number(document.getElementById('av-v3-canvas').dataset.azimuth); return a > 20 && a < 70; }, null, { timeout: 5000 });
-    check(true, 'and can be turned step by step (full 360° with the mouse or finger)');
+    check(true, 'and can be turned step by step (and freely with the mouse or finger)');
     const z0 = Number(await page.getAttribute('#av-v3-canvas', 'data-zoom')); await page.click('#av-v3-zoom-in'); await page.click('#av-v3-zoom-in'); const z1 = Number(await page.getAttribute('#av-v3-canvas', 'data-zoom')); await page.click('#av-v3-zoom-out'); await page.click('#av-v3-zoom-out'); await page.click('#av-v3-zoom-out'); const z2 = Number(await page.getAttribute('#av-v3-canvas', 'data-zoom'));
     check(z1 > z0 && z2 < z1, 'zoom in and zoom out work');
     const firstSlug = await page.getAttribute('#av-v3-canvas', 'data-skin'); await page.click('#av-v3-next'); await page.waitForFunction((x) => document.getElementById('av-v3-canvas').dataset.skin !== x, firstSlug, { timeout: 30000 });
