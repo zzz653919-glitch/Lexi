@@ -106,6 +106,31 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     const fit = await page.evaluate(async () => { const R = await import('/js/avatar/render.js'); return [R.fitsStyle('animal', { slot: 'hat' }), R.fitsStyle('robot', { slot: 'glasses' }), R.fitsStyle('cartoon', { slot: 'hat' }), R.fitsStyle('animal', { slot: 'headphones' })]; });
     check(fit.join() === 'false,false,true,true', 'items that do not fit a character model (hats on the animal ears, glasses on the robot visor) are refused');
 
+    /* ---------- the global fashion collection: collections, sub-collections, search, try-on, body types ---------- */
+    await page.goto(s.base + '/avatar/shop'); await page.waitForSelector('.av-colls .av-chip');
+    check(await page.locator('.av-colls .av-chip[data-coll]:not([data-coll=""])').count() === 12, 'the shop has twelve fashion collections');
+    await page.click('.av-colls [data-coll="traditional"]'); await page.waitForSelector('.av-subs .av-chip[data-sub="uzbek"]');
+    check(await page.locator('.av-subs .av-chip[data-sub]:not([data-sub=""])').count() === 8, 'traditional clothes have sub-collections (Uzbek, Japanese, Korean, Chinese, Indian, Arab, African, European)');
+    await page.click('.av-subs [data-sub="uzbek"]'); await page.waitForSelector('.av-item[data-slug="fx-chapan-green"]');
+    check(await page.locator('.av-item').count() >= 8 && await page.locator('.av-item:not([data-slug^="fx-"])').count() === 0, 'a sub-collection shows only its own items');
+    await page.fill('#av-search', 'kimono'); await page.waitForTimeout(500);
+    check(await page.locator('.av-item').count() === 0, 'search works inside the open sub-collection (no kimono among the Uzbek clothes)');
+    await page.click('.av-subs [data-sub=""]'); await page.click('.av-colls [data-coll=""]'); await page.waitForSelector('.av-item[data-slug^="fx-kimono"]');
+    check(await page.locator('.av-item').count() >= 3 && (await page.locator('.av-item h3').allInnerTexts()).every((x) => /kimono/i.test(x)), 'search finds the kimonos by name');
+    await page.fill('#av-search', ''); await page.waitForTimeout(400);
+    await page.click('.av-colls [data-coll="fantasy"]'); await page.click('.av-item[data-slug^="fx-wizard_robe"] [data-act="fit"]'); await page.waitForSelector('.av-fit .av-fit-tile.on');
+    const wz = await page.locator('.av-fit-face.front').innerHTML();
+    await page.click('#av-fit-build [data-build="0"]'); const slim = await page.locator('.av-fit-face.front').innerHTML(); await page.click('#av-fit-build [data-build="2"]'); const broad = await page.locator('.av-fit-face.front').innerHTML();
+    check(slim !== broad && wz.includes('scale(1 1)'), 'an outfit can be tried on different body types (slim, regular, broad) and follows the body');
+    check((await api(page, '/avatar/wallet')).wallet.balance === 80 && await page.locator('.av-fit .av-colls .av-chip.on').count() >= 1, 'trying on fashion is free, and the fitting room opens in the item\'s collection');
+    await page.keyboard.press('Escape'); await page.waitForSelector('.av-fit', { state: 'detached' });
+    await page.click('.av-tab[data-cat="accessory"]'); await page.waitForSelector('.av-item');
+    check(await page.locator('.av-item[data-slug^="fx-doppi"]').count() >= 1 || await (async () => { await page.click('.av-colls [data-coll="traditional"]'); return page.locator('.av-item[data-slug^="fx-doppi"]').count().then((n) => n >= 1); })(), 'hats, shoes, scarves and capes are part of the collections too');
+    await page.goto(s.base + '/avatar'); await page.waitForSelector('#av-stage svg'); await page.click('.av-tab[data-tab="face"]');
+    check(await page.locator('.av-tile[data-part="build"]').count() === 3, 'the Studio offers three body types');
+    const before = await stageHtml(page); await page.click('.av-tile[data-part="build"][data-index="2"]'); check((await stageHtml(page)) !== before, 'choosing a body type changes the character at once');
+    await page.click('.av-tile[data-part="build"][data-index="1"]');
+
     /* ---------- the leaderboard shows the characters; a click shows the name and the character ---------- */
     s.db.run('UPDATE users SET leaderboard_opt_in = 1 WHERE id = ?', uid); s.db.run("INSERT INTO xp_transactions (user_id, amount, reason, ref_type, ref_id, local_date, created_at) VALUES (?, 5, 'exercise', 'x', 1, ?, ?)", uid, new Date().toISOString().slice(0, 10), new Date().toISOString());
     await page.goto(s.base + '/leaderboard'); await page.waitForSelector('.lb-row');

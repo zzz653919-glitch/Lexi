@@ -6,7 +6,7 @@ import { navigate } from '../app.js';
 import { renderAvatar, SKINS, HAIRS, EYES, STYLE_NAMES, itemSvg } from '../avatar/render.js';
 import { A, loadBoot, equippedItems, avatarEl, avatarNav, rarityBadge, setBalance } from '../avatar/ui.js';
 
-const DEFAULT_LOOK = { shape: 0, skin: 2, hairStyle: 1, hairColor: 1, eyeStyle: 0, eyeColor: 0, brows: 0, mouth: 0 };
+const DEFAULT_LOOK = { build: 1, shape: 0, skin: 2, hairStyle: 1, hairColor: 1, eyeStyle: 0, eyeColor: 0, brows: 0, mouth: 0 };
 const TABS = { studio: ['style', 'face', 'hair', 'eyes', 'mouth', 'outfit', 'shoes', 'head', 'accessories', 'pet', 'scene'], inventory: ['outfit', 'shoes', 'head', 'accessories', 'pet', 'scene'] };
 const TAB_EMOJI = { style: '✨', face: '🙂', hair: '💇', eyes: '👀', mouth: '👄', outfit: '👕', shoes: '👟', head: '🎩', accessories: '🎒', pet: '🐾', scene: '🌄' };
 const GROUPS = { outfit: ['top', 'bottom', 'dress', 'outfit'], shoes: ['shoes'], head: ['hat', 'glasses', 'headphones', 'mask'], accessories: ['back', 'wrist', 'neck', 'wings'], pet: ['pet'], scene: ['background', 'effect', 'animation', 'style', 'collectible'] };
@@ -45,6 +45,7 @@ export default async function avatarStudio({ mode = 'studio' } = {}) {
   /* ---------- option tiles ---------- */
   const tile = (child, { on, label, onclick, extraClass = '', data = {} }) => h('button', { type: 'button', class: 'av-tile' + (on ? ' on' : '') + ' ' + extraClass, 'aria-pressed': String(!!on), 'aria-label': label, title: label, onclick, ...Object.fromEntries(Object.entries(data).map(([k, v]) => ['data-' + k, v])) }, child, h('small', {}, label));
   const faceTile = (k, i, label) => { const span = h('span', { class: 'av-mini' }); span.innerHTML = renderAvatar({ style: draft.style, look: { ...draft.look, [k]: i }, equipped: {}, size: 74, viewBox: '52 14 136 140', plain: true }); return tile(span, { on: draft.look[k] === i, label, data: { part: k, index: i }, onclick: () => { draft.look[k] = i; paint(); fill(); } }); };
+  const buildTile = (i) => { const span = h('span', { class: 'av-mini tall' }); span.innerHTML = renderAvatar({ style: draft.style, look: { ...draft.look, build: i }, equipped: draft.equipped ? Object.fromEntries(Object.entries(draft.equipped).filter(([sl]) => ['top', 'bottom', 'dress', 'outfit', 'shoes'].includes(sl)).map(([sl, slug]) => [sl, boot.items.find((x) => x.slug === slug)]).filter(([, it]) => it)) : {}, size: 74, viewBox: '28 8 184 320', plain: true }); return tile(span, { on: (draft.look.build ?? 1) === i, label: t('av.build_n.' + i), data: { part: 'build', index: i }, onclick: () => { draft.look.build = i; paint(); fill(); } }); };
   const swatches = (k, list, names) => h('div', { class: 'av-swatches', role: 'radiogroup' }, list.map((c, i) => h('button', { type: 'button', class: 'av-swatch' + (draft.look[k] === i ? ' on' : ''), role: 'radio', 'aria-checked': String(draft.look[k] === i), 'aria-label': t(names + '.' + i), title: t(names + '.' + i), 'data-part': k, 'data-index': i, style: { background: c }, onclick: () => { draft.look[k] = i; paint(); fill(); } })));
   const section = (title, ...kids) => h('section', { class: 'av-section' }, h('h3', {}, title), ...kids);
   const labelN = (key, n) => t(`av.${key}`, { n: n + 1 });
@@ -58,7 +59,7 @@ export default async function avatarStudio({ mode = 'studio' } = {}) {
     tabBar.querySelectorAll('.av-tab').forEach((b) => { const on = b.dataset.tab === tab; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
     const parts = [];
     if (tab === 'style') parts.push(section(t('av.tab.style'), h('div', { class: 'av-grid' }, STYLE_NAMES.map((s) => { const span = h('span', { class: 'av-mini tall' }); span.innerHTML = renderAvatar({ style: s, look: draft.look, equipped: {}, size: 80, viewBox: '40 8 160 190', plain: true }); return tile(span, { on: draft.style === s, label: t('av.style.' + s), data: { style: s }, onclick: () => { draft.style = s; paint(); fill(); } }); }))));
-    if (tab === 'face') parts.push(section(t('av.face_shape'), h('div', { class: 'av-grid' }, Array.from({ length: boot.spec.look.shape }, (_, i) => i).filter((i) => i !== 3).map((i, pos) => faceTile('shape', i, labelN('shape', pos))))), section(t('av.skin'), swatches('skin', SKINS, 'av.skin_n')));
+    if (tab === 'face') parts.push(section(t('av.build'), h('div', { class: 'av-grid' }, [0, 1, 2].map(buildTile))), section(t('av.face_shape'), h('div', { class: 'av-grid' }, Array.from({ length: boot.spec.look.shape }, (_, i) => i).filter((i) => i !== 3).map((i, pos) => faceTile('shape', i, labelN('shape', pos))))), section(t('av.skin'), swatches('skin', SKINS, 'av.skin_n')));
     if (tab === 'hair') parts.push(section(t('av.hair_style'), h('div', { class: 'av-grid' }, Array.from({ length: boot.spec.look.hairStyle }, (_, i) => faceTile('hairStyle', i, i === 0 ? t('av.none') : labelN('hair', i))))), section(t('av.hair_color'), swatches('hairColor', HAIRS, 'av.hair_n')));
     if (tab === 'eyes') parts.push(section(t('av.eye_style'), h('div', { class: 'av-grid' }, Array.from({ length: boot.spec.look.eyeStyle }, (_, i) => faceTile('eyeStyle', i, labelN('eyes', i))))), section(t('av.eye_color'), swatches('eyeColor', EYES, 'av.eye_n')));
     if (tab === 'mouth') parts.push(section(t('av.brows'), h('div', { class: 'av-grid' }, Array.from({ length: boot.spec.look.brows }, (_, i) => faceTile('brows', i, labelN('brows', i))))), section(t('av.mouth'), h('div', { class: 'av-grid' }, Array.from({ length: boot.spec.look.mouth }, (_, i) => faceTile('mouth', i, labelN('mouth', i))))));
@@ -87,7 +88,7 @@ export default async function avatarStudio({ mode = 'studio' } = {}) {
     } catch (e) { toast(e.message, 'error', 5000); }
   }
   function reset() { draft = saved ? clone(saved) : blank(); nameInput.value = draft.name; paint(); fill(); toast(t('av.reset_done'), 'info', 1800); }
-  function randomize() { const r = (n) => Math.floor(Math.random() * n), L = boot.spec.look; draft.look = { shape: [0, 1, 2, 4][r(4)], skin: r(L.skin), hairStyle: r(L.hairStyle), hairColor: r(L.hairColor), eyeStyle: r(L.eyeStyle), eyeColor: r(L.eyeColor), brows: r(L.brows), mouth: r(L.mouth) }; paint(); fill(); }
+  function randomize() { const r = (n) => Math.floor(Math.random() * n), L = boot.spec.look; draft.look = { build: r(L.build), shape: [0, 1, 2, 4][r(4)], skin: r(L.skin), hairStyle: r(L.hairStyle), hairColor: r(L.hairColor), eyeStyle: r(L.eyeStyle), eyeColor: r(L.eyeColor), brows: r(L.brows), mouth: r(L.mouth) }; paint(); fill(); }
   async function switchTo(a) {
     if (dirty() && !(await confirmDialog(t('av.discard_title'), t('av.discard_text'), t('av.discard'), true))) return;
     select(a); nameInput.value = draft.name; drawStrip(); paint(); fill();

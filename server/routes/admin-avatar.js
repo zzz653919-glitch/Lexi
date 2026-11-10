@@ -24,9 +24,11 @@ module.exports = function adminAvatarRoutes({ db, auth, audit, settings, tokens,
     if (!partial || has('kind')) { if (!A.KINDS.includes(b.kind)) e.kind = 'val.avatar_kind'; else { v.kind = b.kind; v.slot = A.KIND_SLOT[b.kind]; } }
     if (!partial || has('price')) { const n = int(b.price, -1); if (n < 0 || n > 100000) e.price = 'val.avatar_price'; else v.price = n; }
     if (!partial || has('rarity')) { if (!A.RARITIES.includes(b.rarity)) e.rarity = 'val.avatar_rarity'; else v.rarity = b.rarity; }
+    if (has('collection')) { const x = String(b.collection || ''); if (x && !A.COLLECTIONS[x]) e.collection = 'val.avatar_kind'; else v.collection = x; }
+    if (has('subcollection')) v.subcollection = clean(b.subcollection, 24).toLowerCase().replace(/[^a-z-]/g, '');
     if (has('status')) { if (!['active', 'disabled'].includes(b.status)) e.status = 'val.kids_status'; else v.status = b.status; }
     if (has('art')) { const a = b.art; if (!a || typeof a !== 'object' || Array.isArray(a)) e.art = 'val.avatar_art'; else {
-      const art = {}; for (const [k, x] of Object.entries(a)) { if (['c', 'c2'].includes(k)) { if (!HEX.test(String(x))) { e.art = 'val.kids_color'; break; } art[k] = String(x).toLowerCase(); } else if (['p', 'v'].includes(k)) art[k] = clean(x, 16).replace(/[^\w-]/g, ''); }
+      const art = {}; for (const [k, x] of Object.entries(a)) { if (['c', 'c2', 'c3'].includes(k)) { if (k === 'c3' && !x) continue; if (!HEX.test(String(x))) { e.art = 'val.kids_color'; break; } art[k] = String(x).toLowerCase(); } else if (['p', 'v', 'e'].includes(k)) art[k] = clean(x, 16).replace(/[^\w-]/g, ''); else if (k === 'n') { const n = int(x, -1); if (n >= 0 && n <= 99) art.n = n; } }
       if (!e.art) v.art = JSON.stringify(art); } }
     if (has('image_url')) { const x = String(b.image_url || ''); if (x && !URL_RE.test(x)) e.image_url = 'val.kids_url'; else v.image_url = x; }
     if (has('earn_rule')) { const x = String(b.earn_rule || ''); if (x && !avatar.parseRule(x)) e.earn_rule = 'val.avatar_rule'; else v.earn_rule = x; }
@@ -41,15 +43,15 @@ module.exports = function adminAvatarRoutes({ db, auth, audit, settings, tokens,
     if (q) { where.push("(name_en LIKE ? ESCAPE '\\' OR slug LIKE ? ESCAPE '\\')"); args.push(`%${escapeLike(q)}%`, `%${escapeLike(q)}%`); }
     if (kind) { where.push('kind = ?'); args.push(kind); }
     const rows = await db.all(`SELECT i.*, (SELECT COUNT(*) FROM avatar_owned o WHERE o.item_id = i.id AND o.source != 'starter') owners FROM avatar_items i ${where.length ? 'WHERE ' + where.join(' AND ') : ''} ORDER BY i.position, i.id`, ...args);
-    res.json({ items: rows.map(out), kinds: A.KINDS, rarities: A.RARITIES, earnTypes: A.EARN_TYPES });
+    res.json({ items: rows.map(out), kinds: A.KINDS, collections: A.COLLECTIONS, rarities: A.RARITIES, earnTypes: A.EARN_TYPES });
   });
   r.post('/avatar/items', staff, async (req, res) => {
     const v = input(req.body || {}, false);
     let slug = slugify((req.body || {}).slug || v.name_en), n = 2; const base = slug;
     while (await db.get('SELECT 1 x FROM avatar_items WHERE slug = ?', slug)) slug = base.slice(0, 44) + '-' + n++;
     const t = now(), pos = (await db.get('SELECT COALESCE(MAX(position), 0) + 1 p FROM avatar_items')).p;
-    const id = (await db.run('INSERT INTO avatar_items (slug, name_en, name_uz, name_ru, kind, slot, price, rarity, art, image_url, earn_rule, status, position, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
-      slug, v.name_en, v.name_uz || '', v.name_ru || '', v.kind, v.slot, v.price, v.rarity, v.art || '{}', v.image_url || '', v.earn_rule || '', v.status || 'active', pos, t, t)).id;
+    const id = (await db.run('INSERT INTO avatar_items (slug, name_en, name_uz, name_ru, kind, slot, price, rarity, art, image_url, earn_rule, status, position, collection, subcollection, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+      slug, v.name_en, v.name_uz || '', v.name_ru || '', v.kind, v.slot, v.price, v.rarity, v.art || '{}', v.image_url || '', v.earn_rule || '', v.status || 'active', pos, v.collection || '', v.subcollection || '', t, t)).id;
     await audit(req, 'avatar.item.create', 'avatar_item', id, { slug });
     res.status(201).json(out(await db.get('SELECT * FROM avatar_items WHERE id = ?', id)));
   });

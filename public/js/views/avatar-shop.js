@@ -5,6 +5,7 @@ import { t } from '../i18n.js';
 import { navigate, refreshStats } from '../app.js';
 import { itemSvg } from '../avatar/render.js';
 import { openFitting, closeFitting } from '../avatar/fitting.js';
+import { fashionFilter, PAGE, moreButton } from '../avatar/filters.js';
 import { A, loadBoot, equippedItems, avatarNav, rarityBadge, tokenAmount, setBalance, coinSvg, activeAvatar } from '../avatar/ui.js';
 
 const CATS = [['clothing', '👕'], ['accessory', '🕶️'], ['pet', '🐾'], ['special', '✨']];
@@ -12,7 +13,8 @@ const KIND_LABEL = (k) => t('av.kind.' + k);
 
 export default async function avatarShop() {
   const boot = await loadBoot(true);
-  let cat = 'clothing', kind = '', rarity = '', own = 'all';
+  let cat = 'clothing', kind = '', rarity = '', own = 'all', pages = 1;
+  const ff = fashionFilter(() => { pages = 1; draw(); });
   const grid = h('div', { class: 'av-shop-grid', id: 'av-shop-grid' }), kinds = h('div', { class: 'av-chips', role: 'group', 'aria-label': t('av.filter_kind') }), tabBar = h('div', { class: 'av-tabs shop', role: 'tablist' });
   const look = () => { const a = activeAvatar(); return a ? { look: a.look, style: a.style } : { look: undefined, style: 'cartoon' }; };
 
@@ -35,9 +37,11 @@ export default async function avatarShop() {
     tabBar.querySelectorAll('.av-tab').forEach((b) => { const on = b.dataset.cat === cat; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
     const inCat = boot.items.filter((i) => i.category === cat);
     const ks = [...new Set(inCat.map((i) => i.kind))];
-    kinds.replaceChildren(h('button', { type: 'button', class: 'av-chip' + (!kind ? ' on' : ''), 'data-kind': '', onclick: () => { kind = ''; draw(); } }, t('av.all')), ...ks.map((k) => h('button', { type: 'button', class: 'av-chip' + (kind === k ? ' on' : ''), 'data-kind': k, onclick: () => { kind = k; draw(); } }, KIND_LABEL(k))));
-    const list = inCat.filter((i) => (!kind || i.kind === kind) && (!rarity || i.rarity === rarity) && (own === 'all' || (own === 'owned') === i.owned));
-    grid.replaceChildren(...(list.length ? list.map(card) : [h('p', { class: 'av-empty' }, t('av.shop_empty'))]));
+    kinds.replaceChildren(h('button', { type: 'button', class: 'av-chip' + (!kind ? ' on' : ''), 'data-kind': '', onclick: () => { kind = ''; pages = 1; draw(); } }, t('av.all')), ...ks.map((k) => h('button', { type: 'button', class: 'av-chip' + (kind === k ? ' on' : ''), 'data-kind': k, onclick: () => { kind = k; pages = 1; draw(); } }, KIND_LABEL(k))));
+    ff.refresh(inCat);
+    const list = ff.apply(inCat.filter((i) => (!kind || i.kind === kind) && (!rarity || i.rarity === rarity) && (own === 'all' || (own === 'owned') === i.owned)));
+    const shown = list.slice(0, PAGE * pages), more = moreButton(shown.length, list.length, () => { pages++; draw(); });
+    grid.replaceChildren(...(list.length ? shown.map(card) : [h('p', { class: 'av-empty' }, t('av.shop_empty'))]), ...(more ? [more] : []));
   }
   async function buy(it) {
     if (!(await confirmDialog(t('av.buy_title'), t('av.buy_text', { name: it.name, price: it.price }), t('av.buy')))) return false;
@@ -58,12 +62,12 @@ export default async function avatarShop() {
   const closeModal = closeFitting;
   const fitting = (it) => openFitting({ item: it, buy, refresh: () => { draw(); syncBalance(); } });
 
-  tabBar.append(...CATS.map(([k, e]) => h('button', { type: 'button', class: 'av-tab', role: 'tab', 'data-cat': k, 'aria-selected': 'false', onclick: () => { cat = k; kind = ''; draw(); } }, h('span', { 'aria-hidden': 'true' }, e), h('b', {}, t('av.cat.' + k)))));
-  const rar = h('select', { class: 'av-select', id: 'av-rarity', 'aria-label': t('av.filter_rarity'), onchange: (e) => { rarity = e.target.value; draw(); } }, h('option', { value: '' }, t('av.all_rarities')), ...boot.spec.rarities.map((r) => h('option', { value: r }, t('av.rarity.' + r))));
-  const ownSel = h('select', { class: 'av-select', id: 'av-own', 'aria-label': t('av.filter_owned'), onchange: (e) => { own = e.target.value; draw(); } }, h('option', { value: 'all' }, t('av.all')), h('option', { value: 'owned' }, t('av.owned')), h('option', { value: 'free' }, t('av.not_owned')));
+  tabBar.append(...CATS.map(([k, e]) => h('button', { type: 'button', class: 'av-tab', role: 'tab', 'data-cat': k, 'aria-selected': 'false', onclick: () => { cat = k; kind = ''; pages = 1; ff.reset(); draw(); } }, h('span', { 'aria-hidden': 'true' }, e), h('b', {}, t('av.cat.' + k)))));
+  const rar = h('select', { class: 'av-select', id: 'av-rarity', 'aria-label': t('av.filter_rarity'), onchange: (e) => { rarity = e.target.value; pages = 1; draw(); } }, h('option', { value: '' }, t('av.all_rarities')), ...boot.spec.rarities.map((r) => h('option', { value: r }, t('av.rarity.' + r))));
+  const ownSel = h('select', { class: 'av-select', id: 'av-own', 'aria-label': t('av.filter_owned'), onchange: (e) => { own = e.target.value; pages = 1; draw(); } }, h('option', { value: 'all' }, t('av.all')), h('option', { value: 'owned' }, t('av.owned')), h('option', { value: 'free' }, t('av.not_owned')));
   draw();
   const el = h('div', { class: 'av-page av-shop' }, h('div', { class: 'av-head' }, h('h1', {}, t('av.shop_title')), avatarNav('shop')),
     h('p', { class: 'av-lead' }, t('av.shop_lead')), h('div', { class: 'av-balance-card' }, h('span', {}, t('av.your_tokens')), h('b', { id: 'av-shop-balance' }, tokenAmount(boot.wallet.balance)), h('a', { class: 'av-btn', href: '/avatar/missions' }, t('av.earn_more'))),
-    tabBar, h('div', { class: 'av-filters' }, kinds, h('span', { class: 'av-filter-sel' }, rar, ownSel)), grid);
+    tabBar, ff.el, h('div', { class: 'av-filters' }, kinds, h('span', { class: 'av-filter-sel' }, rar, ownSel)), grid);
   return { el, title: t('av.shop_title'), nav: 'avatar', cleanup: closeModal };
 }
