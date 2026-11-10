@@ -4,6 +4,7 @@ const TokensLib = require('../../server/lib/tokens');
 
 const overflow = (page) => page.evaluate(() => document.documentElement.scrollWidth - window.innerWidth);
 const api = (page, path, opts) => page.evaluate(([p, o]) => fetch('/api' + p, o).then((r) => r.json()), [path, opts || {}]);
+const openCats = async (page) => { if ((await page.getAttribute('#av-cats-toggle', 'aria-expanded')) !== 'true') await page.click('#av-cats-toggle'); };
 const stageHtml = (page) => page.locator('#av-stage').innerHTML();
 const confirmYes = async (page) => { await page.waitForSelector('dialog[open]'); await page.click('dialog[open] .dialog-actions button:last-child'); };
 
@@ -107,7 +108,11 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     check(fit.join() === 'false,false,true,true', 'items that do not fit a character model (hats on the animal ears, glasses on the robot visor) are refused');
 
     /* ---------- the global fashion collection: collections, sub-collections, search, try-on, body types ---------- */
-    await page.goto(s.base + '/avatar/shop'); await page.waitForSelector('.av-colls .av-chip');
+    await page.evaluate(() => localStorage.setItem('lexi.motion', 'on')); await page.goto(s.base + '/avatar/shop'); await page.waitForSelector('.av-colls .av-chip');
+    check(await page.locator('.av-colls.marquee .av-marquee-track').count() === 1 && await page.getAttribute('#av-cats-toggle', 'aria-expanded') === 'false' && await page.locator('.av-marquee-track').evaluate((e) => getComputedStyle(e).animationName === 'av-marquee'), 'the categories scroll round by themselves until the Categories button is pressed');
+    await page.evaluate(() => localStorage.setItem('lexi.motion', 'off')); await page.goto(s.base + '/avatar/shop'); await page.waitForSelector('.av-colls .av-chip');
+    await openCats(page);
+    check(await page.locator('.av-colls.open .av-marquee-track').count() === 0 && await page.locator('.av-colls.open .av-chip[data-coll]:not([data-coll=""])').count() === 12, 'the Categories button shows all categories at once (and a second press makes them scroll again)');
     check(await page.locator('.av-colls .av-chip[data-coll]:not([data-coll=""])').count() === 12, 'the shop has twelve fashion collections');
     await page.click('.av-colls [data-coll="traditional"]'); await page.waitForSelector('.av-subs .av-chip[data-sub="uzbek"]');
     check(await page.locator('.av-subs .av-chip[data-sub]:not([data-sub=""])').count() === 8, 'traditional clothes have sub-collections (Uzbek, Japanese, Korean, Chinese, Indian, Arab, African, European)');
@@ -132,7 +137,7 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     await page.click('.av-tile[data-part="build"][data-index="1"]');
 
     /* ---------- gaming skins: one category per game, sub-categories, sorting, rarity (incl. mythic), try-on ---------- */
-    await page.goto(s.base + '/avatar/shop'); await page.waitForSelector('.av-item'); await page.click('.av-tab[data-cat="games"]'); await page.waitForSelector('.av-colls .av-chip[data-coll="cs2"]');
+    await page.goto(s.base + '/avatar/shop'); await page.waitForSelector('.av-item'); await page.click('.av-tab[data-cat="games"]'); await openCats(page); await page.waitForSelector('.av-colls .av-chip[data-coll="cs2"]');
     check(await page.locator('.av-colls .av-chip[data-coll]:not([data-coll=""])').count() === 15 && await page.locator('#av-games-note').isVisible(), 'the Game skins tab has fifteen games and says the designs are original fan-inspired ones');
     await page.click('.av-colls [data-coll="cs2"]'); await page.waitForSelector('.av-subs .av-chip[data-sub="gloves"]');
     check(await page.locator('.av-subs .av-chip[data-sub]:not([data-sub=""])').count() === 5, 'every game has its own sub-categories (Counter-Strike 2 style: agents, special forces, gloves, masks, military)');
@@ -149,7 +154,7 @@ const confirmYes = async (page) => { await page.waitForSelector('dialog[open]');
     await page.keyboard.press('Escape'); await page.waitForSelector('.av-fit', { state: 'detached' });
 
     /* ---------- the 3D skin viewer: a real WebGL model, turning, zoom, views, details and buttons ---------- */
-    await page.goto(s.base + '/avatar/shop'); await page.waitForSelector('.av-item'); await page.click('.av-tab[data-cat="games"]'); await page.click('.av-colls [data-coll="cs2"]'); await page.waitForSelector('.av-item[data-slug^="gm-cs2-special_forces"]');
+    await page.goto(s.base + '/avatar/shop'); await page.waitForSelector('.av-item'); await page.click('.av-tab[data-cat="games"]'); await openCats(page); await page.click('.av-colls [data-coll="cs2"]'); await page.waitForSelector('.av-item[data-slug^="gm-cs2-special_forces"]');
     const skinName = await page.locator('.av-item[data-slug^="gm-cs2-special_forces"] h3').first().innerText();
     await page.click('.av-item[data-slug^="gm-cs2-special_forces"] h3'); await page.waitForSelector('#skin-viewer #av-v3-canvas[data-skin]', { timeout: 40000 });
     check(await page.getAttribute('#av-v3-canvas', 'data-mode') === 'webgl' && await page.locator('#skin-viewer canvas').count() === 1, 'a click on a game skin opens a real-time WebGL 3D preview');
