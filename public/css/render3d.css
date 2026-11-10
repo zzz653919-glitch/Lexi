@@ -1,0 +1,21 @@
+/* Premium "rendered" look for the artwork: lit gradients, soft shadows, glossy highlights, metallic medals.
+   It only changes how pictures and icon tiles are painted; layouts, sizes and behaviour are untouched. */
+
+/* ---- achievement medals: bronze-gold when earned, brushed steel while locked ---- */
+.ach-card .ico { position: relative; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center; flex: none; color: #5a3a00;
+  background: radial-gradient(circle at 32% 26%, #fff6c4 0, #ffd95a 30%, #e8a800 62%, #a86b00 100%);
+  box-shadow: 0 0 0 3px #f6c93a, 0 0 0 5px #8a5a00, inset 0 3px 6px rgba(255, 255, 255, .75), inset 0 -6px 10px rgba(110, 60, 0, .45), 0 8px 16px rgba(0, 0, 0, .45), 0 0 22px rgba(255, 200, 60, .35); }
+.ach-card .ico::before { content: ""; position: absolute; inset: 7px; border-radius: 50%; border: 2px solid rgba(120, 70, 0, .45); box-shadow: inset 0 2px 3px rgba(255, 255, 255, .6); }
+.ach-card .ico svg { width: 28px; height: 28px; position: relative; filter: drop-shadow(0 1px 0 rgba(255, 255, 255, .6)); }
+.ach-card.locked .ico { color: #d3d8e8; background: radial-gradient(circle at 32% 26%, #a3abc4 0, #6f7690 45%, #3d4359 100%); box-shadow: 0 0 0 3px #7a829c, 0 0 0 5px #2a2f42, inset 0 3px 5px rgba(255, 255, 255, .25), inset 0 -6px 10px rgba(0, 0, 0, .5), 0 6px 12px rgba(0, 0, 0, .4); filter: none; }
+.ach-card.locked .ico::before { border-color: rgba(0, 0, 0, .35); box-shadow: inset 0 1px 2px rgba(255, 255, 255, .2); }
+.ach-card.locked .ico svg { filter: none; opacity: .8; }
+.ach-card { backdrop-filter: blur(6px); }
+
+/* ---- home / profile stat tiles and top-bar chips: glass orbs with a highlight ---- */
+.stat .ico { background: radial-gradient(circle at 30% 24%, rgba(255, 255, 255, .28), rgba(255, 255, 255, .05) 60%), var(--surface-2); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .35), inset 0 -4px 8px rgba(0, 0, 0, .35), 0 6px 12px rgba(0, 0, 0, .3); border: 1px solid rgba(255, 255, 255, .16); }
+.stat .ico svg { filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .45)); }
+.chip { box-shadow: inset 0 1px 0 rgba(255, 255, 255, .22), inset 0 -3px 6px rgba(0, 0, 0, .25), 0 3px 8px rgba(0, 0, 0, .25); }
+.mascot, .splash-logo, .result img, .brand img { filter: drop-shadow(0 8px 14px rgba(0, 0, 0, .4)); }
+img, svg { image-rendering: auto; } img { max-width: 100%; height: auto; }
+

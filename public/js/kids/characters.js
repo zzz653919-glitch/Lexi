@@ -1,5 +1,7 @@
 /* LEXIO KIDS: the learning friends (lion, fox, bunny, cat, dino, robot). Original cartoon characters drawn in SVG, with moods and accessories. */
 import { h } from '../ui.js';
+import { lit } from '../depth.js';
+let litId = 0;
 
 export const CHARACTERS = ['lion', 'fox', 'bunny', 'cat', 'dino', 'robot'];
 export const MOODS = ['happy', 'cheer', 'oops', 'think', 'sleep'];
@@ -46,7 +48,7 @@ const ACCESSORIES = {
 /* markup of one character; the accessory is drawn on top */
 export function characterSvg(character = 'lion', mood = 'happy', accessory = '') {
   const c = HEADS[character] ? character : 'lion', m = MOODS.includes(mood) ? mood : 'happy';
-  return `<svg viewBox="0 0 200 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${c}" focusable="false">${HEADS[c]}${face(m, c === 'robot')}${ACCESSORIES[accessory] || ''}</svg>`;
+  return lit(`<svg viewBox="0 0 200 210" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${c}" focusable="false">${HEADS[c]}${face(m, c === 'robot')}${ACCESSORIES[accessory] || ''}</svg>`, 'k' + (++litId));
 }
 
 /* a living companion: moods change the face and trigger a little animation; say() shows a speech bubble */

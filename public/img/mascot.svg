@@ -1,14 +1,14 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Sprig, the Lexio mascot">
-  <ellipse cx="100" cy="182" rx="56" ry="8" fill="#000" opacity=".1"/>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200" role="img" aria-label="Sprig, the Lexio mascot"><defs><radialGradient id="lgmascot_0" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#000000"/><stop offset=".5" stop-color="#000000"/><stop offset="1" stop-color="#000000"/></radialGradient><radialGradient id="lgmascot_1" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#72fdaa"/><stop offset=".5" stop-color="#5fd38e"/><stop offset="1" stop-color="#4ca972"/></radialGradient><radialGradient id="lgmascot_2" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#38dd89"/><stop offset=".5" stop-color="#2fb872"/><stop offset="1" stop-color="#26935b"/></radialGradient><radialGradient id="lgmascot_3" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#25bc80"/><stop offset=".5" stop-color="#1f9d6b"/><stop offset="1" stop-color="#197e56"/></radialGradient><radialGradient id="lgmascot_4" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#defffc"/><stop offset=".5" stop-color="#b9efd2"/><stop offset="1" stop-color="#94bfa8"/></radialGradient><radialGradient id="lgmascot_5" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#ffffff"/><stop offset=".5" stop-color="#ffffff"/><stop offset="1" stop-color="#cccccc"/></radialGradient><radialGradient id="lgmascot_6" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#1c3d2e"/><stop offset=".5" stop-color="#173326"/><stop offset="1" stop-color="#12291e"/></radialGradient><radialGradient id="lgmascot_7" cx=".34" cy=".26" r=".95"><stop offset="0" stop-color="#ffb9c2"/><stop offset=".5" stop-color="#ff9aa2"/><stop offset="1" stop-color="#cc7b82"/></radialGradient><filter id="lsmascot" x="-12%" y="-12%" width="130%" height="140%"><feDropShadow dx="0" dy="3" stdDeviation="3" flood-color="#1b1240" flood-opacity=".28"/></filter></defs><g filter="url(#lsmascot)">
+  <ellipse cx="100" cy="182" rx="56" ry="8" fill="url(#lgmascot_0)" opacity=".1"/>
   <path d="M100 58V38" stroke="#157a52" stroke-width="7" stroke-linecap="round"/>
-  <path d="M100 42C100 22 84 12 64 14c0 20 14 32 36 28z" fill="#5fd38e"/>
-  <path d="M100 38c0-18 12-28 32-26 0 18-12 28-32 26z" fill="#2fb872"/>
-  <rect x="38" y="56" width="124" height="116" rx="58" fill="#1f9d6b"/>
+  <path d="M100 42C100 22 84 12 64 14c0 20 14 32 36 28z" fill="url(#lgmascot_1)"/>
+  <path d="M100 38c0-18 12-28 32-26 0 18-12 28-32 26z" fill="url(#lgmascot_2)"/>
+  <rect x="38" y="56" width="124" height="116" rx="58" fill="url(#lgmascot_3)"/>
   <rect x="38" y="56" width="124" height="116" rx="58" fill="none" stroke="#157a52" stroke-width="5"/>
-  <ellipse cx="100" cy="132" rx="40" ry="32" fill="#b9efd2"/>
-  <circle cx="76" cy="98" r="17" fill="#fff"/><circle cx="124" cy="98" r="17" fill="#fff"/>
-  <circle cx="79" cy="100" r="8.5" fill="#173326"/><circle cx="121" cy="100" r="8.5" fill="#173326"/>
-  <circle cx="82" cy="96" r="3" fill="#fff"/><circle cx="124" cy="96" r="3" fill="#fff"/>
+  <ellipse cx="100" cy="132" rx="40" ry="32" fill="url(#lgmascot_4)"/>
+  <circle cx="76" cy="98" r="17" fill="url(#lgmascot_5)"/><circle cx="124" cy="98" r="17" fill="url(#lgmascot_5)"/>
+  <circle cx="79" cy="100" r="8.5" fill="url(#lgmascot_6)"/><circle cx="121" cy="100" r="8.5" fill="url(#lgmascot_6)"/>
+  <circle cx="82" cy="96" r="3" fill="url(#lgmascot_5)"/><circle cx="124" cy="96" r="3" fill="url(#lgmascot_5)"/>
   <path d="M84 128c8 12 24 12 32 0" stroke="#173326" stroke-width="6" stroke-linecap="round" fill="none"/>
-  <circle cx="58" cy="122" r="8" fill="#ff9aa2" opacity=".7"/><circle cx="142" cy="122" r="8" fill="#ff9aa2" opacity=".7"/>
-</svg>
+  <circle cx="58" cy="122" r="8" fill="url(#lgmascot_7)" opacity=".7"/><circle cx="142" cy="122" r="8" fill="url(#lgmascot_7)" opacity=".7"/>
+</g></svg>

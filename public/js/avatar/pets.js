@@ -1,6 +1,6 @@
 /* Pet models of the Avatar Shop. Every animal is its own drawing (own silhouette, face and details) in a 0..100 box,
    with soft gradients and a ground shadow so they look like one family of 2.5D game characters. */
-const shade = (hex, k) => { const n = parseInt(hex.slice(1), 16), f = (v) => Math.max(0, Math.min(255, Math.round(v * k))); return '#' + [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => f(v).toString(16).padStart(2, '0')).join(''); };
+const shade = (hex, k) => { if (/^#[0-9a-f]{3}$/i.test(hex)) hex = '#' + [...hex.slice(1)].map((x) => x + x).join(''); const n = parseInt(hex.slice(1), 16), f = (v) => Math.max(0, Math.min(255, Math.round(v * k))); return '#' + [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => f(v).toString(16).padStart(2, '0')).join(''); };
 const DARK = '#1e1a26', MOUTH = '#6b2a35';
 
 /* the species that have a model here (everything else falls back to the older drawing) */
@@ -8,7 +8,7 @@ export const PET_SPECIES = ['tabby', 'persian', 'blackcat', 'british', 'calico',
 const KIND_DEFAULT = { cat: 'tabby', dog: 'labrador', rabbit: 'bunny', fox: 'babyfox', dino: 'babydino', dragon: 'smalldragon', panda: 'panda', redpanda: 'redpanda', hamster: 'hamster', penguin: 'penguin' };
 export const petSpecies = (kind, a = {}) => (PET_SPECIES.includes(a.v) ? a.v : KIND_DEFAULT[kind] || '');
 
-export function petArt(kind, a, pose, u) {
+export function petArt(kind, a, pose, u, fur = false) {
   const sp = petSpecies(kind, a);
   if (!sp) return null;
   const defs = []; let n = 0; const memo = {};
@@ -121,5 +121,6 @@ export function petArt(kind, a, pose, u) {
   }
 
   if (!art) return null;
-  return `<defs>${defs.join('')}</defs>${shadow}${art}`;
+  const furF = fur ? `<filter id="pf${u}" x="-4%" y="-4%" width="108%" height="108%" color-interpolation-filters="sRGB"><feTurbulence type="fractalNoise" baseFrequency=".75" numOctaves="3" seed="7" result="n"/><feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0 0 0 -.5 .27" result="a"/><feComposite in="a" in2="SourceAlpha" operator="in" result="a2"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="a2"/></feMerge></filter>` : '';
+  return `<defs>${defs.join('')}${furF}</defs>${shadow}${fur ? `<g filter="url(#pf${u})">${art}</g>` : art}`;
 }
