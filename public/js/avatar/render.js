@@ -1,13 +1,14 @@
 /* Avatar Studio drawing: every character is composed of SVG layers from parameters (face parts, style, equipped items). Original artwork, no external files. */
 import { petArt } from './pets.js';
+import { drawFashion } from './outfits.js';
+import { drawHat, drawShoe, drawNeck, drawBack } from './wear.js';
+import { INK, shade, stripe, MR, dk, bodyP, sideShade, folds, sleeveL, sleeves, neckRound, legsP, hemBand } from './geo.js';
 export const SKINS = ['#ffe0c7', '#fcd1ae', '#f1b98a', '#d99a6c', '#b97a4c', '#8d5524', '#6b3f1d', '#4a2a14'];
 export const HAIRS = ['#1c1a1a', '#3b2314', '#6b4423', '#a86b32', '#d9a441', '#f2d16b', '#c0392b', '#e86bb0', '#4a90e2', '#8e5bd9'];
 export const EYES = ['#3b2314', '#5a3a1f', '#2f7bff', '#2fb36d', '#7a8c99', '#8e5bd9', '#16b8a6', '#c0392b'];
 const METALS = ['#e8ecf5', '#cfd6e6', '#b4c6e8', '#9ad6c8', '#f3c6d9', '#f7d08a', '#c9b6f2', '#8e99ad'];
 export const STYLE_NAMES = ['cartoon', 'modern', 'fantasy', 'animal', 'robot'];
-const INK = '#2b2640';
 let counter = 0;
-const shade = (hex, k) => { if (/^#[0-9a-f]{3}$/i.test(hex)) hex = '#' + [...hex.slice(1)].map((x) => x + x).join(''); const n = parseInt(hex.slice(1), 16), f = (v) => Math.max(0, Math.min(255, Math.round(v * k))); return '#' + [(n >> 16) & 255, (n >> 8) & 255, n & 255].map((v) => f(v).toString(16).padStart(2, '0')).join(''); };
 
 /* ---------- face parts ---------- */
 const headShape = (i, f, S) => ([
@@ -57,21 +58,6 @@ const mouth = (i, robot) => {
 
 /* ---------- clothes and accessories (drawn from the item's art parameters) ---------- */
 /* ---------- clothes: cut to the body, with sleeves that follow the arms, collars, hems and soft folds ---------- */
-function stripe(art, x, y, w, h) { if (art.p === 'stripes') return Array.from({ length: Math.floor(h / 14) }, (_, i) => `<rect x="${x}" y="${y + 6 + i * 14}" width="${w}" height="6" fill="${art.c2}" opacity=".9"/>`).join(''); if (art.p === 'dots') return Array.from({ length: 8 }, (_, i) => `<circle cx="${x + 12 + (i % 3) * 22}" cy="${y + 14 + Math.floor(i / 3) * 24}" r="4.2" fill="${art.c2}" opacity=".9"/>`).join(''); return ''; }
-const MR = (s) => `<g transform="translate(240 0) scale(-1 1)">${s}</g>`;   // the right side is the left side mirrored
-const dk = (c, k = .8) => shade(c, k);
-const bodyP = (y2 = 236) => `M88 150Q120 139 152 150L157 ${y2 - 34}Q158 ${y2 - 8} 152 ${y2}L88 ${y2}Q82 ${y2 - 8} 83 ${y2 - 34}Z`;
-const sideShade = (y2 = 236) => `<path d="M120 142Q140 143 152 150L157 ${y2 - 34}Q158 ${y2 - 8} 152 ${y2}L120 ${y2}Z" fill="#1b1240" opacity=".08"/>`;
-const folds = (c) => `<path d="M95 218Q103 211 111 220M133 210Q142 205 147 214M100 190Q106 186 110 192" fill="none" stroke="${dk(c, .66)}" stroke-opacity=".45" stroke-width="2" stroke-linecap="round"/>`;
-const sleeveL = (c, S, len = 'short', cuff, wide = 0) => {
-  const d = len === 'long' ? `M91 151Q${68 - wide} 152 ${65 - wide} 177Q${62 - wide} 200 ${62.5 - wide} 217Q74 224 86 219L89 190L91 168Z` : `M91 151Q${68 - wide} 152 ${65 - wide} 177L${63.6 - wide} 197Q76 203 88.5 197L90 170Z`;
-  const cf = len === 'long' ? `<path d="M${62.4 - wide} 212Q74 219 86.2 214L85.8 221Q74 227 ${62.6 - wide} 220Z" fill="${cuff || dk(c, .78)}" ${S}/>` : `<path d="M${63.6 - wide} 192Q76 198 89 192L88.6 198Q76 204 ${63.6 - wide} 198Z" fill="${cuff || dk(c, .86)}"/>`;
-  return `<path d="${d}" fill="${c}" ${S}/>${cf}<path d="M70 160Q66 170 66 182" fill="none" stroke="#fff" stroke-opacity=".28" stroke-width="3" stroke-linecap="round"/>`;
-};
-const sleeves = (c, S, len, cuff, wide) => sleeveL(c, S, len, cuff, wide) + MR(sleeveL(c, S, len, cuff, wide));
-const neckRound = (c, F) => `<path d="M104 146Q120 168 136 146Z" fill="${F}"/><path d="M103 145Q120 171 137 145" fill="none" stroke="${dk(c, .7)}" stroke-width="4" stroke-linecap="round"/>`;
-const legsP = (c, S, end = 308, top = 226) => `<path d="M90 ${top}H150L${end > 280 ? 148.5 : 151} ${end}H122.5L120 ${top + 28}L117.5 ${end}H${end > 280 ? 91.5 : 89}Z" fill="${c}" ${S}/><path d="M120 ${top + 28}L122.5 ${end}H${end > 280 ? 148.5 : 151}L150 ${top}H120Z" fill="#1b1240" opacity=".09"/><path d="M106 ${top + 50}Q108 ${top + 56} 106 ${top + 62}M134 ${top + 50}Q132 ${top + 56} 134 ${top + 62}" fill="none" stroke="${dk(c, .65)}" stroke-opacity=".5" stroke-width="2" stroke-linecap="round"/>`;
-const hemBand = (c, y) => `<path d="M85.6 ${y}Q120 ${y + 5} 154.4 ${y}L153 ${y + 9}H87Z" fill="${dk(c, .8)}"/>`;
 const CLOTHES = {
   tee: (a, S, F) => `<g>${sleeves(a.c, S, 'short')}<path d="${bodyP(236)}" fill="${a.c}" ${S}/>${stripe(a, 84, 162, 72, 70)}${sideShade()}${folds(a.c)}${hemBand(a.c, 228)}${neckRound(a.c, F)}</g>`,
   hoodie: (a, S, F) => `<g><path d="M92 151Q120 124 148 151Q146 170 120 176Q94 170 92 151Z" fill="${dk(a.c, .82)}" ${S}/>${sleeves(a.c, S, 'long', dk(a.c, .72))}<path d="${bodyP(240)}" fill="${a.c}" ${S}/>${stripe(a, 84, 172, 72, 54)}${sideShade(240)}${hemBand(a.c, 231)}<path d="M99 205H141L146 229Q120 234 94 229Z" fill="${dk(a.c, .92)}" ${S}/><path d="M104 148Q120 176 136 148Z" fill="${F}"/><path d="M99 148Q120 180 141 148" fill="none" stroke="${dk(a.c, .68)}" stroke-width="5" stroke-linecap="round"/><path d="M111 166Q109 184 111 196M129 166Q131 184 129 196" fill="none" stroke="#fff" stroke-opacity=".9" stroke-width="2.6" stroke-linecap="round"/><circle cx="111" cy="198" r="2.4" fill="${dk(a.c, .6)}"/><circle cx="129" cy="198" r="2.4" fill="${dk(a.c, .6)}"/></g>`,
@@ -92,6 +78,7 @@ const CLOTHES = {
   wings: (a, S) => `<g><path d="M92 170Q20 110 18 190Q30 240 92 220Z" fill="${a.c}" ${S}/><path d="M148 170Q220 110 222 190Q210 240 148 220Z" fill="${a.c}" ${S}/><path d="M80 176Q40 150 34 190M160 176Q200 150 206 190" fill="none" stroke="${shade(a.c, .75)}" stroke-width="3"/></g>`,
   mask: (a, S) => `<g><path d="M76 82Q96 72 118 84Q120 82 122 84Q144 72 164 82Q166 102 146 102Q128 102 120 94Q112 102 94 102Q74 102 76 82Z" fill="${a.c}" ${S}/><ellipse cx="97" cy="90" rx="8" ry="6" fill="#fff" opacity=".35"/><ellipse cx="143" cy="90" rx="8" ry="6" fill="#fff" opacity=".35"/></g>`,
 };
+Object.assign(CLOTHES, { headwear: (a) => drawHat(a), footwear: (a) => drawShoe(a), neckwear: (a) => drawNeck(a), cape: (a) => drawBack(a) });
 const COSTUMES = {
   astronaut: (a, S, F) => `<g>${sleeves('#eef1f8', S, 'long', '#9aa3b2')}${legsP('#eef1f8', S, 308, 228)}<path d="${bodyP(240)}" fill="#eef1f8" ${S}/>${sideShade(240)}${hemBand('#eef1f8', 231)}<ellipse cx="120" cy="150" rx="27" ry="8" fill="#9aa3b2" ${S}/><rect x="99" y="176" width="42" height="28" rx="7" fill="${a.c2}" ${S}/><circle cx="109" cy="190" r="4.4" fill="#ff5fa2"/><circle cx="122" cy="190" r="4.4" fill="#ffd23f"/><rect x="130" y="184" width="6" height="12" rx="2" fill="#fff" opacity=".8"/><path d="M92 214H148" stroke="#9aa3b2" stroke-width="5"/><circle cx="120" cy="88" r="66" fill="rgba(160,210,255,.2)" stroke="#e8ecf5" stroke-width="7"/><path d="M78 56Q96 34 124 30" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="5" stroke-linecap="round"/></g>`,
   knight: (a, S, F) => `<g>${sleeves('#aab3c2', S, 'long', '#7d8696')}${legsP('#8f98a8', S, 308, 228)}<path d="${bodyP(238)}" fill="#7a8394" ${S}/><path d="M95 152Q120 144 145 152L149 204Q120 228 91 204Z" fill="#cdd4e0" ${S}/><path d="M120 150V222M96 180Q120 188 144 180" fill="none" stroke="#9aa3b2" stroke-width="2.4"/><path d="M120 164l7 9-7 9-7-9z" fill="${a.c2}" stroke="${INK}" stroke-width="2"/><path d="M104 160Q100 172 104 186" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="3" stroke-linecap="round"/><ellipse cx="80" cy="157" rx="15" ry="10" transform="rotate(-18 80 157)" fill="#cdd4e0" ${S}/><ellipse cx="160" cy="157" rx="15" ry="10" transform="rotate(18 160 157)" fill="#cdd4e0" ${S}/><rect x="86" y="214" width="68" height="12" rx="3" fill="#6b4423" ${S}/><rect x="112" y="212" width="16" height="16" rx="3" fill="#ffd23f" ${S}/><path d="M90 226H150L156 262H84Z" fill="#8f98a8" ${S}/><path d="M104 232V258M120 232V258M136 232V258" stroke="#6b7384" stroke-width="2"/><path d="M104 147Q120 158 136 147Z" fill="${F}"/></g>`,
@@ -174,7 +161,8 @@ export const fitsStyle = (style, item) => !(item && (NO_FIT[style] || []).includ
 export function renderAvatar({ style = 'cartoon', look = {}, equipped: wanted = {}, size = 240, viewBox = '0 0 240 340', plain = false, label = '', petPose = 'sit', view = 'front' } = {}) {
   const equipped = {}; for (const [k, v] of Object.entries(wanted || {})) if (fitsStyle(style, v)) equipped[k] = v;   // an item that does not fit is never drawn wrongly
   const back = view === 'back';
-  const u = ++counter, L = { shape: 0, skin: 2, hairStyle: 1, hairColor: 1, eyeStyle: 0, eyeColor: 0, brows: 0, mouth: 0, ...look };
+  const u = ++counter, L = { build: 1, shape: 0, skin: 2, hairStyle: 1, hairColor: 1, eyeStyle: 0, eyeColor: 0, brows: 0, mouth: 0, ...look };
+  const BW = `translate(120 0) scale(${[.9, 1, 1.12][L.build] || 1} 1) translate(-120 0)`;   // body type: slim / regular / broad (clothes follow the body)
   const robot = style === 'robot', animal = style === 'animal', fantasy = style === 'fantasy', threeD = false;
   const S = style === 'cartoon' ? `stroke="${INK}" stroke-width="3.5" stroke-linejoin="round" stroke-linecap="round"` : style === 'modern' ? 'stroke="rgba(30,20,60,.2)" stroke-width="1.6" stroke-linejoin="round"' : '';
   let skin = SKINS[L.skin] || SKINS[2]; const metal = METALS[L.skin] || METALS[0];
@@ -199,7 +187,7 @@ export function renderAvatar({ style = 'cartoon', look = {}, equipped: wanted = 
   const basic = { tee: { c: '#cfd6ec', c2: '#ffffff', p: 'solid' }, shorts: { c: '#8f98b0', c2: '#ffffff', p: 'solid' } };   // nobody is drawn without clothes
   const bots = hideTB ? '' : get('bottom') ? layer('bottom', (it) => CLOTHES[it.kind]) : CLOTHES.shorts(basic.shorts, S);
   const tops = get('dress') ? layer('dress', (it) => CLOTHES[it.kind]) : get('top') ? layer('top', (it) => CLOTHES[it.kind]) : CLOTHES.tee(basic.tee, S);
-  const clothes = fullBody ? (fullBody.image ? img(fullBody) : (COSTUMES[(fullBody.art || {}).v] || (() => ''))(fullBody.art || {}, S, F)) : `${bots}${tops}`;
+  const clothes = fullBody ? (fullBody.image ? img(fullBody) : (fullBody.kind === 'fashion' ? drawFashion(fullBody.art || {}, S, F) : (COSTUMES[(fullBody.art || {}).v] || (() => ''))(fullBody.art || {}, S, F))) : `${bots}${tops}`;
   const shoes = get('shoes') ? layer('shoes', (it) => CLOTHES[it.kind]) : `<g>${[88, 124].map((x) => `<path d="M${x} 298H${x + 30}Q${x + 38} 306 ${x + 34} 316H${x - 4}Q${x - 6} 306 ${x} 298Z" fill="#7a7f99" ${S}/><rect x="${x - 5}" y="314" width="42" height="8" rx="4" fill="#d9dcec" ${S}/><path d="M${x + 6} 306H${x + 24}" stroke="#d9dcec" stroke-width="3"/>`).join('')}</g>`;
   const arms = `<g class="av-arms"><path d="M86 154Q68 158 66 180L63 214Q60 229 72 231Q85 232 85 218L89 190Z" fill="${F}" ${S}/><g class="av-arm-r"><path d="M154 154Q172 158 174 180L177 214Q180 229 168 231Q155 232 155 218L151 190Z" fill="${F}" ${S}/></g></g>`;
   const legs = `<path d="M95 230L119 230L117 306Q116 313 106 313Q96 313 96 306Z" fill="${F}" ${S}/><path d="M121 230L145 230L144 306Q143 313 134 313Q124 313 123 306Z" fill="${F}" ${S}/>`;
@@ -225,12 +213,12 @@ export function renderAvatar({ style = 'cartoon', look = {}, equipped: wanted = 
   return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${viewBox}" width="${size}" height="${Math.round(size * (viewBox.split(' ')[3] / viewBox.split(' ')[2]))}" style="width:${size}px;max-width:100%;height:auto" role="img" aria-label="${label}" class="av-svg av-style-${style}${anim ? ' av-anim-' + anim : ''}" focusable="false">${body3d}${filters}${gradDefs}
     <defs><clipPath id="cp${u}"><rect width="240" height="340" rx="26"/></clipPath></defs><g clip-path="url(#cp${u})">${plain ? '' : (bgItem && bgItem.image ? img(bgItem) : background(bgItem, u))}${effect(get('effect'), false)}${aura}</g>
     <ellipse class="av-shadow" cx="120" cy="322" rx="78" ry="12" fill="url(#fs${u})"/>
-    <g class="av-char" ${flt}>${get('wings') ? layer('wings', (it) => CLOTHES.wings) : ''}${get('back') && !back ? layer('back', (it) => CLOTHES.backpack) : ''}${tail}<g ${LT}><g ${HT}>${back ? '' : hairBk}</g></g><g ${LT}>${legs}${arms}${torsoBase}</g><g ${LT}><g ${FT}>${clothes}</g></g>${back ? `${get('back') ? layer('back', (it) => CLOTHES.backpack) : ''}<g ${LT}>${hairBk}</g>` : ''}<g ${LT}>${shoes}</g>
-      <g ${LT}>${earsP}${animalBits}${head}</g>${faceBits}<g ${LT}><g ${HT}>${hairFt}</g></g>${back ? '' : layer('mask', () => CLOTHES.mask)}${get('neck') ? layer('neck', () => CLOTHES.necklace) : ''}${back ? '' : layer('glasses', (it) => CLOTHES[it.kind])}${layer('headphones', () => CLOTHES.headphones)}${layer('hat', (it) => CLOTHES[it.kind])}${layer('wrist', () => CLOTHES.watch)}</g>
+    <g class="av-char" ${flt}><g transform="${BW}">${get('wings') ? layer('wings', (it) => CLOTHES.wings) : ''}${get('back') && !back ? layer('back', (it) => CLOTHES[it.kind] || CLOTHES.backpack) : ''}${tail}<g ${LT}><g ${HT}>${back ? '' : hairBk}</g></g><g ${LT}>${legs}${arms}${torsoBase}</g><g ${LT}><g ${FT}>${clothes}</g></g>${back ? `${get('back') ? layer('back', (it) => CLOTHES[it.kind] || CLOTHES.backpack) : ''}<g ${LT}>${hairBk}</g>` : ''}<g ${LT}>${shoes}</g></g>
+      <g ${LT}>${earsP}${animalBits}${head}</g>${faceBits}<g ${LT}><g ${HT}>${hairFt}</g></g>${back ? '' : layer('mask', () => CLOTHES.mask)}${get('neck') ? layer('neck', (it) => CLOTHES[it.kind] || CLOTHES.necklace) : ''}${back ? '' : layer('glasses', (it) => CLOTHES[it.kind])}${layer('headphones', () => CLOTHES.headphones)}${layer('hat', (it) => CLOTHES[it.kind])}${layer('wrist', () => CLOTHES.watch)}</g>
     ${petG}${collectG}${effect(get('effect'), true)}</svg>`;
 }
 /* the thumbnail of a shop / inventory item: the item worn by a plain character, cropped to the part that matters */
-const CROP = { hat: '50 0 140 130', glasses: '60 50 120 80', mask: '60 50 120 80', headphones: '40 0 160 140', neck: '70 110 100 90', top: '40 120 160 140', dress: '40 120 160 190', outfit: '20 0 200 340', bottom: '60 210 120 120', shoes: '60 280 120 60', wrist: '30 190 90 70', back: '20 100 200 180', wings: '0 90 240 180' };
+const CROP = { hat: '40 -26 160 156', glasses: '60 50 120 80', mask: '60 50 120 80', headphones: '40 0 160 140', neck: '70 110 100 90', top: '40 120 160 140', dress: '40 120 160 190', outfit: '20 0 200 340', bottom: '60 210 120 120', shoes: '60 280 120 60', wrist: '30 190 90 70', back: '20 100 200 180', wings: '0 90 240 180' };
 export function itemSvg(item, { look, style = 'cartoon', size = 96 } = {}) {
   if (item.image && !['background'].includes(item.slot)) return `<img src="${item.image}" alt="" width="${size}" height="${size}" style="object-fit:contain" draggable="false">`;
   if (item.slot === 'pet') return petSvg(item, 'sit', size);

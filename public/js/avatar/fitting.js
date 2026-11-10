@@ -6,6 +6,7 @@ import { post, put } from '../api.js';
 import { t } from '../i18n.js';
 import { renderAvatar, itemSvg, fitsStyle } from './render.js';
 import { A, equippedItems, rarityBadge, tokenAmount, setBalance, coinSvg } from './ui.js';
+import { fashionFilter, PAGE, moreButton } from './filters.js';
 
 const CATS = [['clothing', '👕'], ['accessory', '🕶️'], ['pet', '🐾'], ['special', '✨']];
 /* a dress or a costume replaces the top and the trousers, and the other way round */
@@ -23,7 +24,9 @@ export function openFitting({ item = null, buy, refresh = () => {} }) {
   const fits = (it) => fitsStyle(me().style, it);
   const sameSet = (a, b) => { const k = new Set([...Object.keys(a), ...Object.keys(b)]); for (const s of k) if ((a[s] && a[s].slug) !== (b[s] && b[s].slug)) return false; return true; };
   const unowned = () => Object.values(trial).filter((it) => !it.owned && !it.starter);
-  const itemsOf = () => boot.items.filter((i) => i.category === cat && (!kind || i.kind === kind));
+  let pages = 1;
+  const ff = fashionFilter(() => { pages = 1; update(); });
+  const itemsOf = () => ff.apply(boot.items.filter((i) => i.category === cat && (!kind || i.kind === kind)));
 
   /* ---- the stage: a front and a back picture on a turning card ---- */
   const front = h('div', { class: 'av-fit-face front' }), backF = h('div', { class: 'av-fit-face back' });
@@ -35,7 +38,7 @@ export function openFitting({ item = null, buy, refresh = () => {} }) {
   const step = (dir) => { const s0 = snap(angle), list = all(angle); setAngle(dir > 0 ? list.find((v) => v > s0) : [...list].reverse().find((v) => v < s0)); };
   const setAngle = (a, instant) => { angle = a; turn.classList.toggle('drag', !!instant); turn.style.setProperty('--a', angle + 'deg'); const f = ((angle % 360) + 360) % 360; stage.dataset.view = f > 90 && f < 270 ? 'back' : 'front'; };
   function paint() {
-    const base = { style: me().style, look: me().look, equipped: trial, size: 360, petPose: pose, label: me().name, plain: !trial.background };
+    const base = { style: me().style, look: { ...me().look, build }, equipped: trial, size: 360, petPose: pose, label: me().name, plain: !trial.background };
     front.innerHTML = renderAvatar(base); backF.innerHTML = renderAvatar({ ...base, view: 'back' });
     stage.classList.remove('pop'); void stage.offsetWidth; stage.classList.add('pop');
   }
@@ -50,6 +53,8 @@ export function openFitting({ item = null, buy, refresh = () => {} }) {
   const rotL = h('button', { type: 'button', class: 'av-fit-rot', id: 'av-fit-left', 'aria-label': t('av.fit.rotate_left'), title: t('av.fit.rotate_left'), onclick: () => { stopSpin(); step(-1); } }, '◀');
   const rotR = h('button', { type: 'button', class: 'av-fit-rot', id: 'av-fit-right', 'aria-label': t('av.fit.rotate_right'), title: t('av.fit.rotate_right'), onclick: () => { stopSpin(); step(1); } }, '▶');
   const poseBar = h('div', { class: 'av-chips center av-fit-pose', role: 'group', 'aria-label': t('av.pose') });
+  let build = (me().look && me().look.build) ?? 1;   // body type: a preview only, to see how an outfit fits different builds
+  const buildBar = h('div', { class: 'av-chips center av-fit-build', id: 'av-fit-build', role: 'group', 'aria-label': t('av.build') }, ...[0, 1, 2].map((i) => h('button', { type: 'button', class: 'av-chip' + (i === build ? ' on' : ''), 'data-build': i, onclick: () => { build = i; buildBar.querySelectorAll('.av-chip').forEach((c) => c.classList.toggle('on', Number(c.dataset.build) === i)); paint(); } }, t('av.build_n.' + i))));
 
   /* ---- actions ---- */
   function apply(it) {
@@ -97,8 +102,8 @@ export function openFitting({ item = null, buy, refresh = () => {} }) {
   function update() {
     tabs.querySelectorAll('.av-tab').forEach((b) => { const on = b.dataset.cat === cat; b.classList.toggle('on', on); b.setAttribute('aria-selected', String(on)); });
     const inCat = boot.items.filter((i) => i.category === cat), ks = [...new Set(inCat.map((i) => i.kind))];
-    chips.replaceChildren(h('button', { type: 'button', class: 'av-chip' + (!kind ? ' on' : ''), onclick: () => { kind = ''; update(); } }, t('av.all')), ...ks.map((k) => h('button', { type: 'button', class: 'av-chip' + (kind === k ? ' on' : ''), 'data-kind': k, onclick: () => { kind = k; update(); } }, t('av.kind.' + k))));
-    const list = itemsOf(); grid.replaceChildren(...(list.length ? list.map(tile) : [h('p', { class: 'av-empty' }, t('av.shop_empty'))]));
+    chips.replaceChildren(h('button', { type: 'button', class: 'av-chip' + (!kind ? ' on' : ''), onclick: () => { kind = ''; pages = 1; update(); } }, t('av.all')), ...ks.map((k) => h('button', { type: 'button', class: 'av-chip' + (kind === k ? ' on' : ''), 'data-kind': k, onclick: () => { kind = k; pages = 1; update(); } }, t('av.kind.' + k))));
+    ff.refresh(inCat); const list = itemsOf(), shown = list.slice(0, PAGE * pages), more = moreButton(shown.length, list.length, () => { pages++; update(); }); grid.replaceChildren(...(list.length ? shown.map(tile) : [h('p', { class: 'av-empty' }, t('av.shop_empty'))]), ...(more ? [more] : []));
     /* the selected item */
     if (sel) {
       const owned = sel.owned || sel.starter;
@@ -119,12 +124,12 @@ export function openFitting({ item = null, buy, refresh = () => {} }) {
     const pet = trial.pet; poseBar.replaceChildren(...(pet ? ['sit', 'play', 'sleep'].map((p) => h('button', { type: 'button', class: 'av-chip' + (p === pose ? ' on' : ''), 'data-pose': p, onclick: () => { pose = p; paint(); update(); } }, t('av.pose.' + p))) : []));
     poseBar.hidden = !pet;
   }
-  tabs.append(...CATS.map(([k, e]) => h('button', { type: 'button', class: 'av-tab', role: 'tab', 'data-cat': k, 'aria-selected': 'false', onclick: () => { cat = k; kind = ''; update(); } }, h('span', { 'aria-hidden': 'true' }, e), h('b', {}, t('av.cat.' + k)))));
+  tabs.append(...CATS.map(([k, e]) => h('button', { type: 'button', class: 'av-tab', role: 'tab', 'data-cat': k, 'aria-selected': 'false', onclick: () => { cat = k; kind = ''; pages = 1; ff.reset(); update(); } }, h('span', { 'aria-hidden': 'true' }, e), h('b', {}, t('av.cat.' + k)))));
 
   /* the character to dress (a learner can have several) */
   const who = avatars().length > 1 ? h('select', { class: 'av-select', id: 'av-fit-who', 'aria-label': t('av.fit.character'), onchange: (e) => {
     const old = saved, tried = Object.fromEntries(Object.entries(trial).filter(([s, it]) => !old[s] || old[s].slug !== it.slug));
-    av = avatars().find((a) => String(a.id) === e.target.value) || av; saved = equippedItems(me().equipped); pose = me().petPose || 'sit';
+    av = avatars().find((a) => String(a.id) === e.target.value) || av; saved = equippedItems(me().equipped); pose = me().petPose || 'sit'; build = (me().look && me().look.build) ?? 1; buildBar.querySelectorAll('.av-chip').forEach((c) => c.classList.toggle('on', Number(c.dataset.build) === build));
     trial = { ...saved }; for (const it of Object.values(tried)) if (fits(it)) { for (const s of CLEARS[it.slot] || []) delete trial[s]; trial[it.slot] = it; } paint(); update();
   } }, ...avatars().map((a) => h('option', { value: a.id, selected: av && a.id === av.id }, a.name))) : null;
 
@@ -133,12 +138,12 @@ export function openFitting({ item = null, buy, refresh = () => {} }) {
     h('div', { class: 'av-fit-room' },
       h('header', { class: 'av-fit-head' }, ...[h('h2', { id: 'av-fit-h' }, '👗 ', t('av.fit.title')), who, bal, closeBtn].filter(Boolean)),
       h('div', { class: 'av-fit-body' },
-        h('section', { class: 'av-fit-left' }, stage, h('div', { class: 'av-fit-rots' }, rotL, spinBtn, rotR), poseBar),
-        h('section', { class: 'av-fit-right' }, tabs, chips, grid, info, bar, note))));
+        h('section', { class: 'av-fit-left' }, stage, h('div', { class: 'av-fit-rots' }, rotL, spinBtn, rotR), buildBar, poseBar),
+        h('section', { class: 'av-fit-right' }, tabs, ff.el, chips, grid, info, bar, note))));
   const onKey = (e) => { if (e.key === 'Escape') { e.stopPropagation(); close(); } };
   function close() { stopSpin(); document.removeEventListener('keydown', onKey); root.remove(); if (current && current.root === root) current = null; document.body.classList.remove('av-noscroll'); }
   current = { root, close };
-  setBal(); setAngle(0); if (item) { cat = item.category; sel = item; if (fits(item)) { for (const s of CLEARS[item.slot] || []) delete trial[s]; trial[item.slot] = item; } }
+  setBal(); setAngle(0); if (item) { cat = item.category; sel = item; if (item.collection) { ff.st.coll = item.collection; ff.st.sub = item.sub || ''; } if (fits(item)) { for (const s of CLEARS[item.slot] || []) delete trial[s]; trial[item.slot] = item; } }
   paint(); update();
   document.addEventListener('keydown', onKey); document.body.classList.add('av-noscroll'); document.body.append(root); closeBtn.focus();
   return current;

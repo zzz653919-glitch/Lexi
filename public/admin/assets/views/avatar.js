@@ -1,6 +1,6 @@
 import { h, icon, get, post, patch, put, del, api, table, tag, formDialog, toast, iconBtn, pager, typedConfirm, t, fmt, modal } from '../common.js';
 
-const KINDS = ['tee', 'hoodie', 'jacket', 'shirt', 'pants', 'shorts', 'dress', 'shoes', 'costume', 'seasonal', 'glasses', 'sunglasses', 'hat', 'cap', 'headphones', 'backpack', 'watch', 'necklace', 'wings', 'mask', 'cat', 'dog', 'rabbit', 'fox', 'dragon', 'bird', 'dino', 'fantasy', 'animation', 'background', 'effect', 'style', 'collectible'];
+const KINDS = ['tee', 'hoodie', 'jacket', 'shirt', 'pants', 'shorts', 'dress', 'shoes', 'costume', 'seasonal', 'glasses', 'sunglasses', 'hat', 'cap', 'headphones', 'backpack', 'watch', 'necklace', 'wings', 'mask', 'fashion', 'headwear', 'footwear', 'neckwear', 'cape', 'cat', 'dog', 'rabbit', 'fox', 'dragon', 'bird', 'dino', 'fantasy', 'animation', 'background', 'effect', 'style', 'collectible'];
 const RARITIES = ['common', 'uncommon', 'rare', 'epic', 'legendary'], EARN = ['lessons', 'streak', 'xp', 'levels', 'words', 'tokens', 'missions'], REWARDS = ['token_lesson', 'token_topic', 'token_test', 'token_mission', 'token_streak7', 'token_level'];
 const rarityTag = (r) => h('span', { class: 'badge', style: { background: { common: '#9aa3b2', uncommon: '#2fb36d', rare: '#2f7bff', epic: '#a855f7', legendary: '#f2b705' }[r], color: r === 'legendary' ? '#3a2400' : '#fff' } }, t('av.rarity.' + r));
 
@@ -15,12 +15,14 @@ function uploader(state, label) {
 
 /* Avatar management: shop items (price, rarity, image, earn rule), token rewards, the ledger and what users own */
 export default async function avatarAdmin() {
-  const R = await import('/js/avatar/render.js');
+  const R = await import('/js/avatar/render.js'); const O = await import('/js/avatar/outfits.js'), W = await import('/js/avatar/wear.js');
   const holder = h('div', {}); let tab = 'items', q = '', kind = '', page = 1, email = '';
   const tabs = h('div', { class: 'row', role: 'tablist' }, [['items', 'adm.avatar.items'], ['rewards', 'adm.avatar.rewards'], ['tx', 'adm.avatar.transactions']].map(([k, key]) => h('button', { type: 'button', class: 'btn secondary small', role: 'tab', 'data-tab': k, onclick: () => { tab = k; draw(); } }, t(key))));
   const mark = () => tabs.querySelectorAll('button').forEach((b) => { b.classList.toggle('secondary', b.dataset.tab !== tab); b.setAttribute('aria-selected', String(b.dataset.tab === tab)); });
 
+  let d0 = { collections: {} };
   async function itemDialog(it) {
+    d0 = await get('/admin/avatar/items?q=zzzz-none');
     const st = { image_url: it ? it.image_url : '' };
     const rule = it && it.earn_rule ? it.earn_rule.split(':') : ['', ''], art = it ? it.art : { c: '#e63946', c2: '#ffffff', p: 'solid' };
     const r = await formDialog({ title: it ? t('adm.avatar.edit_item') : t('adm.avatar.new_item'), wide: true, fields: [
@@ -28,11 +30,13 @@ export default async function avatarAdmin() {
       { name: 'kind', label: t('adm.avatar.f_kind'), type: 'select', value: it ? it.kind : 'tee', options: KINDS.map((k) => ({ value: k, label: t('av.kind.' + k) })) },
       { name: 'price', label: t('adm.avatar.f_price'), type: 'number', value: it ? it.price : 50, min: 0 }, { name: 'rarity', label: t('adm.avatar.f_rarity'), type: 'select', value: it ? it.rarity : 'common', options: RARITIES.map((x) => ({ value: x, label: t('av.rarity.' + x) })) },
       { name: 'status', label: t('adm.avatar.f_status'), type: 'select', value: it ? it.status : 'active', options: [{ value: 'active', label: t('adm.avatar.active') }, { value: 'disabled', label: t('adm.avatar.disabled') }] },
+      { name: 'collection', label: t('adm.avatar.f_collection'), type: 'select', value: it ? it.collection || '' : '', options: [{ value: '', label: t('adm.avatar.no_collection') }, ...Object.keys(d0.collections || {}).map((k) => ({ value: k, label: t('av.collection.' + k) }))] }, { name: 'subcollection', label: t('adm.avatar.f_subcollection'), value: it ? it.subcollection || '' : '', maxlength: 24 },
+      { name: 'preset', label: t('adm.avatar.f_preset'), type: 'select', value: '', options: [{ value: '', label: '—' }, ...[['fashion', O.PRESET_KEYS], ['headwear', W.HATS], ['footwear', W.SHOES], ['neckwear', W.NECKS], ['cape', W.BACKS]].flatMap(([g, list]) => list.map((x) => ({ value: x, label: t('av.kind.' + g) + ': ' + x })))] },
       { name: 'c', label: t('adm.avatar.f_color'), value: art.c || '#e63946', maxlength: 7 }, { name: 'c2', label: t('adm.avatar.f_color2'), value: art.c2 || '#ffffff', maxlength: 7 },
-      { name: 'p', label: t('adm.avatar.f_pattern'), type: 'select', value: art.p || 'solid', options: ['solid', 'stripes', 'dots'].map((x) => ({ value: x, label: t('adm.avatar.pattern_' + x) })) }, { name: 'v', label: t('adm.avatar.f_variant'), value: art.v || '', maxlength: 16, hint: t('adm.avatar.f_variant_hint') },
+      { name: 'c3', label: t('adm.avatar.f_color3'), value: art.c3 || '', maxlength: 7 }, { name: 'p', label: t('adm.avatar.f_pattern'), type: 'select', value: art.p || 'solid', options: O.PATTERNS.map((x) => ({ value: x, label: x })) }, { name: 'e', label: t('adm.avatar.f_emblem'), type: 'select', value: art.e || 'none', options: O.EMBLEMS.map((x) => ({ value: x, label: x })) }, { name: 'n', label: t('adm.avatar.f_number'), type: 'number', value: art.n ?? '', min: 0, max: 99 }, { name: 'v', label: t('adm.avatar.f_variant'), value: art.v || '', maxlength: 16, hint: t('adm.avatar.f_variant_hint') },
       { name: 'earn_type', label: t('adm.avatar.f_earn_type'), type: 'select', value: rule[0], options: [{ value: '', label: t('adm.avatar.earn_none') }, ...EARN.map((x) => ({ value: x, label: t('adm.avatar.earn_' + x) }))] }, { name: 'earn_value', label: t('adm.avatar.f_earn_value'), type: 'number', value: rule[1] || '', min: 1, hint: t('adm.avatar.f_earn_hint') }],
       extra: uploader(st, t('adm.avatar.upload_image')),
-      save: (v) => { const body = { name_en: v.name_en, name_uz: v.name_uz, name_ru: v.name_ru, kind: v.kind, price: Number(v.price) || 0, rarity: v.rarity, status: v.status, art: { c: v.c, c2: v.c2, p: v.p, ...(v.v ? { v: v.v } : {}) }, image_url: st.image_url, earn_rule: v.earn_type && Number(v.earn_value) > 0 ? `${v.earn_type}:${Number(v.earn_value)}` : '' }; return it ? patch('/admin/avatar/items/' + it.id, body) : post('/admin/avatar/items', body); } });
+      save: (v) => { const body = { name_en: v.name_en, name_uz: v.name_uz, name_ru: v.name_ru, kind: v.kind, price: Number(v.price) || 0, rarity: v.rarity, status: v.status, collection: v.collection, subcollection: v.subcollection, art: { c: v.c, c2: v.c2, ...(v.c3 ? { c3: v.c3 } : {}), p: v.p, ...(v.e && v.e !== 'none' ? { e: v.e } : {}), ...(v.n !== '' && v.n != null ? { n: Number(v.n) } : {}), ...((v.preset || v.v) ? { v: v.preset || v.v } : {}) }, image_url: st.image_url, earn_rule: v.earn_type && Number(v.earn_value) > 0 ? `${v.earn_type}:${Number(v.earn_value)}` : '' }; return it ? patch('/admin/avatar/items/' + it.id, body) : post('/admin/avatar/items', body); } });
     if (r) { toast(t('adm.avatar.saved'), 'success'); draw(); }
   }
   const preview = (it) => { const s = h('span', { style: { display: 'inline-block', width: '56px', height: '56px', overflow: 'hidden' } }); s.innerHTML = R.itemSvg({ ...it, image: it.image_url }, { size: 56 }); return s; };
@@ -57,7 +61,7 @@ export default async function avatarAdmin() {
       holder.replaceChildren(h('div', { class: 'row' }, search, ks, h('button', { class: 'btn', id: 'av-new-item', type: 'button', onclick: () => itemDialog(null) }, icon('plus'), t('adm.avatar.new_item')), h('span', { class: 'muted small' }, t('adm.avatar.count', { n: d.items.length }))),
         table([
           { label: t('adm.avatar.col_picture'), render: preview }, { label: t('adm.avatar.col_item'), render: (it) => h('div', {}, h('b', {}, it.name_en), h('div', { class: 'muted small' }, [it.name_uz, it.name_ru].filter(Boolean).join(' · ') + ' · ' + it.slug)) },
-          { label: t('adm.avatar.f_kind'), render: (it) => t('av.kind.' + it.kind) }, { label: t('adm.avatar.f_rarity'), render: (it) => rarityTag(it.rarity) },
+          { label: t('adm.avatar.f_kind'), render: (it) => t('av.kind.' + it.kind) }, { label: t('adm.avatar.f_collection'), render: (it) => (it.collection ? t('av.collection.' + it.collection) + (it.subcollection ? ' / ' + it.subcollection : '') : '—') }, { label: t('adm.avatar.f_rarity'), render: (it) => rarityTag(it.rarity) },
           { label: t('adm.avatar.f_price'), render: (it) => (it.earn_rule ? '—' : fmt.number(it.price)) }, { label: t('adm.avatar.col_earn'), render: (it) => (it.earn_rule ? it.earn_rule : it.starter ? t('av.starter') : '') },
           { label: t('adm.avatar.col_owners'), render: (it) => fmt.number(it.owners) }, { label: t('adm.col.status'), render: (it) => tag(it.status === 'active' ? 'published' : 'draft') },
           { label: '', cls: 'actions', render: (it) => h('div', { class: 'row' }, iconBtn('edit', t('common.edit'), () => itemDialog(it)),

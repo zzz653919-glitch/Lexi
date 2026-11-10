@@ -21,6 +21,22 @@ test('avatar catalogue: 125 original items in every category, names in three lan
   assert.ok(ITEMS.filter((i) => i.earn).length >= 4, 'pets that are earned');
 });
 
+test('fashion collection: hundreds of original items in twelve collections, valid data, three languages', () => {
+  const { FASHION } = require('../../server/seed/avatar');
+  const A = require('../../server/lib/avatar-spec');
+  assert.ok(FASHION.length >= 400, 'hundreds of fashion items');
+  assert.strictEqual(new Set(FASHION.map((i) => i.slug)).size, FASHION.length, 'unique slugs');
+  assert.deepStrictEqual([...new Set(FASHION.map((i) => i.collection))].sort(), Object.keys(A.COLLECTIONS).sort(), 'every collection has items');
+  for (const i of FASHION) {
+    assert.ok(A.KINDS.includes(i.kind) && A.RARITIES.includes(i.rarity), i.slug); assert.ok(A.COLLECTIONS[i.collection].includes(i.subcollection), `${i.slug}: ${i.collection}/${i.subcollection}`);
+    assert.ok(i.en && i.uz && i.ru && i.price > 0, i.slug + ' has names in three languages and a price'); assert.doesNotMatch(i.uz, /[oOgG][‘ʻ'`]|sh|ch/i, i.uz);
+    assert.ok(i.art.v && /^#[0-9a-f]{6}$/.test(i.art.c) && /^#[0-9a-f]{6}$/.test(i.art.c2), i.slug + ' has a design and colours');
+    assert.ok(!/nike|adidas|disney|marvel|pokemon|batman|spider/i.test(i.en), 'no brand or character names: ' + i.en);
+  }
+  for (const c of ['traditional', 'sports', 'formal', 'fantasy', 'historical', 'futuristic', 'gaming', 'fandom', 'seasonal', 'streetwear', 'luxury']) assert.ok(FASHION.filter((i) => i.collection === c).length >= 20, c + ' is a big collection');
+  for (const sub of ['uzbek', 'japanese', 'korean', 'chinese', 'indian', 'arab', 'african', 'european']) assert.ok(FASHION.some((i) => i.collection === 'traditional' && i.subcollection === sub), 'traditional / ' + sub);
+});
+
 test('avatar studio: starter items, create / change / switch / delete characters, validated on the server', async () => {
   const s = await startServer({ seedKids: true });
   try {
@@ -161,6 +177,14 @@ test('admin avatar management: items, images, prices, rarity, token rewards, led
     assert.strictEqual((await admin.post('/api/admin/avatar/items', { name_en: 'X', kind: 'tee', price: -5, rarity: 'common' })).status, 400);
     assert.strictEqual((await admin.post('/api/admin/avatar/items', { name_en: 'X', kind: 'sofa', price: 5, rarity: 'common' })).status, 400);
     assert.strictEqual((await admin.post('/api/admin/avatar/items', { name_en: 'X', kind: 'tee', price: 5, rarity: 'mythic' })).status, 400);
+    /* the collection grows from the admin panel: a design preset, three colours, an emblem, a number, a collection and a sub-collection */
+    const fx = await admin.post('/api/admin/avatar/items', { name_en: 'Tashkent Derby Kit', name_uz: 'Toşkent derbisi formasi', name_ru: 'Форма ташкентского дерби', kind: 'fashion', price: 120, rarity: 'rare', collection: 'sports', subcollection: 'football', art: { v: 'jersey_fb', c: '#2f7bff', c2: '#ffffff', c3: '#243a7a', p: 'stripes', e: 'star', n: 10 } });
+    assert.strictEqual(fx.status, 201); assert.strictEqual(fx.json.slot, 'outfit'); assert.strictEqual(fx.json.category, 'clothing'); assert.strictEqual(fx.json.collection, 'sports'); assert.strictEqual(fx.json.subcollection, 'football');
+    assert.deepStrictEqual(fx.json.art, { v: 'jersey_fb', c: '#2f7bff', c2: '#ffffff', c3: '#243a7a', p: 'stripes', e: 'star', n: 10 });
+    assert.strictEqual((await admin.post('/api/admin/avatar/items', { name_en: 'Bad', kind: 'fashion', price: 5, rarity: 'common', collection: 'nonsense' })).status, 400, 'only known collections');
+    assert.ok((await admin.get('/api/admin/avatar/items')).json.collections.sports.includes('football'), 'the admin form can list the collections');
+    const shopItem = (await (await learner(s, 'shopper@example.com')).get('/api/avatar/bootstrap')).json.items.find((i) => i.slug === fx.json.slug);
+    assert.ok(shopItem && shopItem.collection === 'sports' && shopItem.sub === 'football' && shopItem.forSale, 'the new item appears in the shop under its collection');
     const made = (await admin.post('/api/admin/avatar/items', { name_en: 'Lucky Cap', name_uz: 'Omadli beysbolka', name_ru: 'Счастливая кепка', kind: 'cap', price: 77, rarity: 'rare', art: { c: '#112233', c2: '#ffffff', p: 'solid' } }));
     assert.strictEqual(made.status, 201); assert.strictEqual(made.json.slot, 'hat'); assert.strictEqual(made.json.slug, 'lucky-cap'); assert.strictEqual(made.json.category, 'accessory');
     assert.strictEqual((await admin.post('/api/admin/avatar/items', { name_en: 'Lucky Cap', kind: 'cap', price: 1, rarity: 'common' })).json.slug, 'lucky-cap-2');
