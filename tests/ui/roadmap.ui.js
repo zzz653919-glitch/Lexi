@@ -17,20 +17,22 @@ const overflow = (page) => page.evaluate(() => document.documentElement.scrollWi
 
     /* ---------- dashboard ---------- */
     check((await page.locator('.level-strip li').count()) === 6, 'the dashboard shows all six roadmap levels');
-    check((await page.locator('.level-strip li.ls-current').count()) === 1 && (await page.locator('.level-strip li.ls-current .ls-code').innerText()) === 'A1', 'A1 is the current level');
-    check((await page.locator('.level-strip li.ls-soon, .level-strip li.ls-locked').count()) === 5, 'every other level is locked, even after choosing C2 by hand');
+    check((await page.locator('.level-strip li.ls-current').count()) === 1 && (await page.locator('.level-strip li.ls-current .ls-code').innerText()) === 'C1', 'the level chosen by hand (C2 is capped at C1) is the current level');
+    check((await page.locator('.level-strip li.ls-soon, .level-strip li.ls-locked').count()) === 1, 'only IELTS stays locked after choosing a level by hand');
     check((await page.locator('.roadmap-card .skill-row').count()) === 4, 'four skill indicators');
     check(/80%/.test(await page.locator('.roadmap-card').innerText()), 'the dashboard states the 80% pass mark');
 
     /* ---------- path ---------- */
     await page.click('a[data-nav=learn]'); await page.waitForSelector('.path');
     check((await page.locator('.level-tab').count()) === 6, 'six level tabs');
-    check((await page.locator('.level-tab[aria-disabled="true"]').count()) === 5, 'five are locked');
+    check((await page.locator('.level-tab[data-locked="true"]').count()) === 1, 'only IELTS is locked');
     check(await page.locator('.level-head').isVisible(), 'the level header explains the rules');
     check((await page.locator('.node.kind-exam').count()) === 1 && (await page.locator('.node.kind-topic_test').count()) === 10, 'the exam and ten topic tests are marked on the path');
-    await page.click('.level-tab[aria-disabled="true"] >> nth=0', { force: true }); await page.waitForSelector('.notice');
-    check(/examination/i.test(await page.locator('.notice').first().innerText()) || /prepared/i.test(await page.locator('.notice').first().innerText()), 'a locked level says why');
-    await page.click('.level-tab >> nth=0');
+    // a level can be switched to at any time: the saved level changes and only its lessons are shown
+    await page.click('.level-tab[data-level="IELTS"]'); await page.waitForSelector('.level-tab[data-level="IELTS"][aria-selected="true"]');
+    check((await page.locator('.level-head h2').innerText()).startsWith('IELTS'), 'switching to IELTS shows the IELTS level');
+    await page.click('.level-tab[data-level="A1"]'); await page.waitForSelector('.level-tab[data-level="A1"][aria-selected="true"]'); await page.waitForSelector('.node.current');
+    check((await page.locator('.level-head h2').innerText()).startsWith('A1'), 'and switching back shows A1 again');
 
     /* ---------- a lesson: study page, then exercises ---------- */
     await page.click('.node.current'); await page.click('dialog .btn:not(.secondary)');

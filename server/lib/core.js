@@ -147,10 +147,11 @@ function make(db, settings) {
   const roadmapStart = (levels, cefr) => { const i = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'].indexOf(cefr); const code = PLACEMENT_TO_ROADMAP[i < 0 ? 1 : i]; const idx = levels.findIndex((l) => l.code === code); return idx < 0 ? 0 : idx; };
   async function buildPath(user, course, lang) {
     const T = (row, f) => L10N.text(row, f, lang);
+    await healLessonLevels();
     const [levels, units, lessons, progRows, countRows, openRows, examRows] = await Promise.all([
       db.all('SELECT * FROM levels WHERE course_id = ? ORDER BY position, id', course.id),
       db.all('SELECT u.* FROM units u JOIN levels l ON l.id = u.level_id WHERE l.course_id = ? ORDER BY u.position, u.id', course.id),
-      db.all("SELECT l.*, u.level_id FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE lv.course_id = ? AND l.status = 'published' ORDER BY l.position, l.id", course.id),
+      db.all("SELECT l.* FROM lessons l JOIN levels lv ON lv.id = l.level_id WHERE lv.course_id = ? AND l.status = 'published' ORDER BY l.position, l.id", course.id),
       db.all('SELECT * FROM user_progress WHERE user_id = ?', user.id),
       db.all("SELECT lesson_id, COUNT(*) n FROM exercises WHERE status = 'published' GROUP BY lesson_id"),
       db.all("SELECT lesson_id FROM lesson_attempts WHERE user_id = ? AND status = 'in_progress' AND lesson_id IS NOT NULL", user.id),
@@ -161,16 +162,18 @@ function make(db, settings) {
     const strictCourse = levels.some((l) => l.strict);
     // a strict (roadmap) course only opens levels above A1 through examinations; a placement test may open the levels up to its (capped) result
     const placed = ['placement', 'reassessment'].includes(user.level_source);
-    const startPos = strictCourse
-      ? (placed ? roadmapStart(levels, user.cefr_level) : -1)
-      : (levels.find((l) => l.code === user.start_level) || levels[0] || { position: 0 }).position;
+    // the level the learner selected (saved on the account); without one it comes from the placement test or the start level
+    const selLevel = levels.find((l) => l.code === user.selected_level)
+      || (strictCourse ? levels[placed ? roadmapStart(levels, user.cefr_level) : 0] : levels.find((l) => l.code === user.start_level)) || levels[0] || { position: 0, code: null };
+    const selIdx = Math.max(0, levels.indexOf(selLevel));
+    const startPos = strictCourse ? selIdx : selLevel.position;
     const exams = Object.fromEntries(examRows.map((r) => [r.lesson_id, r]));
-    const out = { course: { id: course.id, slug: course.slug, title: T(course, 'title'), description: T(course, 'description'), track: course.track, strict: strictCourse }, levels: [] };
+    const out = { course: { id: course.id, slug: course.slug, title: T(course, 'title'), description: T(course, 'description'), track: course.track, strict: strictCourse }, levels: [], selectedLevel: selLevel.code || null, selectedEmpty: false };
     let prevLevel = null, order = [];
     for (const [li, lv] of levels.entries()) {
-      const lvUnits = units.filter((u) => u.level_id === lv.id).map((u) => ({ ...u, lessons: lessons.filter((l) => l.unit_id === u.id) })).filter((u) => u.lessons.length);
+      const lvUnits = units.filter((u) => u.level_id === lv.id).map((u) => ({ ...u, lessons: lessons.filter((l) => l.unit_id === u.id && l.level_id === lv.id) })).filter((u) => u.lessons.length);
       if (!lvUnits.length) {
-        if (lv.strict) { out.levels.push({ id: lv.id, code: lv.code, title: T(lv, 'title'), description: T(lv, 'description'), unlocked: false, comingSoon: true, strict: true, total: 0, done: 0, pct: 0, threshold: lv.exam_pass_pct, examPassPct: lv.exam_pass_pct, units: [], exam: null }); prevLevel = { total: 0, done: 0, strict: true, examPassed: false, empty: true }; }
+        if (lv.strict) { out.levels.push({ id: lv.id, code: lv.code, selected: lv.code === selLevel.code, title: T(lv, 'title'), description: T(lv, 'description'), unlocked: false, comingSoon: true, strict: true, total: 0, done: 0, pct: 0, threshold: lv.exam_pass_pct, examPassPct: lv.exam_pass_pct, units: [], exam: null }); prevLevel = { total: 0, done: 0, strict: true, examPassed: false, empty: true }; }
         continue;
       }
       const flat = [].concat(...lvUnits.map((u) => u.lessons));
@@ -192,7 +195,7 @@ function make(db, settings) {
         unlocked = lv.unlock_rule === 'open' || !prevLevel || lv.position <= startPos;
         if (!unlocked) unlocked = prevLevel.total === 0 || Math.round(100 * prevLevel.done / prevLevel.total) >= lv.unlock_threshold_pct;
       }
-      const lvOut = { id: lv.id, code: lv.code, title: T(lv, 'title'), description: T(lv, 'description'), unlocked, total: flat.length, done, pct: Math.round(100 * done / flat.length), threshold: lv.strict ? lv.exam_pass_pct : lv.unlock_threshold_pct, strict: !!lv.strict, examPassPct: lv.exam_pass_pct, units: [], lockReason: levelReason,
+      const lvOut = { id: lv.id, code: lv.code, selected: lv.code === selLevel.code, title: T(lv, 'title'), description: T(lv, 'description'), unlocked, total: flat.length, done, pct: Math.round(100 * done / flat.length), threshold: lv.strict ? lv.exam_pass_pct : lv.unlock_threshold_pct, strict: !!lv.strict, examPassPct: lv.exam_pass_pct, units: [], lockReason: levelReason,
         exam: examLesson ? { lessonId: examLesson.id, passed: examPassed, bestScore: exams[examLesson.id] ? exams[examLesson.id].best : null } : null, requiredDone, requiredTotal: required.length, completed: !!lv.strict && examPassed };
       for (const [i, l] of flat.entries()) {
         let state = 'locked', reason = null;
@@ -222,10 +225,19 @@ function make(db, settings) {
     }
     // recommendation: the lesson in progress, else the first available unfinished lesson
     const states = out.levels.flatMap((lv) => lv.units.flatMap((u) => u.lessons.map((l) => ({ l, lv, u }))));
-    const rec = states.find((x) => x.l.inProgress && x.l.state !== 'locked') || states.find((x) => x.l.state === 'available');
+    // the recommendation only ever comes from the selected level
+    const inSel = states.filter((x) => x.lv.code === selLevel.code);
+    const rec = inSel.find((x) => x.l.inProgress && x.l.state !== 'locked') || inSel.find((x) => x.l.state === 'available');
+    out.selectedEmpty = !inSel.length;
+    out.selectedTotals = { lessons: inSel.length, done: inSel.filter((x) => x.l.state === 'completed').length };
     out.recommended = rec ? { lessonId: rec.l.id, title: rec.l.title, unit: rec.u.title, unitId: rec.u.id, level: rec.lv.code, resume: rec.l.inProgress } : null;
     out.totals = { lessons: states.length, done: states.filter((x) => x.l.state === 'completed').length };
     return out;
+  }
+  /* every lesson carries the id of its level (lessons.level_id); this keeps it equal to the level of its unit, whatever wrote the lesson */
+  async function healLessonLevels() {
+    const bad = await db.get('SELECT COUNT(*) n FROM lessons l JOIN units u ON u.id = l.unit_id WHERE l.level_id IS NOT u.level_id');
+    if (bad.n) await db.run('UPDATE lessons SET level_id = (SELECT u.level_id FROM units u WHERE u.id = lessons.unit_id) WHERE level_id IS NOT (SELECT u.level_id FROM units u WHERE u.id = lessons.unit_id)');
   }
   async function lessonAccess(user, lessonId, lang) {
     const row = await db.get("SELECT l.*, c.id course_id, c.status course_status FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id JOIN courses c ON c.id = lv.course_id WHERE l.id = ?", lessonId);
@@ -237,7 +249,7 @@ function make(db, settings) {
     return { ok: true, lesson: row };
   }
 
-  return { ACHIEVEMENTS, userById, todayFor, heartState, syncHearts, changeHearts, awardXp, bumpDay, markStreakDay, streakInfo, dayInfo, weekDays, checkAchievements, achievementList, courseFor, buildPath, lessonAccess, weekStart };
+  return { ACHIEVEMENTS, userById, todayFor, heartState, syncHearts, changeHearts, awardXp, bumpDay, markStreakDay, streakInfo, dayInfo, weekDays, checkAchievements, achievementList, courseFor, buildPath, lessonAccess, healLessonLevels, weekStart };
 }
 
 module.exports = { make, ACHIEVEMENTS };

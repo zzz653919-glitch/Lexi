@@ -52,6 +52,7 @@ function createApp(options = {}) {
       // the roadmap lessons are large: on a hosted database they are written by the build / CLI (resumable), at start-up only on a local file
       if (opts.seedRoadmap && db.local) { try { await seed.ensureRoadmap(db); } catch (e) { if (!opts.quiet) console.error('[seed] roadmap:', e.message); } }
       if (opts.seedKids && !opts.seedRoadmap && db.local) { try { await seed.ensureKids(db); await seed.ensureAvatar(db); } catch (e) { if (!opts.quiet) console.error('[seed] kids / avatar:', e.message); } }
+      await db.run(require('./lib/lesson-levels').SYNC_SQL);   // every lesson carries the level id of its unit
       // built-in test content is optional: if it cannot be written right now the site still opens (it is retried on the next start)
       // (independent steps run together: on a hosted database every query is a network trip; the hosted build already prepared the content, so there it is skipped)
       await Promise.all([

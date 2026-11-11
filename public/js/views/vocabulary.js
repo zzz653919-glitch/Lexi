@@ -1,5 +1,5 @@
 import { h, icon, speak, canSpeak, toast, spinner } from '../ui.js';
-import { get, post } from '../api.js';
+import { get, post, session } from '../api.js';
 import { t, n } from '../i18n.js';
 import { showLoader } from '../loaders.js';
 
@@ -8,7 +8,7 @@ const MODES = [['flashcards', 'cards'], ['choice', 'list'], ['typed', 'edit'], [
 
 const posName = (p) => { const k = 'adm.pos.' + String(p).replace(' ', '_'); const v = t(k); return v === k ? p : v; };   // the part of speech in the interface language
 export default async function vocabulary({ query }) {
-  const st = { q: query.get('q') || '', filter: query.get('filter') || 'all', page: 1, level: '', kind: '' };
+  const st = { q: query.get('q') || '', filter: query.get('filter') || 'all', page: 1, level: (session.user && session.user.selectedLevel) || '', kind: '' };
   const list = h('div', { class: 'stack', 'aria-live': 'polite' });
   const pager = h('div', { class: 'pager' });
   const summary = await get('/review/summary');
@@ -39,7 +39,7 @@ export default async function vocabulary({ query }) {
   }
   let timer; qInput.addEventListener('input', () => { clearTimeout(timer); timer = setTimeout(() => { st.q = qInput.value.trim(); st.page = 1; load(); }, 300); });
   const kindSel = h('select', { class: 'input', 'aria-label': t('vocab.kind'), onchange: (e) => { st.kind = e.target.value; st.page = 1; load(); } }, [['', t('vocab.all_kinds')]].concat(['word', 'collocation', 'phrasal_verb', 'idiom', 'academic'].map((k) => [k, t('vocab.kind_' + k)])).map(([v, l]) => h('option', { value: v }, l)));
-  const levelSel = h('select', { class: 'input', 'aria-label': t('vocab.level'), onchange: (e) => { st.level = e.target.value; st.page = 1; load(); } }, [['', t('vocab.all_levels')], ['A1', 'A1'], ['A2', 'A2'], ['B1', 'B1'], ['B2', 'B2'], ['C1', 'C1']].map(([v, l]) => h('option', { value: v }, l)));
+  const levelSel = h('select', { class: 'input', 'aria-label': t('vocab.level'), onchange: (e) => { st.level = e.target.value; st.page = 1; load(); } }, [['', t('vocab.all_levels')], ['A1', 'A1'], ['A2', 'A2'], ['B1', 'B1'], ['B2', 'B2'], ['C1', 'C1'], ['IELTS', 'IELTS']].map(([v, l]) => h('option', { value: v, selected: v === st.level }, l)));
   const el = h('div', { class: 'stack' },
     h('div', { class: 'page-head' }, h('h1', {}, t('nav.vocabulary')), h('div', { class: 'chips' }, h('span', { class: 'chip warn' }, t('vocab.n_due', { n: summary.due })), h('span', { class: 'chip' }, t('vocab.n_in_review', { n: summary.total })), h('span', { class: 'chip bad' }, icon('flag'), t('vocab.n_difficult', { n: summary.difficult })))),
     h('section', { class: 'card' }, h('h2', {}, t('vocab.practise')), h('div', { class: 'grid two' }, MODES.map(([m, ic]) => h('a', { class: 'card mode-card', href: '/review?mode=' + m, style: { textDecoration: 'none', color: 'inherit', marginTop: 0 } }, h('div', { class: 'ico' }, icon(ic)), h('div', {}, h('h3', {}, t('review.mode.' + m)), h('p', {}, t('vocab.mode.' + m))))))),

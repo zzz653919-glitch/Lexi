@@ -61,7 +61,7 @@ const A = require('../../server/lib/auth');
     /* ---------- path -> lesson ---------- */
     await page.click('a[data-nav=learn]'); await page.waitForSelector('.path');
     check((await page.locator('.node.completed').count()) === 0 && (await page.locator('.node.current').count()) === 1 && (await page.locator('.node.locked').count()) >= 2, 'path shows current and locked lessons');
-    check((await page.locator('.level-tab[aria-disabled="true"]').count()) === 4, 'levels A2–C1 are shown as locked');
+    check((await page.locator('.level-tab[data-locked="true"]').count()) === 4, 'levels above the selected level are shown as locked');
     await page.click('.node.locked >> nth=0');
     check((await page.locator('dialog').innerText()).includes('Locked'), 'tapping a locked lesson explains why');
     await page.keyboard.press('Escape');

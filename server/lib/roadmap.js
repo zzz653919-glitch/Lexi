@@ -14,7 +14,7 @@ function make(db) {
     if (!path || !path.course || !path.course.strict) return null;
     const levels = path.levels.map((l) => ({ code: l.code, title: l.title, state: l.comingSoon ? 'soon' : l.completed ? 'completed' : l.unlocked ? 'open' : 'locked' }));
     // the current level: the first unlocked level whose examination has not been passed
-    const cur = path.levels.find((l) => l.unlocked && !l.completed && !l.comingSoon) || path.levels.find((l) => !l.comingSoon) || path.levels[0];
+    const cur = path.levels.find((l) => l.code === path.selectedLevel && !l.comingSoon) || path.levels.find((l) => l.unlocked && !l.completed && !l.comingSoon) || path.levels.find((l) => !l.comingSoon) || path.levels[0];
     const curState = levels.find((l) => l.code === cur.code);
     if (curState) curState.state = cur.completed ? 'completed' : 'current';
     const sk = await skills(user.id, path.course.id);
