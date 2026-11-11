@@ -236,9 +236,11 @@ function make(db, settings) {
     return out;
   }
   /* every lesson carries the id of its level (lessons.level_id); this keeps it equal to the level of its unit, whatever wrote the lesson */
+  let healed = false;   // checked once per process (a database round trip is expensive on a hosted database); content writes reset it
   async function healLessonLevels() {
-    const bad = await db.get('SELECT COUNT(*) n FROM lessons l JOIN units u ON u.id = l.unit_id WHERE l.level_id IS NOT u.level_id');
-    if (bad.n) await db.run('UPDATE lessons SET level_id = (SELECT u.level_id FROM units u WHERE u.id = lessons.unit_id) WHERE level_id IS NOT (SELECT u.level_id FROM units u WHERE u.id = lessons.unit_id)');
+    if (healed) return;
+    healed = true;
+    await db.run('UPDATE lessons SET level_id = (SELECT u.level_id FROM units u WHERE u.id = lessons.unit_id) WHERE level_id IS NOT (SELECT u.level_id FROM units u WHERE u.id = lessons.unit_id)');
   }
   async function lessonAccess(user, lessonId, lang) {
     const row = await db.get("SELECT l.*, c.id course_id, c.status course_status FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id JOIN courses c ON c.id = lv.course_id WHERE l.id = ?", lessonId);

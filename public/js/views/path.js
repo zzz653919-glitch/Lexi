@@ -7,9 +7,8 @@ import { startAttempt } from './start.js';
 const lockText = (reason) => (reason ? t(reason.key, reason.params) : t('path.lock_default'));
 
 export default async function pathView({ query }) {
-  const data = await get('/path' + (query.get('courseId') ? '?courseId=' + encodeURIComponent(query.get('courseId')) : ''));
+  const [data, profile] = await Promise.all([get('/path' + (query.get('courseId') ? '?courseId=' + encodeURIComponent(query.get('courseId')) : '')), get('/me/profile')]);
   if (!data.course) return { el: h('div', { class: 'card empty' }, h('img', { src: '/img/mascot.svg', alt: '' }), h('h2', {}, t('path.no_course')), h('p', {}, t('path.no_course_text'))), title: t('nav.learn'), nav: 'learn' };
-  const profile = await get('/me/profile');
   const rec = data.recommended;
   // the level saved on the account: only its lessons are shown (progress in the other levels is kept)
   let selected = data.levels.find((l) => l.code === data.selectedLevel) || data.levels.find((l) => l.unlocked) || data.levels[0];

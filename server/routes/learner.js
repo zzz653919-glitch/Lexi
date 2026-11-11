@@ -146,7 +146,7 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     const tl = user.translation_language;
     if (q) { where.push(`(v.en LIKE ? ESCAPE '\\' OR ${L10N.vocabWordSql(tl)} LIKE ? ESCAPE '\\')`); args.push('%' + escapeLike(q) + '%', '%' + escapeLike(q) + '%'); }
     if (req.query.level) {
-      const known = (await db.all('SELECT DISTINCT code FROM levels')).map((x) => x.code).concat(['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
+      const known = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2', 'IELTS'];
       if (!known.includes(String(req.query.level))) throw bad('err.fix_fields', { level: 'val.level_unknown' });
     }
     if (req.query.level) { where.push('(v.cefr = ? OR lv.code = ?)'); args.push(String(req.query.level), String(req.query.level)); }
