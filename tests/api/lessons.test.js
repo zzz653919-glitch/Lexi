@@ -41,12 +41,16 @@ test('a lesson can be played to the end: server-side XP, progress, unlocking', a
     assert.strictEqual(r.correct, 12); assert.strictEqual(r.incorrect, 0); assert.strictEqual(r.accuracy, 100);
     assert.strictEqual(r.xp, 12 * 10 + 20 + 10, '10 XP per right answer + lesson bonus 20 + perfect bonus 10');
     const u = s.db.get('SELECT xp_total FROM users WHERE email = ?', 'l@example.com');
-    assert.strictEqual(u.xp_total, 150, 'the stored total matches the transactions');
-    assert.strictEqual(s.db.get('SELECT SUM(amount) n FROM xp_transactions').n, 150);
+    // the lesson pays 150; the achievements it unlocks (First Lesson, Fast Learner) pay their own XP on top, once
+    const bonus = s.db.get("SELECT COALESCE(SUM(xp_awarded), 0) n FROM user_achievements WHERE user_id = (SELECT id FROM users WHERE email = 'l@example.com')").n;
+    assert.ok(bonus > 0 && bonus <= 200);
+    assert.strictEqual(u.xp_total, 150 + bonus, 'the stored total matches the transactions');
+    assert.strictEqual(s.db.get('SELECT SUM(amount) n FROM xp_transactions').n, 150 + bonus);
+    assert.strictEqual(s.db.get("SELECT SUM(amount) n FROM xp_transactions WHERE reason != 'achievement'").n, 150, 'the lesson itself pays 150');
     const p2 = (await c.get('/api/path')).json;
     assert.strictEqual(flat(p2)[0].state, 'completed'); assert.strictEqual(flat(p2)[1].state, 'available', 'the next lesson unlocks');
     const dash = (await c.get('/api/dashboard')).json;
-    assert.strictEqual(dash.today.xp, 150); assert.strictEqual(dash.streak.current, 1); assert.strictEqual(dash.lessons.done, 1);
+    assert.strictEqual(dash.today.xp, 150 + bonus); assert.strictEqual(dash.streak.current, 1); assert.strictEqual(dash.lessons.done, 1);
     assert.ok(dash.achievements.length >= 3, 'achievements were earned');
   } finally { await s.stop(); }
 });

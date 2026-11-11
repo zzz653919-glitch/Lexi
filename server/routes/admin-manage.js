@@ -170,7 +170,7 @@ module.exports = function manageRoutes({ db, settings, auth, core, audit, opts }
       attempts: (await db.get('SELECT COUNT(*) n FROM exercise_responses WHERE user_id = ?', u.id)).n,
       accuracy: acc.n ? Math.round(100 * acc.c / acc.n) : null,
       reviewWords: (await db.get('SELECT COUNT(*) n FROM review_items WHERE user_id = ?', u.id)).n,
-      achievements: (await core.achievementList(u.id)).filter((a) => a.earnedAt).map((a) => a.code),
+      achievements: (await core.achievementList(u.id)).map((a) => a.code),
       week: await core.weekDays(u),
       level: { cefr: u.cefr_level, source: u.level_source },
       exams: (await db.all(`SELECT x.kind, x.score_pct, x.pass_pct, x.passed, x.band, x.created_at, l.title FROM exam_results x JOIN lessons l ON l.id = x.lesson_id WHERE x.user_id = ? ORDER BY x.id DESC LIMIT 20`, u.id)).map((x) => ({ kind: x.kind, title: x.title, score: x.score_pct, passPct: x.pass_pct, passed: !!x.passed, band: x.band, at: x.created_at })),

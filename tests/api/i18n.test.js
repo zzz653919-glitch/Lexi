@@ -86,11 +86,13 @@ test('switching the interface language does not change course, progress, XP or v
     for (const l of ['uz', 'ru', 'en']) { await c.patch('/api/me', { uiLanguage: l }); titles[l] = (await c.req('GET', '/api/path', undefined, { headers: { 'X-Lang': l } })).json.course.title; }
     assert.strictEqual(titles.en, 'English Foundations'); assert.strictEqual(titles.uz, 'Ingliz tili asoslari'); assert.strictEqual(titles.ru, 'Основы английского');
     const after = await snap();
-    assert.strictEqual(after.me.courseId, before.me.courseId); assert.strictEqual(after.me.xpTotal, before.me.xpTotal);
+    assert.strictEqual(after.me.courseId, before.me.courseId);
+    // trying all three interface languages is itself an achievement (Polyglot Journey, 120 XP once): that is the only XP a language switch may add
+    assert.strictEqual(after.stats.xpTotal - before.stats.xpTotal, 120, 'only the Polyglot Journey reward');
     assert.deepStrictEqual(after.words.items.map((w) => [w.id, w.en]), before.words.items.map((w) => [w.id, w.en]), 'the English words themselves never change');
     assert.ok(before.words.items.every((w) => !/[а-я]/i.test(w.translation)) && after.words.items.every((w) => /[а-я]/i.test(w.translation)), 'the explanations follow the interface language: Uzbek, then Russian (English keeps the last one)');
     assert.strictEqual(after.me.translationLanguage, 'ru');
-    assert.deepStrictEqual(after.stats.streak, before.stats.streak); assert.strictEqual(after.stats.xp, before.stats.xp);
+    assert.deepStrictEqual(after.stats.streak, before.stats.streak); assert.strictEqual(after.stats.xpTotal - before.stats.xpTotal, 120);
     // the translation language can still be chosen separately (the next switch to Uzbek or Russian sets it again)
     await c.patch('/api/me', { translationLanguage: 'uz' });
     assert.ok(!/[а-я]/i.test((await c.get('/api/vocabulary?pageSize=2')).json.items[0].translation));

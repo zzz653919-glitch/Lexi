@@ -68,7 +68,7 @@ test('daily goal and achievements are calculated from real records', async () =>
     await c.patch('/api/me', { dailyGoalXp: 40 });
     const d0 = (await c.get('/api/dashboard')).json; assert.strictEqual(d0.today.goalMet, false); assert.strictEqual(d0.achievements.length, 0);
     await finishNext(s, c);
-    const d1 = (await c.get('/api/dashboard')).json; assert.strictEqual(d1.today.goalMet, true); assert.strictEqual(d1.today.xp, 150);
+    const d1 = (await c.get('/api/dashboard')).json; assert.strictEqual(d1.today.goalMet, true); assert.strictEqual(d1.today.xp, 150 + s.db.get("SELECT COALESCE(SUM(xp_awarded), 0) n FROM user_achievements WHERE user_id = (SELECT id FROM users WHERE email = 'goal@example.com')").n, 'the lesson (150) plus the XP of the achievements it unlocked');
     const a = (await c.get('/api/achievements')).json.items; const got = a.filter((x) => x.earnedAt).map((x) => x.code);
     for (const code of ['first_lesson', 'perfect_lesson', 'xp_100', 'daily_goal']) assert.ok(got.includes(code), code);
     assert.ok(!got.includes('xp_500') && !got.includes('streak_7'));

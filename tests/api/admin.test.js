@@ -245,7 +245,7 @@ test('user management: suspend, reactivate, list, detail, reset progress with co
     const path = (await l.get('/api/path')).json; const st = (await l.post(`/api/lessons/${path.levels[0].units[0].lessons[0].id}/start`)).json;
     const { playAttempt } = require('./helpers'); await playAttempt(l, st, s.db);
     const detail = (await a.get(`/api/admin/users/${lid}`)).json;
-    assert.strictEqual(detail.lessonsCompleted, 1); assert.strictEqual(detail.user.xpTotal, 150); assert.ok(!JSON.stringify(detail).includes('password'), 'never any password data');
+    assert.strictEqual(detail.lessonsCompleted, 1); assert.strictEqual(detail.user.xpTotal, 150 + s.db.get('SELECT COALESCE(SUM(xp_awarded), 0) n FROM user_achievements WHERE user_id = ?', lid).n, 'the lesson (150) plus the XP of the achievements it unlocked'); assert.ok(!JSON.stringify(detail).includes('password'), 'never any password data');
     assert.strictEqual(detail.week.length, 7); assert.ok(detail.recent.length >= 1);
     const list = (await a.get('/api/admin/users?q=lea&role=learner&status=active&pageSize=5')).json; assert.strictEqual(list.total, 1); assert.ok(!JSON.stringify(list).includes('password'));
     const blk = (await a.post(`/api/admin/users/${lid}/suspend`, { reason: 'Shared an answer key' })).json; assert.strictEqual(blk.status, 'suspended'); assert.strictEqual(blk.blockedReason, 'Shared an answer key');

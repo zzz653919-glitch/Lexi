@@ -5,7 +5,7 @@ const L10N = require('../lib/localize');
 const IELTS = require('../lib/ielts');
 const { now, clean, int, clamp, HttpError, bad, escapeLike, weekStart, addDays } = require('../lib/util');
 
-module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n, learning, daily: dailySummary, roadmap, tokens, avatar }) {
+module.exports = function learnerRoutes({ db, settings, auth, core, attempts, review, i18n, learning, daily: dailySummary, roadmap, tokens, avatar, ach }) {
   const r = express.Router();
   r.use(auth.requireUser);
 
@@ -13,10 +13,11 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
   r.get('/me/profile', async (req, res) => res.json(await profile(req.user, req.lang)));
   async function profile(u, lang) {
     // the reads run together: one network trip each on a hosted database
-    const [user, done, ach, courses] = await Promise.all([core.userById(u.id), db.get('SELECT COUNT(*) n FROM user_progress WHERE user_id = ?', u.id), db.get('SELECT COUNT(*) n FROM user_achievements WHERE user_id = ?', u.id),
+    const [user, done, courses] = await Promise.all([core.userById(u.id), db.get('SELECT COUNT(*) n FROM user_progress WHERE user_id = ?', u.id),
       db.all("SELECT id, title, track, translations FROM courses WHERE status = 'published' ORDER BY position, id")]);
     const [course, streak] = await Promise.all([core.courseFor(user), core.streakInfo(user)]);
-    return { user: publicUser(user), stats: { lessonsCompleted: done.n, streak, hearts: core.heartState(user), achievements: ach.n }, avatars: AVATARS,
+    const badges = await ach.featured(u.id, lang);
+    return { user: publicUser(user), stats: { lessonsCompleted: done.n, streak, hearts: core.heartState(user), achievements: badges.unlocked }, achievements: badges, avatars: AVATARS,
       course: course ? { id: course.id, title: L10N.text(course, 'title', lang) } : null, courses: courses.map((c) => ({ id: c.id, title: L10N.text(c, 'title', lang), track: c.track })) };
   }
   r.patch('/me', async (req, res) => {
@@ -30,6 +31,7 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     if (values.start_level !== undefined) { await learning.setLevel(req.user.id, b.startLevel, 'manual', { note: 'chosen in the profile' }); delete values.start_level; }
     const keys = Object.keys(values);
     if (keys.length) await db.run(`UPDATE users SET ${keys.map((k) => k + ' = ?').join(', ')} WHERE id = ?`, ...keys.map((k) => values[k]), req.user.id);
+    if (values.ui_language) await ach.recordLanguage(req.user.id, values.ui_language);   // Polyglot Journey counts the interface languages really used
     res.json(await profile(req.user, req.lang));
   });
   r.post('/me/password', async (req, res) => {
@@ -90,7 +92,7 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     const rec = path && path.recommended;
     let unit = null;
     if (path && rec) { for (const lv of path.levels) for (const u of lv.units) if (u.id === rec.unitId) unit = { id: u.id, title: u.title, total: u.total, done: u.done, level: lv.code }; }
-    const [today, streak, week, achievements, reviewCounts, mistakes, daily, learningInfo, rm] = await Promise.all([core.dayInfo(user), core.streakInfo(user), core.weekDays(user), core.achievementList(user.id), review.counts(user), mistakesAvailable(user.id), dailySummary.summary(user), learning.brief(user, true), roadmap.summary(user, path)]);
+    const [today, streak, week, achievements, reviewCounts, mistakes, daily, learningInfo, rm] = await Promise.all([core.dayInfo(user), core.streakInfo(user), core.weekDays(user), core.achievementList(user.id, req.lang), review.counts(user), mistakesAvailable(user.id), dailySummary.summary(user), learning.brief(user, true), roadmap.summary(user, path)]);
     res.json({
       user: publicUser(user), course: course ? { id: course.id, title: L10N.text(course, 'title', req.lang) } : null, recommended: rec || null, unit,
       lessons: path ? path.totals : { lessons: 0, done: 0 },
@@ -175,7 +177,14 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
   r.post('/review/answer', async (req, res) => res.json(await review.answer(req.user, req.body || {})));
 
   /* ---------- achievements, leaderboard ---------- */
-  r.get('/achievements', async (req, res) => res.json({ items: await core.achievementList(req.user.id) }));
+  /* ---------- achievements and rewards ---------- */
+  r.get('/achievements', async (req, res) => res.json({ ...(await ach.list(req.user.id, req.lang)), categories: ach.CATEGORIES, rarities: ach.RARITIES }));
+  r.get('/achievements/unseen', async (req, res) => res.json({ items: await ach.unseen(req.user.id, req.lang, { catchUp: true }) }));
+  r.post('/achievements/seen', async (req, res) => {
+    const codes = Array.isArray((req.body || {}).codes) ? req.body.codes.filter((c) => typeof c === 'string' && /^[a-z0-9_]{2,40}$/.test(c)).slice(0, 60) : null;
+    await ach.markSeen(req.user.id, codes);
+    res.json({ ok: true });
+  });
   r.get('/leaderboard', async (req, res) => {
     const s = settings.all();
     if (!s.leaderboard_enabled) return res.json({ enabled: false, items: [] });
