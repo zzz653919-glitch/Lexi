@@ -53,7 +53,8 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     const user = await core.userById(req.user.id);
     const course = await core.courseFor(user, Number(req.query.courseId) || null);
     if (!course) return res.json({ course: null, levels: [], recommended: null, totals: { lessons: 0, done: 0 } });
-    res.json(await core.buildPath(user, course, req.lang));
+    const want = String(req.query.level || '');
+    res.json(await core.buildPath(user, course, req.lang, { detail: want === 'all' ? null : /^[A-Z0-9]{2,8}$/.test(want) ? want : 'selected' }));
   });
   /* ---------- the selected level: list, switch (progress is kept), lessons of one level only ---------- */
   const levelRow = (lv) => ({ code: lv.code, title: lv.title, selected: !!lv.selected, unlocked: lv.unlocked, comingSoon: !!lv.comingSoon, hasLessons: lv.total > 0, total: lv.total, done: lv.done, pct: lv.pct });
@@ -85,7 +86,7 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     const user = req.user;   // loaded for this request already
     const s = settings.all();
     const course = await core.courseFor(user);
-    const path = course ? await core.buildPath(user, course, req.lang) : null;
+    const path = course ? await core.buildPath(user, course, req.lang, { detail: 'selected' }) : null;
     const rec = path && path.recommended;
     let unit = null;
     if (path && rec) { for (const lv of path.levels) for (const u of lv.units) if (u.id === rec.unitId) unit = { id: u.id, title: u.title, total: u.total, done: u.done, level: lv.code }; }

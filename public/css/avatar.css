@@ -138,14 +138,14 @@
 .av-fit .av-chip { background: #fff; color: #3a2a7a; border: 2px solid #d8cdf8; } .av-fit .av-chip.on { background: #3a2a7a; color: #fff; border-color: #3a2a7a; }
 
 /* ---------- the shop and the fitting room in the site's own space design (dark glass instead of white) ---------- */
-.av-shop .av-item { background: linear-gradient(160deg, rgba(86, 60, 170, .55), rgba(26, 18, 70, .82)); color: #f4f0ff; border: 2px solid rgba(255, 255, 255, .2); box-shadow: 0 8px 22px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .14); backdrop-filter: blur(6px); }
+.av-shop .av-item { background: linear-gradient(160deg, rgba(86, 60, 170, .55), rgba(26, 18, 70, .82)); color: #f4f0ff; border: 2px solid rgba(255, 255, 255, .2); box-shadow: 0 8px 22px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .14); }
 .av-shop .av-item:hover { border-color: rgba(255, 255, 255, .45); box-shadow: 0 14px 30px rgba(0, 0, 0, .5), 0 0 26px rgba(155, 93, 229, .4); }
 .av-shop .av-item.r-uncommon { border-color: #2fb36d; box-shadow: 0 8px 22px rgba(0, 0, 0, .4), 0 0 16px rgba(47, 179, 109, .28); } .av-shop .av-item.r-rare { border-color: #4a90ff; box-shadow: 0 8px 22px rgba(0, 0, 0, .4), 0 0 18px rgba(47, 123, 255, .35); } .av-shop .av-item.r-epic { border-color: #b36bff; box-shadow: 0 8px 22px rgba(0, 0, 0, .4), 0 0 20px rgba(168, 85, 247, .42); } .av-shop .av-item.r-legendary { border-color: #ffc83d; box-shadow: 0 8px 22px rgba(0, 0, 0, .4), 0 0 24px rgba(242, 183, 5, .5); }
 .av-shop .av-item.owned { background: linear-gradient(160deg, rgba(36, 130, 100, .5), rgba(18, 48, 64, .82)); }
 .av-shop .av-item h3 { color: #fff; } .av-shop .av-thumb { background: linear-gradient(160deg, rgba(255, 255, 255, .94), rgba(232, 224, 255, .9)); box-shadow: inset 0 -10px 18px rgba(120, 90, 200, .15); }
 .av-shop .av-item-meta small, .av-shop .av-earn { color: #d2c8f7; } .av-shop .av-price .av-tokens { color: #ffd23f; } .av-shop .av-owned { color: #6af0b0; } .av-shop .av-bar { background: rgba(255, 255, 255, .16); }
 .av-shop .av-select { background: rgba(255, 255, 255, .1); color: #fff; border: 2px solid rgba(255, 255, 255, .32); } .av-shop .av-select option { color: #2b2147; background: #fff; }
-.av-shop .av-tab:not(.on) { background: rgba(255, 255, 255, .1); color: #fff; border: 2px solid rgba(255, 255, 255, .28); backdrop-filter: blur(4px); }
+.av-shop .av-tab:not(.on) { background: rgba(255, 255, 255, .1); color: #fff; border: 2px solid rgba(255, 255, 255, .28); }
 .av-shop .av-chip.on, .av-fit .av-chip.on { background: #ffd23f; color: #3a2a00; border-color: #ffd23f; }
 .av-fit { background: radial-gradient(circle at 14% 8%, rgba(255, 95, 162, .38), transparent 42%), radial-gradient(circle at 92% 14%, rgba(53, 167, 255, .34), transparent 45%), radial-gradient(circle at 60% 104%, rgba(155, 93, 229, .45), transparent 52%), linear-gradient(160deg, #140e33, #251a5e); color: #fff; }
 .av-fit-head h2 { background: linear-gradient(90deg, #ffd23f, #ff7ab8, #8fd8ff); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -153,7 +153,7 @@
 .av-fit .av-select { background: rgba(255, 255, 255, .1); color: #fff; border: 2px solid rgba(255, 255, 255, .32); } .av-fit .av-select option { color: #2b2147; background: #fff; }
 .av-fit-stage { background: linear-gradient(180deg, rgba(255, 255, 255, .2), rgba(255, 255, 255, .06)); border: 2px solid rgba(255, 255, 255, .3); box-shadow: 0 10px 34px rgba(0, 0, 0, .45), inset 0 -30px 50px rgba(155, 93, 229, .28); }
 .av-fit-floor { background: radial-gradient(ellipse at center, rgba(255, 210, 63, .35), transparent 70%); }
-.av-fit-right { background: rgba(255, 255, 255, .07); border: 2px solid rgba(255, 255, 255, .2); box-shadow: 0 10px 34px rgba(0, 0, 0, .4); backdrop-filter: blur(8px); }
+.av-fit-right { background: rgba(255, 255, 255, .07); border: 2px solid rgba(255, 255, 255, .2); box-shadow: 0 10px 34px rgba(0, 0, 0, .4); }
 .av-fit-tile { background: rgba(255, 255, 255, .08); color: #fff; border: 2px solid rgba(255, 255, 255, .2); } .av-fit-tile small { color: #d2c8f7; } .av-fit-tile.owned small { color: #6af0b0; }
 .av-fit-tile.on { background: rgba(255, 79, 154, .22); border-color: #ff7ab8; } .av-fit-tile.sel { box-shadow: 0 0 0 3px #ffd23f, 0 0 18px rgba(255, 210, 63, .4); }
 .av-fit-tile.r-rare { border-color: #4a90ff; } .av-fit-tile.r-epic { border-color: #b36bff; } .av-fit-tile.r-legendary { border-color: #ffc83d; } .av-fit-tile.r-uncommon { border-color: #2fb36d; } .av-fit-tile.on.r-rare, .av-fit-tile.on.r-epic, .av-fit-tile.on.r-legendary, .av-fit-tile.on.r-uncommon { border-color: #ff7ab8; }
