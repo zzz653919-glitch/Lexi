@@ -8,7 +8,7 @@ async function learner(s, email) {
   const c = new Client(s.base); await c.login(email);
   return c;
 }
-const levels = async (c) => (await c.get('/api/path')).json;
+const levels = async (c) => (await c.get('/api/path?level=all')).json;
 const lessonsOf = (p, code, kinds) => p.levels.find((l) => l.code === code).units.flatMap((u) => u.lessons).filter((l) => !kinds || kinds.includes(l.kind));
 
 test('roadmap content: six levels, 240 lessons in 60 topics, A1 complete with tests and an examination; no duplicate or empty published exercises', async () => {

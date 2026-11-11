@@ -67,6 +67,7 @@ function createApp(options = {}) {
   app.disable('x-powered-by');
   if (opts.trustProxy) app.set('trust proxy', 1);
 
+  app.use(require('./lib/compress').compress());
   app.use((req, res, next) => {
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
@@ -174,7 +175,10 @@ function createApp(options = {}) {
     (req, res) => sendAdmin(res, 'admin/index.html'));
 
   /* ---------- learner app ---------- */
-  app.use(express.static(PUBLIC, { index: false, redirect: false, setHeaders: (res) => res.setHeader('Cache-Control', 'no-cache') }));
+  app.use(express.static(PUBLIC, { index: false, redirect: false, setHeaders: (res, file) => {
+    // fonts, images and the vendored libraries never change under the same name: the browser keeps them for a week (code and styles are revalidated: a cheap 304)
+    res.setHeader('Cache-Control', /[\\/](fonts|img|vendor)[\\/]/.test(file) ? 'public, max-age=604800' : 'no-cache');
+  } }));
   /* client-side routes of the single-page app: opening one directly (or reloading it) serves the app shell;
      any other path still gets the shell (so the app can show its own "page not found" screen) but with a real 404 status */
   const CLIENT_ROUTES = /^\/(?:login|register|forgot|reset|confirm|avatar(?:\/(?:shop|inventory|missions))?|kids(?:\/(?:learn|games|stories)\/[^/]+|\/(?:lessons|games|stories|world|stickers|progress|speak|coloring|coloring\/[^/]+|parents))?|learn|ielts|welcome|placement|results|daily\/[^/]+|attempt\/[^/]+|practice|vocabulary|review|leaderboard|achievements|profile)?\/?$/;

@@ -70,11 +70,16 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
   });
   r.get('/courses/:id', async (req, res) => {
     const c = need(await db.get('SELECT * FROM courses WHERE id = ?', int(req.params.id)), 'Course');
-    const levels = await db.all('SELECT * FROM levels WHERE course_id = ? ORDER BY position, id', c.id);
-    for (const lv of levels) {
-      lv.units = await db.all('SELECT * FROM units WHERE level_id = ? ORDER BY position, id', lv.id);
-      for (const u of lv.units) u.lessons = await db.all(`SELECT l.*, (SELECT COUNT(*) FROM exercises e WHERE e.lesson_id = l.id) exercises, (SELECT COUNT(*) FROM exercises e WHERE e.lesson_id = l.id AND e.status = 'published') published_exercises FROM lessons l WHERE l.unit_id = ? ORDER BY l.position, l.id`, u.id);
-    }
+    // three queries for the whole tree (not one per level and per unit), and without the lesson bodies: the editor loads a lesson when it is opened
+    const [levels, units, lessons] = await Promise.all([
+      db.all('SELECT * FROM levels WHERE course_id = ? ORDER BY position, id', c.id),
+      db.all('SELECT u.* FROM units u JOIN levels lv ON lv.id = u.level_id WHERE lv.course_id = ? ORDER BY u.position, u.id', c.id),
+      db.all(`SELECT l.id, l.unit_id, l.level_id, l.title, l.description, l.position, l.status, l.unlock_rule, l.prerequisite_lesson_id, l.xp_reward, l.translations, l.kind, l.skill, l.created_at, l.updated_at,
+        (SELECT COUNT(*) FROM exercises e WHERE e.lesson_id = l.id) exercises, (SELECT COUNT(*) FROM exercises e WHERE e.lesson_id = l.id AND e.status = 'published') published_exercises
+        FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id WHERE lv.course_id = ? ORDER BY l.position, l.id`, c.id)]);
+    const byUnit = new Map(); for (const l of lessons) { if (!byUnit.has(l.unit_id)) byUnit.set(l.unit_id, []); byUnit.get(l.unit_id).push(l); }
+    for (const u of units) u.lessons = byUnit.get(u.id) || [];
+    for (const lv of levels) lv.units = units.filter((u) => u.level_id === lv.id);
     res.json({ course: c, levels });
   });
   r.patch('/courses/:id', async (req, res) => {

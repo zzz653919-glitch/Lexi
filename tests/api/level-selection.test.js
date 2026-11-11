@@ -23,7 +23,7 @@ test('selecting each level A1..C1 and IELTS shows only that level\'s lessons and
       assert.strictEqual(put.status, 200, code);
       assert.strictEqual(put.json.selectedLevel, code);
       assert.strictEqual(put.json.recommended.level, code, code + ' recommendation stays inside the level');
-      const p = (await c.get('/api/path')).json;
+      const p = (await c.get('/api/path?level=all')).json;
       assert.strictEqual(p.selectedLevel, code);
       assert.strictEqual(p.recommended.level, code);
       assert.ok(p.levels.every((l) => l.unlocked), 'every level can be entered once the learner chose a level');
@@ -96,5 +96,24 @@ test('a profile level choice and a registration choice both become the selected 
     const reg = await r.post('/api/auth/register', { email: 'reg@example.com', password: 'Password123!', displayName: 'Reg', startLevel: 'B1' });
     assert.ok(reg.status < 300, JSON.stringify(reg.json));
     assert.strictEqual((await r.get('/api/path')).json.recommended.level, 'B1');
+  } finally { await s.stop(); }
+});
+
+test('/api/path sends the lessons of the selected level only (the other levels are summaries); ?level= asks for another one', async () => {
+  const s = await startServer({ seedRoadmap: true });
+  try {
+    const c = await learner(s, 'slim@example.com');
+    await c.put('/api/me/selected-level', { level: 'B1' });
+    const p = (await c.get('/api/path')).json;
+    assert.ok(p.levels.find((l) => l.code === 'B1').units.length > 0);
+    for (const l of p.levels.filter((x) => x.code !== 'B1')) { assert.strictEqual(l.units.length, 0, l.code + ' is a summary'); assert.ok(l.total > 0, l.code + ' keeps its counts'); }
+    const full = (await c.get('/api/path?level=all')).json;
+    assert.ok(full.levels.every((l) => l.units.length > 0));
+    assert.ok(JSON.stringify(p).length < JSON.stringify(full).length / 3, 'the slim answer is a fraction of the full one');
+    assert.ok((await c.get('/api/path?level=C1')).json.levels.find((l) => l.code === 'C1').units.length > 0);
+    // gzip is offered for JSON
+    const r = await fetch(c.base + '/api/path?level=all', { headers: { Cookie: c.cookie, 'Accept-Encoding': 'gzip' } });
+    assert.strictEqual(r.headers.get('content-encoding'), 'gzip');
+    assert.deepStrictEqual((await r.json()).levels.length, full.levels.length);
   } finally { await s.stop(); }
 });

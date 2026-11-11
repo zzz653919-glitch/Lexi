@@ -123,10 +123,13 @@ export async function openSkinViewer({ item, list = [], buy, wear, tryOn, refres
       fitCamera(); place(0, Math.PI / 2 - .04, fitDist); state();
       canvas.dataset.mode = 'webgl';
       await loadModel();
+      let dirty = true, lastDraw = 0; controls.addEventListener('change', () => { dirty = true; }); canvasHost.addEventListener('pointerdown', () => { dirty = true; });
       const loop = () => {
         if (disposed) return; raf = requestAnimationFrame(loop);
         if (tween) { const k = Math.min(1, (performance.now() - tween.t0) / tween.ms), e = k < .5 ? 2 * k * k : 1 - Math.pow(-2 * k + 2, 2) / 2, az = tween.from + tween.d * e, off = camera.position.clone(), sph = new T.Spherical().setFromVector3(off); sph.theta = az; camera.position.setFromSpherical(sph); camera.lookAt(0, 0, 0); if (k >= 1) tween = null; }
-        controls.autoRotate = auto; controls.update(); renderer.render(scene, camera);
+        // draw only when something moved (drag, zoom, spin, fly-to, resize); an idle viewer redraws a few times a second instead of 60
+        const was = !!tween; controls.autoRotate = auto; const moved = controls.update(), now = performance.now();
+        if (moved || dirty || was || auto || now - lastDraw > 400) { renderer.render(scene, camera); lastDraw = now; dirty = false; }
       };
       loop();
     } catch (e) { console.warn('3D viewer fell back:', e); fallback(); }

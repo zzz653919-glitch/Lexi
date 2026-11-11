@@ -145,13 +145,13 @@ function make(db, settings) {
   /* the roadmap level a placement test opens: up to B2 at most, never the advanced levels (B2+, C1, IELTS) */
   const PLACEMENT_TO_ROADMAP = ['A1', 'A1', 'A2', 'B1', 'B2', 'B2', 'B2'];
   const roadmapStart = (levels, cefr) => { const i = ['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2'].indexOf(cefr); const code = PLACEMENT_TO_ROADMAP[i < 0 ? 1 : i]; const idx = levels.findIndex((l) => l.code === code); return idx < 0 ? 0 : idx; };
-  async function buildPath(user, course, lang) {
+  async function buildPath(user, course, lang, opts = {}) {
     const T = (row, f) => L10N.text(row, f, lang);
     await healLessonLevels();
     const [levels, units, lessons, progRows, countRows, openRows, examRows] = await Promise.all([
       db.all('SELECT * FROM levels WHERE course_id = ? ORDER BY position, id', course.id),
       db.all('SELECT u.* FROM units u JOIN levels l ON l.id = u.level_id WHERE l.course_id = ? ORDER BY u.position, u.id', course.id),
-      db.all("SELECT l.* FROM lessons l JOIN levels lv ON lv.id = l.level_id WHERE lv.course_id = ? AND l.status = 'published' ORDER BY l.position, l.id", course.id),
+      db.all("SELECT l.id, l.unit_id, l.level_id, l.title, l.description, l.position, l.status, l.unlock_rule, l.prerequisite_lesson_id, l.xp_reward, l.translations, l.kind, l.skill FROM lessons l JOIN levels lv ON lv.id = l.level_id WHERE lv.course_id = ? AND l.status = 'published' ORDER BY l.position, l.id", course.id),
       db.all('SELECT * FROM user_progress WHERE user_id = ?', user.id),
       db.all("SELECT lesson_id, COUNT(*) n FROM exercises WHERE status = 'published' GROUP BY lesson_id"),
       db.all("SELECT lesson_id FROM lesson_attempts WHERE user_id = ? AND status = 'in_progress' AND lesson_id IS NOT NULL", user.id),
@@ -232,13 +232,18 @@ function make(db, settings) {
     out.selectedEmpty = !inSel.length;
     out.selectedTotals = { lessons: inSel.length, done: inSel.filter((x) => x.l.state === 'completed').length };
     out.recommended = rec ? { lessonId: rec.l.id, title: rec.l.title, unit: rec.u.title, unitId: rec.u.id, level: rec.lv.code, resume: rec.l.inProgress } : null;
+    // only the level on screen carries its units and lessons (the other five are ~85% of the answer); their counts and states stay
+    const only = opts.detail === 'selected' ? selLevel.code : opts.detail;
+    if (only) for (const lv of out.levels) if (lv.code !== only) { lv.detail = false; lv.units = []; } else lv.detail = true;
     out.totals = { lessons: states.length, done: states.filter((x) => x.l.state === 'completed').length };
     return out;
   }
   /* every lesson carries the id of its level (lessons.level_id); this keeps it equal to the level of its unit, whatever wrote the lesson */
+  let healed = false;   // checked once per process (a database round trip is expensive on a hosted database); content writes reset it
   async function healLessonLevels() {
-    const bad = await db.get('SELECT COUNT(*) n FROM lessons l JOIN units u ON u.id = l.unit_id WHERE l.level_id IS NOT u.level_id');
-    if (bad.n) await db.run('UPDATE lessons SET level_id = (SELECT u.level_id FROM units u WHERE u.id = lessons.unit_id) WHERE level_id IS NOT (SELECT u.level_id FROM units u WHERE u.id = lessons.unit_id)');
+    if (healed) return;
+    healed = true;
+    await db.run('UPDATE lessons SET level_id = (SELECT u.level_id FROM units u WHERE u.id = lessons.unit_id) WHERE level_id IS NOT (SELECT u.level_id FROM units u WHERE u.id = lessons.unit_id)');
   }
   async function lessonAccess(user, lessonId, lang) {
     const row = await db.get("SELECT l.*, c.id course_id, c.status course_status FROM lessons l JOIN units u ON u.id = l.unit_id JOIN levels lv ON lv.id = u.level_id JOIN courses c ON c.id = lv.course_id WHERE l.id = ?", lessonId);
