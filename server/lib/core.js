@@ -185,7 +185,8 @@ function make(db, settings) {
       let unlocked;
       let levelReason = null;
       if (lv.strict) {
-        unlocked = !prevLevel || li <= startPos;
+        // a learner who picked a level by hand may enter every level; the others open levels through examinations
+        unlocked = !prevLevel || li <= startPos || (!!user.level_chosen && !lv.comingSoon);
         if (!unlocked) {
           if (prevLevel.empty) levelReason = { key: 'path.lock_coming', params: { level: lv.code } };
           else if (!prevLevel.examPassed) levelReason = { key: 'path.lock_level_exam', params: { level: prevLevel.code, pct: prevLevel.examPassPct } };
