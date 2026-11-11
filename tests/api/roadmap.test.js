@@ -57,7 +57,7 @@ test('roadmap content: six levels, 240 lessons in 60 topics, A1 complete with te
   } finally { await s.stop(); }
 });
 
-test('strict unlocking: a new learner has only A1; a chosen level opens nothing; A2 needs the A1 examination', async () => {
+test('strict unlocking: a new learner has only A1; a chosen level opens that level and the ones below, never the ones above; A2 needs the A1 examination', async () => {
   const s = await startServer({ roadmap: true });
   try {
     const c = await learner(s, 'new@example.com');
@@ -66,9 +66,12 @@ test('strict unlocking: a new learner has only A1; a chosen level opens nothing;
     assert.deepStrictEqual(p.levels.map((l) => l.code), ['A1', 'A2', 'B1', 'B2', 'C1', 'IELTS']);
     assert.strictEqual(p.levels[0].unlocked, true);
     assert.ok(p.levels.slice(1).every((l) => !l.unlocked), 'later levels are locked');
-    // choosing a level by hand, even C2, unlocks nothing
-    await c.post('/api/me/level', { level: 'C2' });
-    p = await levels(c); assert.ok(p.levels.slice(1).every((l) => !l.unlocked));
+    // choosing a level by hand opens exactly that level (and the ones below it); the ones above stay behind their examinations
+    await c.post('/api/me/level', { level: 'A2' });
+    p = await levels(c); assert.deepStrictEqual(p.levels.map((l) => l.unlocked), [true, true, false, false, false, false]);
+    assert.strictEqual(p.selectedLevel, 'A2'); assert.strictEqual(p.recommended.level, 'A2');
+    await c.post('/api/me/level', { level: 'A1' });
+    p = await levels(c); assert.deepStrictEqual(p.levels.map((l) => l.unlocked), [true, false, false, false, false, false]);
     // the lessons of A1 are sequential and the exam is locked
     const a1 = lessonsOf(p, 'A1');
     assert.strictEqual(a1.filter((l) => l.state === 'available').length, 1, 'only the first lesson is open');

@@ -1,5 +1,5 @@
-import { h, icon, modal, spinner } from '../ui.js';
-import { get, patch } from '../api.js';
+import { h, icon, modal, spinner, toast } from '../ui.js';
+import { get, patch, put, session } from '../api.js';
 import { navigate } from '../app.js';
 import { t, n } from '../i18n.js';
 import { startAttempt } from './start.js';
@@ -11,7 +11,13 @@ export default async function pathView({ query }) {
   if (!data.course) return { el: h('div', { class: 'card empty' }, h('img', { src: '/img/mascot.svg', alt: '' }), h('h2', {}, t('path.no_course')), h('p', {}, t('path.no_course_text'))), title: t('nav.learn'), nav: 'learn' };
   const profile = await get('/me/profile');
   const rec = data.recommended;
-  let selected = (rec && data.levels.find((l) => l.code === rec.level)) || data.levels.find((l) => l.unlocked) || data.levels[0];
+  // the level saved on the account: only its lessons are shown (progress in the other levels is kept)
+  let selected = data.levels.find((l) => l.code === data.selectedLevel) || data.levels.find((l) => l.unlocked) || data.levels[0];
+  const switchTo = async (lv) => {
+    if (lv.code === data.selectedLevel) return;
+    try { await put('/me/selected-level', { level: lv.code }); if (session.user) session.user.selectedLevel = lv.code; toast(t('path.level_switched', { level: lv.code }), 'success'); navigate('/learn?lv=' + encodeURIComponent(lv.code)); }
+    catch (e) { toast(e.message || t('app.error_text'), 'error', 5000); }
+  };
   const holder = h('div', {});
   const tabs = h('div', { class: 'level-tabs', role: 'tablist', 'aria-label': t('path.levels') });
 
@@ -28,12 +34,13 @@ export default async function pathView({ query }) {
   }
 
   function draw() {
-    tabs.replaceChildren(...data.levels.map((lv) => h('button', { type: 'button', role: 'tab', class: 'level-tab', 'aria-selected': String(lv === selected), 'aria-disabled': String(!lv.unlocked), onclick: () => { selected = lv; draw(); } },
+    tabs.replaceChildren(...data.levels.map((lv) => h('button', { type: 'button', role: 'tab', class: 'level-tab', 'aria-selected': String(lv === selected), 'data-level': lv.code, 'data-locked': String(!lv.unlocked), onclick: () => switchTo(lv) },
       lv.completed ? icon('check') : lv.unlocked ? null : icon('lock'), lv.code, h('span', { class: 'muted small' }, lv.comingSoon ? t('path.soon') : `${lv.done}/${lv.total}`))));
     const lv = selected;
     const parts = [];
     parts.push(h('div', { class: 'level-head card' + (lv.completed ? ' completed' : '') }, h('div', { class: 'row between' }, h('h2', {}, `${lv.code} — ${lv.title}`), h('span', { class: 'chip ' + (lv.completed ? 'ok' : lv.unlocked ? 'info' : 'bad') }, lv.completed ? icon('check') : lv.unlocked ? null : icon('lock'), t(lv.completed ? 'path.level_completed' : lv.unlocked ? 'path.level_current' : 'path.level_locked'))), lv.description ? h('p', { class: 'muted' }, lv.description) : null,
       lv.strict && !lv.comingSoon ? h('p', { class: 'small' }, t('path.level_rules', { done: lv.requiredDone, total: lv.requiredTotal, pct: lv.examPassPct })) : null));
+    if (!lv.units.length && !lv.comingSoon) parts.push(h('div', { class: 'notice empty-level', role: 'status' }, t('path.level_empty', { level: lv.code })));
     if (lv.comingSoon) parts.push(h('div', { class: 'notice' }, t('path.level_coming_soon', { level: lv.code })));
     else if (!lv.unlocked) parts.push(h('div', { class: 'notice' }, lv.lockReason ? t(lv.lockReason.key, lv.lockReason.params) : t('path.level_locked_note', { level: lv.code, pct: lv.threshold })));
     let idx = 0;
@@ -59,8 +66,8 @@ export default async function pathView({ query }) {
   const el = h('div', { class: 'learn-layout' },
     h('div', {}, h('div', { class: 'page-head' }, h('div', {}, h('h1', {}, data.course.title), h('p', { class: 'muted', style: { margin: 0 } }, data.course.description)), switcher),
       data.course.track === 'ielts' ? h('div', { class: 'notice' }, t('path.ielts_notice')) : null,
-      tabs, holder),
-    h('aside', { class: 'path-side' }, h('div', { class: 'card' }, h('h2', {}, t('path.course_progress')), h('div', { class: 'progress' }, h('i', { style: { width: (total.lessons ? Math.round(100 * total.done / total.lessons) : 0) + '%' } })), h('p', { class: 'muted small', style: { marginTop: '8px' } }, t('path.lessons_completed', { done: total.done, total: total.lessons }))),
+      h('p', { class: 'muted small level-hint' }, t('path.level_hint')), tabs, holder),
+    h('aside', { class: 'path-side' }, h('div', { class: 'card' }, h('h2', {}, t('path.course_progress') + ' · ' + (data.selectedLevel || '')), h('div', { class: 'progress' }, h('i', { style: { width: (((data.selectedTotals || total).lessons) ? Math.round(100 * (data.selectedTotals || total).done / (data.selectedTotals || total).lessons) : 0) + '%' } })), h('p', { class: 'muted small', style: { marginTop: '8px' } }, t('path.lessons_completed', { done: (data.selectedTotals || total).done, total: (data.selectedTotals || total).lessons }))),
       rec ? h('div', { class: 'card' }, h('h3', {}, t('path.up_next')), h('p', { style: { marginBottom: '8px' } }, rec.title), h('button', { class: 'btn small block', onclick: () => startAttempt(rec.lessonId) }, rec.resume ? t('common.continue') : t('common.start'))) : null,
       h('div', { class: 'card' }, h('h3', {}, t('path.levels')), h('p', { class: 'muted small' }, t('path.levels_note')))));
   return { el, title: t('nav.learn'), nav: 'learn' };

@@ -15,7 +15,7 @@ const LEARNING_LANGUAGES = ['en'];
 
 const publicUser = (u) => ({
   id: u.id, email: u.email, displayName: u.display_name, role: u.role, avatar: u.avatar, timezone: u.timezone, uiLanguage: u.ui_language, translationLanguage: u.translation_language, learningLanguage: u.learning_language,
-  courseId: u.course_id, startLevel: u.start_level, cefrLevel: u.cefr_level || null, levelSource: u.level_source, onboarded: !!u.onboarded, mode: u.mode || 'standard', lessonLength: u.lesson_length || 'normal', dailyGoalXp: u.daily_goal_xp, xpTotal: u.xp_total, leaderboardOptIn: !!u.leaderboard_opt_in, createdAt: u.created_at,
+  courseId: u.course_id, startLevel: u.start_level, selectedLevel: u.selected_level || null, cefrLevel: u.cefr_level || null, levelSource: u.level_source, onboarded: !!u.onboarded, mode: u.mode || 'standard', lessonLength: u.lesson_length || 'normal', dailyGoalXp: u.daily_goal_xp, xpTotal: u.xp_total, leaderboardOptIn: !!u.leaderboard_opt_in, createdAt: u.created_at,
 });
 
 function validateProfile(input, settings, { partial }) {
@@ -71,6 +71,7 @@ module.exports = function authRoutes({ db, settings, auth, core, opts }) {
       email, v.display_name, A.hashPassword(b.password), 'learner', v.avatar, v.timezone || 'UTC', v.ui_language, v.translation_language, course ? course.id : null, pathLevel(v.start_level), v.daily_goal_xp, s.max_hearts, t, t, t, chosenLevel ? v.start_level : null, chosenLevel ? 'manual' : 'default', chosenLevel ? t : null, chosenLevel ? 1 : 0)).id;
     const sess = await auth.createSession(id, req);
     auth.setCookie(res, sess.token);
+    if (chosenLevel) await db.run('UPDATE users SET selected_level = ?, selected_level_at = ? WHERE id = ?', pathLevel(v.start_level), t, id);
     req.user = await core.userById(id); req.session = { csrf_token: sess.csrf };
     res.status(201).json(meBody(req));
   });

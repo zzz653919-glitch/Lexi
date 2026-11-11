@@ -55,6 +55,32 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     if (!course) return res.json({ course: null, levels: [], recommended: null, totals: { lessons: 0, done: 0 } });
     res.json(await core.buildPath(user, course, req.lang));
   });
+  /* ---------- the selected level: list, switch (progress is kept), lessons of one level only ---------- */
+  const levelRow = (lv) => ({ code: lv.code, title: lv.title, selected: !!lv.selected, unlocked: lv.unlocked, comingSoon: !!lv.comingSoon, hasLessons: lv.total > 0, total: lv.total, done: lv.done, pct: lv.pct });
+  async function levelPath(req) {
+    const user = await core.userById(req.user.id);
+    const course = await core.courseFor(user);
+    return { user, course, path: course ? await core.buildPath(user, course, req.lang) : null };
+  }
+  const knownLevel = (path, code) => { const lv = path && path.levels.find((l) => l.code === String(code || '')); if (!lv) throw bad('err.fix_fields', { level: 'val.level_unknown' }); return lv; };
+  r.get('/levels', async (req, res) => {
+    const { path } = await levelPath(req);
+    res.json(path ? { selectedLevel: path.selectedLevel, levels: path.levels.map(levelRow) } : { selectedLevel: null, levels: [] });
+  });
+  r.put('/me/selected-level', async (req, res) => {
+    const { path } = await levelPath(req);
+    const lv = knownLevel(path, (req.body || {}).level);
+    await learning.selectLevel(req.user.id, lv.code);
+    const user = await core.userById(req.user.id);
+    const fresh = await core.buildPath(user, await core.courseFor(user), req.lang);
+    res.json({ selectedLevel: fresh.selectedLevel, level: levelRow(fresh.levels.find((l) => l.code === lv.code)), empty: fresh.selectedEmpty, recommended: fresh.recommended });
+  });
+  r.get('/levels/:code/lessons', async (req, res) => {
+    const { path } = await levelPath(req);
+    const lv = knownLevel(path, req.params.code);
+    const lessons = lv.units.flatMap((u) => u.lessons.map((l) => ({ ...l, unitId: u.id, unit: u.title, level: lv.code })));
+    res.json({ level: levelRow(lv), empty: !lessons.length, message: lessons.length ? null : { key: 'path.level_empty', params: { level: lv.code } }, items: lessons });
+  });
   r.get('/dashboard', async (req, res) => {
     const user = req.user;   // loaded for this request already
     const s = settings.all();
@@ -67,7 +93,9 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     res.json({
       user: publicUser(user), course: course ? { id: course.id, title: L10N.text(course, 'title', req.lang) } : null, recommended: rec || null, unit,
       lessons: path ? path.totals : { lessons: 0, done: 0 },
-      level: rec ? path.levels.find((l) => l.code === rec.level) && { code: rec.level, pct: path.levels.find((l) => l.code === rec.level).pct } : null,
+      selectedLevel: path ? path.selectedLevel : null, selectedEmpty: path ? path.selectedEmpty : false, levelLessons: path ? path.selectedTotals : { lessons: 0, done: 0 },
+      levels: path ? path.levels.map(levelRow) : [],
+      level: path && path.levels.find((l) => l.code === path.selectedLevel) ? { code: path.selectedLevel, pct: path.levels.find((l) => l.code === path.selectedLevel).pct } : null,
       today, streak, hearts: core.heartState(user), week,
       achievements: achievements.filter((a) => a.earnedAt).sort((a, b) => (a.earnedAt < b.earnedAt ? 1 : -1)).slice(0, 3),
       review: reviewCounts, mistakesAvailable: mistakes,
@@ -93,6 +121,12 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
 
   /* ---------- lessons ---------- */
   r.post('/lessons/:id/start', async (req, res) => {
+    // a client that says which level it is showing must be showing the level of the lesson
+    const want = (req.body || {}).level;
+    if (want) {
+      const row = await db.get('SELECT lv.code FROM lessons l JOIN levels lv ON lv.id = l.level_id WHERE l.id = ?', int(req.params.id));
+      if (row && row.code !== String(want)) throw new HttpError(409, 'err.lesson_other_level', { level: row.code });
+    }
     try { res.json(await attempts.start(req.user, int(req.params.id), req.lang)); }
     catch (e) { if (e.extra) return res.status(e.status).json({ error: req.t(e.message, e.params), code: e.message, ...e.extra }); throw e; }
   });
@@ -111,6 +145,10 @@ module.exports = function learnerRoutes({ db, settings, auth, core, attempts, re
     if (course) { where.push('(v.course_id = ? OR v.course_id IS NULL)'); args.push(course.id); }
     const tl = user.translation_language;
     if (q) { where.push(`(v.en LIKE ? ESCAPE '\\' OR ${L10N.vocabWordSql(tl)} LIKE ? ESCAPE '\\')`); args.push('%' + escapeLike(q) + '%', '%' + escapeLike(q) + '%'); }
+    if (req.query.level) {
+      const known = (await db.all('SELECT DISTINCT code FROM levels')).map((x) => x.code).concat(['A0', 'A1', 'A2', 'B1', 'B2', 'C1', 'C2']);
+      if (!known.includes(String(req.query.level))) throw bad('err.fix_fields', { level: 'val.level_unknown' });
+    }
     if (req.query.level) { where.push('(v.cefr = ? OR lv.code = ?)'); args.push(String(req.query.level), String(req.query.level)); }
     if (['word', 'collocation', 'phrasal_verb', 'idiom', 'academic'].includes(req.query.kind)) { where.push('v.kind = ?'); args.push(req.query.kind); }
     if (req.query.unitId) { where.push('v.unit_id = ?'); args.push(int(req.query.unitId)); }

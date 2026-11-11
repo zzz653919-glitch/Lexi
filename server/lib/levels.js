@@ -18,4 +18,10 @@ const SKILL_OF_TYPE = {
   multiple_choice: 'grammar', fill_blank: 'grammar', order_words: 'grammar', reading: 'reading', listen_choice: 'listening', listen_type: 'listening',
 };
 
-module.exports = { LEVELS, index, valid, code, clampIndex, SKILLS, TRACKED, REPORT_GROUPS, TRACKED_OF, SKILL_OF_TYPE };
+/* the roadmap level a CEFR result opens: a placement opens up to B2 at most (the advanced levels are earned or chosen) */
+const ROADMAP_OF = ['A1', 'A1', 'A2', 'B1', 'B2', 'B2', 'B2'];
+const roadmapCode = (cefr) => ROADMAP_OF[Math.max(0, index(cefr))] || 'A1';
+/* the CEFR level the content (daily lesson, words, plan) follows for a roadmap level; IELTS preparation works at C1 */
+const cefrOfRoadmap = (code) => (code === 'IELTS' ? 'C1' : valid(code) ? code : 'A1');
+
+module.exports = { roadmapCode, cefrOfRoadmap, LEVELS, index, valid, code, clampIndex, SKILLS, TRACKED, REPORT_GROUPS, TRACKED_OF, SKILL_OF_TYPE };

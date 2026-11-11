@@ -2,6 +2,7 @@
 const express = require('express');
 const X = require('../lib/exercises');
 const csv = require('../lib/csv');
+const { SYNC_SQL } = require('../lib/lesson-levels');
 const { now, clean, cleanMultiline, int, HttpError, bad } = require('../lib/util');
 
 const parseJson = (j) => { try { const v = JSON.parse(j || '{}'); return v && typeof v === 'object' ? v : {}; } catch (_) { return {}; } };
@@ -175,6 +176,7 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
     const v = await unitInput(req.body || {}, true);
     const keys = Object.keys(v);
     if (keys.length) await db.run(`UPDATE units SET ${keys.map((k) => k + ' = ?').join(', ')} WHERE id = ?`, ...keys.map((k) => v[k]), u.id);
+    await db.run(SYNC_SQL);
     await audit(req, 'unit.update', 'unit', u.id, v);
     res.json(await db.get('SELECT * FROM units WHERE id = ?', u.id));
   });
@@ -227,6 +229,7 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
     const id = (await db.run('INSERT INTO lessons (unit_id, title, description, position, status, unlock_rule, prerequisite_lesson_id, xp_reward, created_at, updated_at, kind, skill, content) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)',
       u.id, v.title, v.description || '', await nextPos('lessons', 'unit_id', u.id), 'draft', v.unlock_rule || 'sequential', v.prerequisite_lesson_id || null, v.xp_reward ?? settings.all().xp_lesson_bonus, t, t, v.kind || 'lesson', v.skill || null, v.content || '{}')).id;
     if (v.translations) await db.run('UPDATE lessons SET translations = ? WHERE id = ?', v.translations, id);
+    await db.run(SYNC_SQL);
     await audit(req, 'lesson.create', 'lesson', id, v);
     res.status(201).json(await db.get('SELECT * FROM lessons WHERE id = ?', id));
   });
@@ -242,6 +245,7 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
     if (v.unlock_rule && v.unlock_rule !== 'prerequisite' && v.prerequisite_lesson_id === undefined) v.prerequisite_lesson_id = null;
     const keys = Object.keys(v);
     if (keys.length) await db.run(`UPDATE lessons SET ${keys.map((k) => k + ' = ?').join(', ')}, updated_at = ? WHERE id = ?`, ...keys.map((k) => v[k]), now(), l.id);
+    await db.run(SYNC_SQL);
     await audit(req, 'lesson.update', 'lesson', l.id, v);
     res.json(await db.get('SELECT * FROM lessons WHERE id = ?', l.id));
   });
@@ -270,6 +274,7 @@ module.exports = function contentRoutes({ db, settings, auth, core, audit }) {
       for (const e of await db.all('SELECT * FROM exercises WHERE lesson_id = ? ORDER BY position, id', l.id)) await copyExercise(e, nid, e.position);
       return nid;
     });
+    await db.run(SYNC_SQL);
     await audit(req, 'lesson.duplicate', 'lesson', id, { from: l.id });
     res.status(201).json(await db.get('SELECT * FROM lessons WHERE id = ?', id));
   });

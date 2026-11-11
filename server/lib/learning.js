@@ -16,8 +16,16 @@ function make(db, settings) {
     if (!LV.valid(level)) throw new Error('unknown level ' + level);
     const u = await db.get('SELECT cefr_level FROM users WHERE id = ?', userId);
     const t = now();
-    await db.run('UPDATE users SET cefr_level = ?, level_source = ?, level_changed_at = ?, start_level = ?, onboarded = 1 WHERE id = ?', level, source, t, pathLevel(level), userId);
+    // the selected roadmap level follows a manual choice or a test result; an automatic level-up leaves it where the learner put it
+    const sel = source === 'manual' ? pathLevel(level) : ['placement', 'reassessment'].includes(source) ? LV.roadmapCode(level) : null;
+    await db.run('UPDATE users SET cefr_level = ?, level_source = ?, level_changed_at = ?, start_level = ?, onboarded = 1' + (sel ? ', selected_level = ?, selected_level_at = ?' : '') + ' WHERE id = ?', level, source, t, pathLevel(level), ...(sel ? [sel, t] : []), userId);
     await db.run('INSERT INTO user_level_history (user_id, level, previous, source, note, assessment_id, created_at) VALUES (?,?,?,?,?,?,?)', userId, level, u ? u.cefr_level : null, source, note, assessmentId, t);
+  }
+
+  /* the learner picks a roadmap level (A1..C1 or IELTS); it is saved on the account and the content follows it; progress is never touched */
+  async function selectLevel(userId, code) {
+    await setLevel(userId, LV.cefrOfRoadmap(code), 'manual', { note: 'selected level ' + code });
+    await db.run('UPDATE users SET selected_level = ?, selected_level_at = ? WHERE id = ?', code, now(), userId);
   }
 
   /* called when a placement test or a reassessment finishes */
@@ -156,7 +164,7 @@ function make(db, settings) {
     };
   }
 
-  return { brief, setLevel, applyAssessment, recordEvidence, maybeLevelUp, recommendation, buildPlan, plan, status, skills, history, pathLevel };
+  return { brief, setLevel, selectLevel, applyAssessment, recordEvidence, maybeLevelUp, recommendation, buildPlan, plan, status, skills, history, pathLevel };
 }
 
 module.exports = { make, pathLevel };
