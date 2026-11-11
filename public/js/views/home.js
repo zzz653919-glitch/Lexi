@@ -1,5 +1,5 @@
 import { h, icon, avatar, toast } from '../ui.js';
-import { get, post, put, session, ApiError } from '../api.js';
+import { get, post, session, ApiError } from '../api.js';
 import { navigate, switcher } from '../app.js';
 import { t, n, fmt } from '../i18n.js';
 import { startAttempt } from './start.js';
@@ -57,11 +57,6 @@ export default async function home() {
   ].filter(Boolean);
 
   /* the roadmap: level strip, progress of the current level, the four skills, test results and weak areas */
-  const lvSwitch = d.selectedLevel && d.levels.length ? h('label', { class: 'level-switch row', style: { gap: '8px', alignItems: 'center' } }, h('b', {}, t('path.your_level')),
-    h('select', { class: 'input', id: 'dash-level', 'aria-label': t('path.change_level'), onchange: async (e) => {
-      try { await put('/me/selected-level', { level: e.target.value }); session.user.selectedLevel = e.target.value; toast(t('path.level_switched', { level: e.target.value }), 'success'); navigate('/?lv=' + e.target.value); }
-      catch (err) { toast(err instanceof ApiError ? err.message : t('app.error_text'), 'error', 5000); } } },
-    d.levels.map((l) => h('option', { value: l.code, selected: l.code === d.selectedLevel }, l.code)))) : null;
   const rm = d.roadmap;
   const skillRow = (k) => { const x = rm.skills[k]; return h('li', { class: 'skill-row' }, h('div', { class: 'row between' }, h('b', {}, t('exam.skill_' + k)), h('span', { class: 'muted small' }, x.pct === null ? t('roadmap.no_data') : x.pct + '%')), h('div', { class: 'progress', role: 'progressbar', 'aria-valuemin': 0, 'aria-valuemax': 100, 'aria-valuenow': x.pct || 0, 'aria-label': t('exam.skill_' + k) }, h('i', { style: { width: (x.pct || 0) + '%' } }))); };
   const roadmapCard = rm ? h('section', { class: 'card roadmap-card', 'aria-labelledby': 'rm-h' },
@@ -86,7 +81,6 @@ export default async function home() {
       h('span', { class: 'eyebrow' }, d.course ? `${d.course.title}${rec ? ' · ' + rec.level : ''}` : t('dashboard.no_course')),
       h('h2', { id: 'cont-h' }, rec ? rec.title : d.course ? t('dashboard.all_done') : t('dashboard.no_published')),
       rec ? h('p', { style: { margin: 0, opacity: .9 } }, t('dashboard.unit', { title: rec.unit })) : null, contBtn),
-    lvSwitch,
     ...banners,
     roadmapCard,
     lr.level ? h('section', { class: 'card daily-card', 'aria-labelledby': 'daily-h' },
