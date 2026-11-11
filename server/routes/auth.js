@@ -71,7 +71,7 @@ module.exports = function authRoutes({ db, settings, auth, core, opts }) {
       email, v.display_name, A.hashPassword(b.password), 'learner', v.avatar, v.timezone || 'UTC', v.ui_language, v.translation_language, course ? course.id : null, pathLevel(v.start_level), v.daily_goal_xp, s.max_hearts, t, t, t, chosenLevel ? v.start_level : null, chosenLevel ? 'manual' : 'default', chosenLevel ? t : null, chosenLevel ? 1 : 0)).id;
     const sess = await auth.createSession(id, req);
     auth.setCookie(res, sess.token);
-    if (chosenLevel) await db.run('UPDATE users SET level_chosen = 1, selected_level = ?, selected_level_at = ? WHERE id = ?', pathLevel(v.start_level), t, id);
+    if (chosenLevel) await db.run('UPDATE users SET selected_level = ?, selected_level_at = ? WHERE id = ?', pathLevel(v.start_level), t, id);
     req.user = await core.userById(id); req.session = { csrf_token: sess.csrf };
     res.status(201).json(meBody(req));
   });
