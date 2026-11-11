@@ -18,7 +18,7 @@ function make(db, settings) {
     const t = now();
     // the selected roadmap level follows a manual choice or a test result; an automatic level-up leaves it where the learner put it
     const sel = source === 'manual' ? pathLevel(level) : ['placement', 'reassessment'].includes(source) ? LV.roadmapCode(level) : null;
-    await db.run('UPDATE users SET cefr_level = ?, level_source = ?, level_changed_at = ?, start_level = ?, onboarded = 1' + (sel ? ', selected_level = ?, selected_level_at = ?' : '') + ' WHERE id = ?', level, source, t, pathLevel(level), ...(sel ? [sel, t] : []), userId);
+    await db.run('UPDATE users SET cefr_level = ?, level_source = ?, level_changed_at = ?, start_level = ?, onboarded = 1' + (sel ? ', selected_level = ?, selected_level_at = ?, level_chosen = ' + (source === 'manual' ? 1 : 0) : '') + ' WHERE id = ?', level, source, t, pathLevel(level), ...(sel ? [sel, t] : []), userId);
     await db.run('INSERT INTO user_level_history (user_id, level, previous, source, note, assessment_id, created_at) VALUES (?,?,?,?,?,?,?)', userId, level, u ? u.cefr_level : null, source, note, assessmentId, t);
   }
 

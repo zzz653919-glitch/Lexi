@@ -4,5 +4,8 @@ UPDATE lessons SET level_id = (SELECT u.level_id FROM units u WHERE u.id = lesso
 CREATE INDEX IF NOT EXISTS idx_lessons_level ON lessons(level_id, position);
 ALTER TABLE users ADD COLUMN selected_level TEXT;
 ALTER TABLE users ADD COLUMN selected_level_at TEXT;
+-- 1 = the learner picked the level by hand: every level is then open to enter (a placement test result keeps the exam gates)
+ALTER TABLE users ADD COLUMN level_chosen INTEGER NOT NULL DEFAULT 0;
 -- learners who chose their level by hand keep it as the selected level
 UPDATE users SET selected_level = start_level WHERE level_source = 'manual' AND start_level IN (SELECT code FROM levels);
+UPDATE users SET level_chosen = 1 WHERE selected_level IS NOT NULL AND level_source = 'manual';

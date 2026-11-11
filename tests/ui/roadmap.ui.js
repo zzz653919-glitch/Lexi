@@ -18,14 +18,14 @@ const overflow = (page) => page.evaluate(() => document.documentElement.scrollWi
     /* ---------- dashboard ---------- */
     check((await page.locator('.level-strip li').count()) === 6, 'the dashboard shows all six roadmap levels');
     check((await page.locator('.level-strip li.ls-current').count()) === 1 && (await page.locator('.level-strip li.ls-current .ls-code').innerText()) === 'C1', 'the level chosen by hand (C2 is capped at C1) is the current level');
-    check((await page.locator('.level-strip li.ls-soon, .level-strip li.ls-locked').count()) === 1, 'only IELTS stays locked after choosing a level by hand');
+    check((await page.locator('.level-strip li.ls-soon, .level-strip li.ls-locked').count()) === 0, 'no level is locked after choosing a level by hand');
     check((await page.locator('.roadmap-card .skill-row').count()) === 4, 'four skill indicators');
     check(/80%/.test(await page.locator('.roadmap-card').innerText()), 'the dashboard states the 80% pass mark');
 
     /* ---------- path ---------- */
     await page.click('a[data-nav=learn]'); await page.waitForSelector('.path');
     check((await page.locator('.level-tab').count()) === 6, 'six level tabs');
-    check((await page.locator('.level-tab[data-locked="true"]').count()) === 1, 'only IELTS is locked');
+    check((await page.locator('.level-tab[data-locked="true"]').count()) === 0, 'no level is locked');
     check(await page.locator('.level-head').isVisible(), 'the level header explains the rules');
     check((await page.locator('.node.kind-exam').count()) === 1 && (await page.locator('.node.kind-topic_test').count()) === 10, 'the exam and ten topic tests are marked on the path');
     // a level can be switched to at any time: the saved level changes and only its lessons are shown

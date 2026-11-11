@@ -26,7 +26,7 @@ test('selecting each level A1..C1 and IELTS shows only that level\'s lessons and
       const p = (await c.get('/api/path')).json;
       assert.strictEqual(p.selectedLevel, code);
       assert.strictEqual(p.recommended.level, code);
-      assert.ok(p.levels.find((l) => l.code === code).unlocked, code + ' is open once selected');
+      assert.ok(p.levels.every((l) => l.unlocked), 'every level can be entered once the learner chose a level');
       const dash = (await c.get('/api/dashboard')).json;
       assert.strictEqual(dash.selectedLevel, code); assert.strictEqual(dash.recommended.level, code); assert.strictEqual(dash.level.code, code);
       const list = (await c.get('/api/levels/' + code + '/lessons')).json;
