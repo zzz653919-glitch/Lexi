@@ -83,7 +83,7 @@ document.addEventListener('click', (e) => {
 window.addEventListener('popstate', () => render());
 
 /* the language choice is stored on this device and, when signed in, in the user's profile (the profile wins on the next visit) */
-export const saveLanguage = (code) => (session.user ? api('PATCH', '/me', { uiLanguage: code }).then((r) => { session.user = r.user; }) : Promise.resolve());
+export const saveLanguage = (code) => (session.user ? api('PATCH', '/me', { uiLanguage: code }).then((r) => { session.user = r.user; import('./achievements/popup.js').then((m) => m.checkUnseen()).catch(() => {}); }) : Promise.resolve());
 export const switcher = (cls) => languageSwitcher({ save: saveLanguage, className: cls });
 
 function buildShell() {
@@ -129,9 +129,11 @@ function rewardAnimation(data) {
   fresh.forEach((r) => shownRewards.add(r.id));
   import('./avatar/ui.js').then(async (m) => { await m.loadAvatarCss(); m.tokenBurst(fresh); }).catch(() => {});
 }
+let unseenChecked = false;   // achievements unlocked while the learner was elsewhere (another device, a language change): shown once per visit
+const checkAchievements = () => { if (unseenChecked || !session.user) return; unseenChecked = true; import('./achievements/popup.js').then((m) => m.checkUnseen()).catch(() => {}); };
 export async function refreshStats() {
   if (!session.user) return;
-  try { stats.prev = stats.data; stats.data = await get('/me/stats'); if (shell) { statChips(shell.chipBox); statChips(shell.sideChips); stats.prev = null; } rewardAnimation(stats.data); } catch (_) { /* optional */ }
+  try { stats.prev = stats.data; stats.data = await get('/me/stats'); if (shell) { statChips(shell.chipBox); statChips(shell.sideChips); stats.prev = null; } rewardAnimation(stats.data); checkAchievements(); } catch (_) { /* optional */ }
   return stats.data;
 }
 

@@ -11,13 +11,17 @@ async function withBrowser(fn, { viewport = { width: 1280, height: 800 }, ...ctx
   try { return await fn(browser, viewport, ctxOpts); } finally { await browser.close(); }
 }
 /* a page that records every console error, uncaught exception and failed (>=400, unexpected) request */
-async function openPage(browser, viewport, { lang = 'en', motion = 'off', ...ctxOpts } = {}) {
+async function openPage(browser, viewport, { lang = 'en', motion = 'off', ach = true, ...ctxOpts } = {}) {
   const ctx = await browser.newContext({ viewport, ...ctxOpts });
   // layout / contrast / flow tests run without animations (deterministic measurements); tests/ui/motion.ui.js turns them on explicitly
   if (motion) await ctx.addInitScript((m) => { try { if (!localStorage.getItem('lexi.motion')) localStorage.setItem('lexi.motion', m); } catch (_) { /* storage blocked */ } }, motion);
   if (lang) await ctx.addInitScript((l) => { try { if (!localStorage.getItem('lexi.lang')) localStorage.setItem('lexi.lang', l); } catch (_) { /* storage blocked */ } }, lang);
   const page = await ctx.newPage();
   page.problems = [];
+  // the unlocked-achievement notification is a modal: in the flows that are not about it, it is closed the moment it blocks an action (tests/ui/achievements.ui.js tests it)
+  // (and the start-up check for achievements unlocked elsewhere answers "nothing new", so layout measurements never see the notification)
+  if (ach) await page.route('**/api/achievements/unseen', (route) => route.fulfill({ json: { items: [] } }));
+  if (ach && page.addLocatorHandler) await page.addLocatorHandler(page.locator('.ach-pop #ach-pop-close'), async (btn) => { await btn.click(); }, { noWaitAfter: true });
   page.expectedStatuses = new Set();
   page.on('pageerror', (e) => page.problems.push('pageerror: ' + e.message + (process.env.UI_DEBUG ? ' ' + e.stack : '')));
   page.on('console', (m) => { if (m.type() === 'error' && !/Failed to load resource/.test(m.text())) page.problems.push('console: ' + m.text()); });

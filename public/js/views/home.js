@@ -110,6 +110,6 @@ export default async function home() {
           d.mistakesAvailable ? h('a', { class: 'btn small secondary', href: '/practice' }, n('dashboard.fix_mistakes', d.mistakesAvailable)) : null),
         d.review.difficult ? h('p', { class: 'small muted', style: { marginTop: '10px' } }, n('dashboard.difficult_words', d.review.difficult)) : null)),
     h('section', { class: 'card', 'aria-labelledby': 'ach-h' }, h('div', { class: 'row between' }, h('h2', { id: 'ach-h' }, t('dashboard.recent_achievements')), h('a', { href: '/achievements', class: 'small' }, t('common.see_all'))),
-      d.achievements.length ? h('div', { class: 'ach-row' }, d.achievements.map((a) => h('span', { class: 'ach-mini' }, icon(achievementIcon(a.icon)), t('ach.' + a.code + '.title')))) : h('p', { class: 'muted', style: { margin: 0 } }, t('dashboard.first_badge'))));
+      d.achievements.length ? h('div', { class: 'ach-row' }, d.achievements.map((a) => h('span', { class: 'ach-mini' }, icon(achievementIcon(a.icon)), a.title))) : h('p', { class: 'muted', style: { margin: 0 } }, t('dashboard.first_badge'))));
   return { el, title: t('nav.home'), nav: 'home' };
 }

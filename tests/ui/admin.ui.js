@@ -35,7 +35,7 @@ const { check, withBrowser, openPage, summary, loginUI, startServer, Client } = 
     const stat = async (label) => Number(await page.locator('.stat-card', { hasText: label }).first().locator('b').innerText());
     check((await stat('Registered users')) === 3 && (await stat('Exercises')) === 144 && (await stat('Lessons')) === 12, 'dashboard numbers equal the database');
     check((await page.locator('svg.chart').count()) === 4, 'four charts are drawn from real records');
-    check((await page.locator('.adm-side nav a[data-nav]').count()) === 11, 'administrator sees all 11 sections');
+    check((await page.locator('.adm-side nav a[data-nav]').count()) === 12, 'administrator sees all 12 sections');
 
     /* ---------- course -> level -> unit -> lesson -> exercise ---------- */
     await page.click('.adm-side a:has-text("Courses")'); await page.waitForSelector('h1:has-text("Courses")'); await page.waitForSelector('.tbl');

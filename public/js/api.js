@@ -26,6 +26,8 @@ export async function api(method, url, body, opts = {}) {
     if (res.status === 503 && data && data.maintenance && session.onMaintenance) session.onMaintenance(err.message);
     throw err;
   }
+  // the answer of a lesson, a review or a daily lesson lists the achievements it unlocked on the server: celebrate them (loaded only when there is one)
+  if (data && Array.isArray(data.earned) && data.earned.length && data.earned[0] && data.earned[0].rarity) import('./achievements/popup.js').then((m) => m.showUnlocked(data.earned)).catch(() => {});
   return data;
 }
 export const get = (u) => api('GET', u);

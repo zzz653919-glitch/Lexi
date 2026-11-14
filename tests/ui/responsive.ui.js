@@ -4,7 +4,7 @@ const { layoutProbe, a11yProbe, contrastProbe } = require('./a11y');
 const { answer, currentState } = require('./solver');
 
 const WIDTHS = [[320, 700, 'mobile 320'], [360, 740, 'mobile 360'], [390, 844, 'mobile 390'], [430, 932, 'mobile 430'], [768, 1024, 'tablet 768'], [1024, 768, 'small desktop 1024'], [1440, 900, 'desktop 1440']];
-const LEARNER_PAGES = [['/', 'continue-card', 'home'], ['/learn', 'path', 'learning path'], ['/vocabulary', 'card.word', 'vocabulary'], ['/review', 'btn', 'review'], ['/leaderboard', 'card', 'leaderboard'], ['/achievements', 'ach-card', 'achievements'], ['/profile', 'avatar-grid', 'profile']];
+const LEARNER_PAGES = [['/', 'continue-card', 'home'], ['/learn', 'path', 'learning path'], ['/vocabulary', 'card.word', 'vocabulary'], ['/review', 'btn', 'review'], ['/leaderboard', 'card', 'leaderboard'], ['/achievements', 'ach-item', 'achievements'], ['/profile', 'avatar-grid', 'profile']];
 const ADMIN_PAGES = [['/admin', 'stat-grid', 'dashboard'], ['/admin/courses', 'tbl', 'courses'], ['/admin/courses/1', 'tree-level', 'course tree'], ['/admin/lessons/1', 'tbl', 'lesson editor'], ['/admin/vocabulary', 'tbl', 'vocabulary'], ['/admin/users', 'tbl', 'users'], ['/admin/users/1', 'stat-grid', 'user'], ['/admin/settings', 'card', 'settings'], ['/admin/audit', 'tbl', 'audit']];
 
 (async () => {
@@ -120,7 +120,7 @@ const ADMIN_PAGES = [['/admin', 'stat-grid', 'dashboard'], ['/admin/courses', 't
       await check1('login', '/login', 'form'); await page.fill('input[name=email]', 'u@example.com'); await page.fill('input[name=password]', 'bad-pass-1'); await page.click('button[type=submit]'); await page.waitForSelector('.form-error:not([hidden])');
       let r = await page.evaluate(contrastProbe, ['.form-error', '.btn']); check(r.every((x) => x.ratio >= x.need), `${scheme} contrast of the login error box (${r.map((x) => x.ratio).join(', ')})`);
       await loginUI(page, s.base, 'u@example.com'); await page.waitForSelector('.continue-card');
-      await check1('home', '/', '.continue-card'); await check1('learn', '/learn', '.path'); await check1('vocabulary', '/vocabulary', '.word'); await check1('profile', '/profile', '.avatar-grid'); await check1('achievements', '/achievements', '.ach-card');
+      await check1('home', '/', '.continue-card'); await check1('learn', '/learn', '.path'); await check1('vocabulary', '/vocabulary', '.word'); await check1('profile', '/profile', '.avatar-grid'); await check1('achievements', '/achievements', '.ach-item');
       await page.goto(s.base + '/learn'); await page.waitForSelector('.node.current'); await page.click('.node.current'); await page.click('dialog button:has-text("Start lesson"), dialog button:has-text("Continue")').catch(() => {}); await page.waitForSelector('.lesson-body .q-title');
       const lessonSels = ['.q-title', '.q-sub', '.option', '.lesson-foot .btn', '.hearts', '.q-sentence', '.tile'];
       r = await page.evaluate(contrastProbe, lessonSels); let bad = r.filter((x) => x.ratio < x.need); check(bad.length === 0, `${scheme} contrast in a lesson${bad.length ? ': ' + bad.map((b) => `${b.sel} ${b.ratio}<${b.need}`).join('; ') : ''}`);

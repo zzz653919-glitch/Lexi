@@ -123,7 +123,7 @@ const A = require('../../server/lib/auth');
     check(/Words to review/.test(text) && (await page.locator('.review-list li').count()) >= 1, 'words to review are listed');
     check(/Your mistakes/.test(text), 'mistakes are listed');
     check((await page.locator('.result a:has-text("Continue")').count()) === 1, 'Continue button');
-    check(s.db.get('SELECT xp_total n FROM users WHERE email = ?', 'anna@example.com').n === 11 * 10 + 5 + 20 + 0 - 0, 'user XP total equals the sum of earned XP');
+    check(s.db.get('SELECT xp_total n FROM users WHERE email = ?', 'anna@example.com').n === 11 * 10 + 5 + 20 + 0 - 0 + s.db.get("SELECT COALESCE(SUM(xp_awarded), 0) n FROM user_achievements WHERE user_id = (SELECT id FROM users WHERE email = 'anna@example.com')").n, 'user XP total equals the lesson XP plus the XP of the achievements it unlocked');
     await page.click('.result a:has-text("Continue")'); await page.waitForSelector('.path');
     check((await page.locator('.node.completed').count()) === 1 && (await page.locator('.node.current').count()) === 1, 'completing the lesson unlocks the next one');
     check((await page.locator('.chips .flame').first().innerText()).trim().startsWith('1'), 'streak shows 1 day');
@@ -187,8 +187,8 @@ const A = require('../../server/lib/auth');
     await page.waitForSelector('.form-error:not([hidden])'); check(true, 'an invalid time zone is rejected by the server');
     await page.goto(s.base + '/leaderboard'); await page.waitForSelector('.board');
     check((await page.locator('.board li.you').count()) === 1 && (await page.locator('.board').innerText()).includes('Anna K') && !(await page.content()).includes('anna@example.com'), 'leaderboard shows the opted-in learner by display name only');
-    await page.goto(s.base + '/achievements'); await page.waitForSelector('.ach-card');
-    check((await page.locator('.ach-card:not(.locked)').count()) >= 2 && (await page.locator('.ach-card.locked').count()) >= 5, 'achievements page separates earned and locked badges');
+    await page.goto(s.base + '/achievements'); await page.waitForSelector('.ach-item');
+    check((await page.locator('.ach-item:not(.locked)').count()) >= 2 && (await page.locator('.ach-item.locked').count()) >= 5, 'achievements page separates earned and locked badges');
 
     /* ---------- no obsolete pages, unknown routes ---------- */
     page.expectedStatuses.add(404);   // unknown pages are real 404 responses that still show the app's not-found screen

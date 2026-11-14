@@ -47,11 +47,16 @@ function make({ db, settings, tokens }) {
       db.get(`SELECT COUNT(*) n FROM levels lv WHERE (SELECT COUNT(*) FROM lessons l JOIN units u ON u.id = l.unit_id WHERE u.level_id = lv.id AND l.status = 'published') > 0
         AND (SELECT COUNT(*) FROM lessons l JOIN units u ON u.id = l.unit_id WHERE u.level_id = lv.id AND l.status = 'published') = (SELECT COUNT(*) FROM lessons l JOIN units u ON u.id = l.unit_id JOIN user_progress p ON p.lesson_id = l.id AND p.user_id = ? WHERE u.level_id = lv.id AND l.status = 'published')`, user.id),
       db.get('SELECT COUNT(*) n FROM review_items WHERE user_id = ?', user.id), tokens.wallet(user.id), db.get("SELECT COUNT(*) n FROM token_transactions WHERE user_id = ? AND reason = 'mission'", user.id)]);
-    return { lessons: lessons.n, streak: streak ? streak.longest_streak : 0, xp: user.xp_total, levels: levels.n, words: words.n, tokens: tok.earned, missions: missions.n };
+    const ach = new Set((await db.all('SELECT code FROM user_achievements WHERE user_id = ?', user.id)).map((r) => r.code));
+    return { ach, lessons: lessons.n, streak: streak ? streak.longest_streak : 0, xp: user.xp_total, levels: levels.n, words: words.n, tokens: tok.earned, missions: missions.n };
   }
   const RULE_FIELD = { lessons: 'lessons', streak: 'streak', xp: 'xp', levels: 'levels', words: 'words', tokens: 'tokens', missions: 'missions' };
-  function parseRule(rule) { const [type, v] = String(rule || '').split(':'); return A.EARN_TYPES.includes(type) && int(v, 0) > 0 ? { type, need: int(v, 0) } : null; }
-  const progressOf = (rule, st) => { const r = parseRule(rule); return r ? { type: r.type, need: r.need, have: Math.min(st[RULE_FIELD[r.type]] || 0, r.need), done: (st[RULE_FIELD[r.type]] || 0) >= r.need } : null; };
+  function parseRule(rule) {
+    const [type, v] = String(rule || '').split(':');
+    if (type === 'ach') return /^[a-z0-9_]{2,40}$/.test(v || '') ? { type, need: 1, code: v } : null;   // earned with an achievement (the achievement gives the item)
+    return A.EARN_TYPES.includes(type) && int(v, 0) > 0 ? { type, need: int(v, 0) } : null;
+  }
+  const progressOf = (rule, st) => { const r = parseRule(rule); if (r && r.type === 'ach') { const done = !!(st.ach && st.ach.has(r.code)); return { type: 'ach', need: 1, have: done ? 1 : 0, done }; } return r ? { type: r.type, need: r.need, have: Math.min(st[RULE_FIELD[r.type]] || 0, r.need), done: (st[RULE_FIELD[r.type]] || 0) >= r.need } : null; };
 
   /* items earned by learning (pets for achievements and so on) are given as soon as the rule is met */
   async function grantEarned(user, st) {
